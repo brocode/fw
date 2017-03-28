@@ -2,6 +2,7 @@ use std::io;
 use std::time::SystemTimeError;
 use serde_json;
 use git2;
+use std::ffi::OsString;
 
 #[derive(Debug)]
 pub enum AppError {
@@ -11,4 +12,5 @@ pub enum AppError {
   InternalError(&'static str),
   ClockError(SystemTimeError),
   GitError(git2::Error),
+  Utf8Error(OsString),
 }
