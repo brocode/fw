@@ -52,6 +52,5 @@ pub fn synchronize(maybe_config: Result<Config, AppError>,
       .collect();
 
     results.into_iter().fold(Result::Ok(()), |accu, maybe_error| accu.and(maybe_error))
-
   })
 }
