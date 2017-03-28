@@ -27,7 +27,7 @@ pub fn synchronize(maybe_config: Result<Config, AppError>,
     let results: Vec<Result<(), AppError>> = config
       .projects
       .par_iter()
-      .map(move |(_, project)| {
+      .map(|(_, project)| {
         let mut repo_builder = builder();
         let path = Path::new(workspace.clone().as_str()).join(project.name.as_str());
         let exists = path.exists();
@@ -51,7 +51,7 @@ pub fn synchronize(maybe_config: Result<Config, AppError>,
       })
       .collect();
 
-    results.iter().fold(Result::Ok(()), |accu, maybe_error| accu.and(maybe_error))
+    results.into_iter().fold(Result::Ok(()), |accu, maybe_error| accu.and(maybe_error))
 
   })
 }
