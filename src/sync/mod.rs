@@ -6,6 +6,7 @@ use git2;
 use git2::build::RepoBuilder;
 use git2::RemoteCallbacks;
 use git2::FetchOptions;
+use std::process::Command;
 use rayon::prelude::*;
 
 fn builder<'a>() -> RepoBuilder<'a> {
@@ -46,9 +47,22 @@ pub fn synchronize(maybe_config: Result<Config, AppError>,
                        warn!(project_logger, "Error cloning repo"; "error" => format!("{}", error));
                        AppError::GitError(error)
                      })
-            .and_then(|_|
-                      // TODO spawn after_clone
-                      Ok(()))
+            .and_then(|_| {
+              match project.clone().after_clone {
+                Some(cmd) => {
+
+                  info!(project_logger, "Handling post hooks"; "after_clone" => cmd);
+                  // TODO spawn after_clone
+                  //Command::new("sh")
+                  //  .arg("-c")
+                  //  .arg(cmd)
+                  //  .output()
+                  //  .expect("need to handle this error properly");
+                  Ok(())
+                }
+                None => Ok(()),
+              }
+            })
         }
       })
       .collect();
