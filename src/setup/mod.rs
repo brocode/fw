@@ -1,9 +1,11 @@
 use slog::Logger;
 use errors::AppError;
-use std::path::PathBuf;
-use config::Project;
+use std::path::{PathBuf, Path};
+use config::{Project, Settings, Config};
 use std::collections::HashMap;
 use std::fs;
+use serde_json::ser;
+use git2::Repository;
 
 pub fn setup(workspace_dir: &str, logger: &Logger) -> Result<(), AppError> {
   let setup_logger = logger.new(o!("workspace" => format!("{}", workspace_dir)));
@@ -17,7 +19,7 @@ pub fn setup(workspace_dir: &str, logger: &Logger) -> Result<(), AppError> {
 
   maybe_path
     .and_then(|path| determine_projects(path, logger))
-    .map(|_| ())
+    .and_then(|projects| write_config(projects, logger, workspace_dir))
 }
 
 fn determine_projects(path: PathBuf,
@@ -32,10 +34,15 @@ fn determine_projects(path: PathBuf,
         .into_iter()
         .map(|entry: fs::DirEntry| match entry.file_name().into_string() {
                Ok(name) => {
+          // todo unwrap calls
+                 // todo path to repo fix
+          let repo = Repository::open("").unwrap();
+          let remote = repo.find_remote("origin").unwrap();
+          let url = remote.url().unwrap();
           info!(logger, "processing"; "project" => name);
           Ok(Project {
                name: name,
-               git: "".to_owned(),
+               git: url.to_owned(),
              })
         }
                Err(invalid_unicode) => Err(AppError::Utf8Error(invalid_unicode)),
@@ -59,4 +66,16 @@ fn determine_projects(path: PathBuf,
           }
         })
     })
+}
+
+fn write_config(projects: HashMap<String, Project>,
+                logger: &Logger,
+                workspace_dir: &str)
+                -> Result<(), AppError> {
+  let config = Config {
+    projects: projects,
+    settings: Settings { workspace: workspace_dir.to_owned() },
+  };
+  //ser::to_writer_pretty(writer, config);
+  unimplemented!()
 }
