@@ -25,6 +25,7 @@ pub fn setup(workspace_dir: &str, logger: &Logger) -> Result<(), AppError> {
 fn determine_projects(path: PathBuf,
                       logger: &Logger)
                       -> Result<HashMap<String, Project>, AppError> {
+  let workspace_path = path.clone();
 
   fs::read_dir(path)
     .and_then(|base| base.collect())
@@ -34,14 +35,18 @@ fn determine_projects(path: PathBuf,
         .into_iter()
         .map(|entry: fs::DirEntry| match entry.file_name().into_string() {
                Ok(name) => {
-          // todo path to repo fix
-          let repo = try!(Repository::open(""));
+          let project_logger = logger.new(o!("project" => name.clone()));
+          let mut path_to_repo = workspace_path.clone();
+          path_to_repo.push(name.clone());
+          let repo = try!(Repository::open(path_to_repo));
+          let all = try!(repo.remotes());
+          debug!(project_logger, "remotes"; "found" => format!("{:?}", all.get(0)));
           let remote = try!(repo.find_remote("origin"));
           let url = try!(remote
                            .url()
                            .ok_or(AppError::UserError(format!("invalid remote origin at {:?}",
                                                               repo.path()))));
-          info!(logger, "processing"; "project" => name);
+          info!(project_logger, "git config validated");
           Ok(Project {
                name: name,
                git: url.to_owned(),
@@ -78,6 +83,7 @@ fn write_config(projects: HashMap<String, Project>,
     projects: projects,
     settings: Settings { workspace: workspace_dir.to_owned() },
   };
+  info!(logger, "Finished"; "projects" => format!("{:?}", config));
   //ser::to_writer_pretty(writer, config);
   unimplemented!()
 }
