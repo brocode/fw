@@ -51,7 +51,8 @@ fn determine_projects(path: PathBuf,
           info!(project_logger, "git config validated");
           Ok(Project {
                name: name,
-               git: url.to_owned(),
+            git: url.to_owned(),
+            after_clone: None
              })
         }
                Err(invalid_unicode) => Err(AppError::Utf8Error(invalid_unicode)),

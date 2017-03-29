@@ -16,6 +16,7 @@ pub struct Settings {
 pub struct Project {
   pub name: String,
   pub git: String,
+  pub after_clone: Option<String>,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
