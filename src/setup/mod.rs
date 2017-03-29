@@ -41,12 +41,12 @@ fn determine_projects(path: PathBuf,
              })
         .collect();
 
-      let mut acc: HashMap<String, Project> = HashMap::new();
+      let acc: HashMap<String, Project> = HashMap::new();
       let ok_projects: Result<HashMap<String, Project>, AppError> =
-        projects.into_iter().fold(Ok(acc), |mut maybeAccu: Result<HashMap<String, Project>, AppError>, project: Result<Project, AppError>| {
+        projects.into_iter().fold(Ok(acc), |maybe_accu: Result<HashMap<String, Project>, AppError>, project: Result<Project, AppError>| {
           match project {
             Ok(p) =>
-              maybeAccu.and_then(|mut accu| {accu.insert(p.clone().name, p);
+              maybe_accu.and_then(|mut accu| {accu.insert(p.clone().name, p);
                                          Ok(accu)}),
             Err(e) => Err(e),
           }
