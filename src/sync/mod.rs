@@ -42,15 +42,19 @@ pub fn synchronize(maybe_config: Result<Config, AppError>,
           info!(project_logger, "Cloning project");
           repo_builder
             .clone(project.git.as_str(), &path)
-            .map(|_| ())
             .map_err(|error| {
                        warn!(project_logger, "Error cloning repo"; "error" => format!("{}", error));
                        AppError::GitError(error)
                      })
+            .and_then(|_|
+                      // TODO spawn after_clone
+                      Ok(()))
         }
       })
       .collect();
 
-    results.into_iter().fold(Result::Ok(()), |accu, maybe_error| accu.and(maybe_error))
+    results
+      .into_iter()
+      .fold(Result::Ok(()), |accu, maybe_error| accu.and(maybe_error))
   })
 }

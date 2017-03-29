@@ -1,9 +1,8 @@
 use slog::Logger;
 use errors::AppError;
-use std::path::{PathBuf, Path};
+use std::path::PathBuf;
 use config::{Project, Settings, Config};
 use std::collections::HashMap;
-use std::io::prelude::*;
 use std::fs;
 use serde_json::ser;
 use git2::Repository;
@@ -51,8 +50,8 @@ fn determine_projects(path: PathBuf,
           info!(project_logger, "git config validated");
           Ok(Project {
                name: name,
-            git: url.to_owned(),
-            after_clone: None
+               git: url.to_owned(),
+               after_clone: None,
              })
         }
                Err(invalid_unicode) => Err(AppError::Utf8Error(invalid_unicode)),
