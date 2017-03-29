@@ -34,11 +34,13 @@ fn determine_projects(path: PathBuf,
         .into_iter()
         .map(|entry: fs::DirEntry| match entry.file_name().into_string() {
                Ok(name) => {
-          // todo unwrap calls
-                 // todo path to repo fix
-          let repo = Repository::open("").unwrap();
-          let remote = repo.find_remote("origin").unwrap();
-          let url = remote.url().unwrap();
+          // todo path to repo fix
+          let repo = try!(Repository::open(""));
+          let remote = try!(repo.find_remote("origin"));
+          let url = try!(remote
+                           .url()
+                           .ok_or(AppError::UserError(format!("invalid remote origin at {:?}",
+                                                              repo.path()))));
           info!(logger, "processing"; "project" => name);
           Ok(Project {
                name: name,

@@ -56,3 +56,10 @@ impl error::Error for AppError {
         }
     }
 }
+
+
+impl From<git2::Error> for AppError {
+    fn from(err: git2::Error) -> AppError {
+        AppError::GitError(err)
+    }
+}
