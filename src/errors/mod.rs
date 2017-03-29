@@ -63,3 +63,15 @@ impl From<git2::Error> for AppError {
         AppError::GitError(err)
     }
 }
+
+impl From<io::Error> for AppError {
+    fn from(err: io::Error) -> AppError {
+        AppError::IO(err)
+    }
+}
+
+impl From<serde_json::Error> for AppError {
+    fn from(err: serde_json::Error) -> AppError {
+        AppError::BadJson(err)
+    }
+}

@@ -57,7 +57,7 @@ fn main() {
     .get_matches();
 
   let logger = logger_from_verbosity(&matches.occurrences_of("v"));
-  let config = config::get_config(".fw.json");
+  let config = config::get_config();
 
   let subcommand_name = matches
     .subcommand_name()

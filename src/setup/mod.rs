@@ -3,9 +3,11 @@ use errors::AppError;
 use std::path::{PathBuf, Path};
 use config::{Project, Settings, Config};
 use std::collections::HashMap;
+use std::io::prelude::*;
 use std::fs;
 use serde_json::ser;
 use git2::Repository;
+use config;
 
 pub fn setup(workspace_dir: &str, logger: &Logger) -> Result<(), AppError> {
   let setup_logger = logger.new(o!("workspace" => format!("{}", workspace_dir)));
@@ -40,7 +42,7 @@ fn determine_projects(path: PathBuf,
           path_to_repo.push(name.clone());
           let repo = try!(Repository::open(path_to_repo));
           let all = try!(repo.remotes());
-          debug!(project_logger, "remotes"; "found" => format!("{:?}", all.get(0)));
+          debug!(project_logger, "remotes"; "found" => format!("{:?}", all.len()));
           let remote = try!(repo.find_remote("origin"));
           let url = try!(remote
                            .url()
@@ -83,7 +85,9 @@ fn write_config(projects: HashMap<String, Project>,
     projects: projects,
     settings: Settings { workspace: workspace_dir.to_owned() },
   };
-  info!(logger, "Finished"; "projects" => format!("{:?}", config));
-  //ser::to_writer_pretty(writer, config);
-  unimplemented!()
+  debug!(logger, "Finished"; "projects" => format!("{:?}", config.projects.len()));
+  let config_path = try!(config::config_path());
+  info!(logger, "Writing config"; "path" => format!("{:?}", config_path));
+  let mut buffer = try!(fs::File::create(config_path));
+  ser::to_writer_pretty(&mut buffer, &config).map_err(|e| AppError::BadJson(e))
 }
