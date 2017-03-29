@@ -25,28 +25,38 @@ fn determine_projects(path: PathBuf,
                       -> Result<HashMap<String, Project>, AppError> {
 
   fs::read_dir(path)
-    .and_then(|base| base.collect()).map_err(|e| AppError::IO(e))
+    .and_then(|base| base.collect())
+    .map_err(|e| AppError::IO(e))
     .and_then(|project_entries: Vec<fs::DirEntry>| {
       let projects: Vec<Result<Project, AppError>> = project_entries
         .into_iter()
         .map(|entry: fs::DirEntry| match entry.file_name().into_string() {
                Ok(name) => {
-                 info!(logger, "processing"; "project" => name);
-                 Ok(Project {
-                      name: name,
-                      git: "".to_owned(),
-                    })
-               }
+          info!(logger, "processing"; "project" => name);
+          Ok(Project {
+               name: name,
+               git: "".to_owned(),
+             })
+        }
                Err(invalid_unicode) => Err(AppError::Utf8Error(invalid_unicode)),
              })
         .collect();
 
       let acc: HashMap<String, Project> = HashMap::new();
-        projects.into_iter().fold(Ok(acc), |maybe_accu: Result<HashMap<String, Project>, AppError>, project: Result<Project, AppError>| {
+      projects
+        .into_iter()
+        .fold(Ok(acc),
+              |maybe_accu: Result<HashMap<String, Project>, AppError>,
+               project: Result<Project, AppError>| {
           match project {
-            Ok(p) =>
-              maybe_accu.and_then(|mut accu| {accu.insert(p.clone().name, p);
-                                         Ok(accu)}),
+            Ok(p) => {
+              maybe_accu.and_then(|mut accu| {
+                                    accu.insert(p.clone().name, p);
+                                    Ok(accu)
+                                  })
+            }
             Err(e) => Err(e),
-          }})})
+          }
+        })
+    })
 }
