@@ -1,3 +1,4 @@
+use std;
 use config::Config;
 use slog::Logger;
 use errors::AppError;
@@ -6,7 +7,7 @@ use git2;
 use git2::build::RepoBuilder;
 use git2::RemoteCallbacks;
 use git2::FetchOptions;
-use std::process::Command;
+use std::process::{Command, Output};
 use rayon::prelude::*;
 
 fn builder<'a>() -> RepoBuilder<'a> {
@@ -47,22 +48,30 @@ pub fn synchronize(maybe_config: Result<Config, AppError>,
                        warn!(project_logger, "Error cloning repo"; "error" => format!("{}", error));
                        AppError::GitError(error)
                      })
-            .and_then(|_| {
-              match project.clone().after_clone {
-                Some(cmd) => {
-
-                  info!(project_logger, "Handling post hooks"; "after_clone" => cmd);
-                  // TODO spawn after_clone
-                  //Command::new("sh")
-                  //  .arg("-c")
-                  //  .arg(cmd)
-                  //  .output()
-                  //  .expect("need to handle this error properly");
-                  Ok(())
+            .and_then(|_| match project.clone().after_clone {
+                        Some(cmd) => {
+              info!(project_logger, "Handling post hooks"; "after_clone" => cmd);
+              let result = try!(Command::new("sh").arg("-c").arg(cmd).output());
+              match result {
+                Output {
+                  status,
+                  ref stdout,
+                  ref stderr,
+                } if !status.success() => {
+                  let ok_stderr = try!(std::str::from_utf8(stderr));
+                  let ok_stdout = try!(std::str::from_utf8(stdout));
+                  crit!(
+                    project_logger,
+                    "post clone hook blew up";
+                    "stderr" => ok_stderr,
+                    "stdout" => ok_stdout);
+                  Err(AppError::UserError("Post hook blew up".to_owned()))
                 }
-                None => Ok(()),
+                _ => Ok(()),
               }
-            })
+            }
+                        None => Ok(()),
+                      })
         }
       })
       .collect();
