@@ -52,6 +52,7 @@ fn determine_projects(path: PathBuf,
                name: name,
                git: url.to_owned(),
                after_clone: None,
+               after_workon: None,
              })
         }
                Err(invalid_unicode) => Err(AppError::Utf8Error(invalid_unicode)),

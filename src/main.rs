@@ -54,6 +54,12 @@ fn main() {
                          .value_name("WORKSPACE_DIR")
                          .index(1)
                          .required(true)))
+    .subcommand(SubCommand::with_name("gen-workon")
+                  .about("Generate sourceable shell code to work on project")
+                  .arg(Arg::with_name("PROJECT_NAME")
+                         .value_name("PROJECT_NAME")
+                         .index(1)
+                         .required(true)))
     .get_matches();
 
   let logger = logger_from_verbosity(&matches.occurrences_of("v"));
@@ -76,6 +82,11 @@ fn main() {
                        .expect("argument required by clap.rs"),
                      &subcommand_logger)
       }
+      "gen-workon" => {
+        workon::gen(subcommand_matches
+                      .value_of("PROJECT_NAME")
+                      .expect("argument required by clap.rs"))
+      }
       _ => Result::Err(AppError::InternalError("Command not implemented")),
     }
     .and_then(|_| now.elapsed().map_err(|e| AppError::ClockError(e)))
@@ -95,3 +106,4 @@ mod errors;
 mod config;
 mod sync;
 mod setup;
+mod workon;

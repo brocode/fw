@@ -17,6 +17,7 @@ pub struct Project {
   pub name: String,
   pub git: String,
   pub after_clone: Option<String>,
+  pub after_workon: Option<String>,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
