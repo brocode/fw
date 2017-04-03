@@ -13,7 +13,7 @@
     - workspace persistence (I can ~rm -rf~ my entire workspace and have it back in a few minutes)
     - ZERO overhead project switching with the ~workon~ function (need to activate ~nvm~? Run ~sbt~? Set LCD brightness to 100%? ~fw~ will do all that for you)
     - (WIP) zsh completions on the project names for ~workon~
-    - (WIP) generate projectile configuration for all your project (no need to ~projectile-add-known-project~ every time you clone some shit, it will just work)
+    - generate projectile configuration for all your project (no need to ~projectile-add-known-project~ every time you clone some shit, it will just work)
 
 ** Installation
    #+BEGIN_SRC bash

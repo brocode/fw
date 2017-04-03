@@ -21,10 +21,9 @@ use std::time::SystemTime;
 
 fn logger_from_verbosity(verbosity: &u64) -> Logger {
   let log_level: Level = match *verbosity {
-    0 => Level::Warning,
-    1 => Level::Info,
-    2 => Level::Debug,
-    3 | _ => Level::Trace,
+    0 => Level::Info,
+    1 => Level::Debug,
+    _ => Level::Trace,
   };
 
   let drain = slog_term::StreamerBuilder::new()
@@ -54,6 +53,7 @@ fn main() {
                          .value_name("WORKSPACE_DIR")
                          .index(1)
                          .required(true)))
+    .subcommand(SubCommand::with_name("projectile").about("Write projectile bookmarks"))
     .subcommand(SubCommand::with_name("gen-workon")
                   .about("Generate sourceable shell code to work on project")
                   .arg(Arg::with_name("PROJECT_NAME")
@@ -87,6 +87,7 @@ fn main() {
                       .value_of("PROJECT_NAME")
                       .expect("argument required by clap.rs"))
       }
+      "projectile" => projectile::projectile(config, &subcommand_logger),
       _ => Result::Err(AppError::InternalError("Command not implemented")),
     }
     .and_then(|_| now.elapsed().map_err(|e| AppError::ClockError(e)))
@@ -107,3 +108,4 @@ mod config;
 mod sync;
 mod setup;
 mod workon;
+mod projectile;
