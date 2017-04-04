@@ -5,10 +5,13 @@ authors = ["mriehl <max@flatmap.ninja>"]
 
 [dependencies]
 clap = "2.22.0"
-slog = "1.5.2"
 slog-term = "1.5.0"
 serde_json = "0.9"
 serde = "0.9"
 serde_derive = "0.9"
 git2 = "0.6"
 rayon = "0.6.0"
+
+[dependencies.slog]
+version = "1.5.2"
+features = ["release_max_level_trace", "max_level_trace"]

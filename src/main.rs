@@ -19,12 +19,12 @@ use clap::{Arg, App, SubCommand, AppSettings};
 use errors::AppError;
 use std::time::SystemTime;
 
-fn logger_from_verbosity(verbosity: &u64, quiet: &bool) -> Logger {
+fn logger_from_verbosity(verbosity: u64, quiet: &bool) -> Logger {
   let log_level: Level = match verbosity {
     _ if *quiet => Level::Warning,
-    &0 => Level::Info,
-    &1 => Level::Debug,
-    _ => Level::Trace,
+    0 => Level::Info,
+    1 => Level::Debug,
+    2 | _ => Level::Trace,
   };
 
   let drain = slog_term::StreamerBuilder::new()
@@ -33,7 +33,7 @@ fn logger_from_verbosity(verbosity: &u64, quiet: &bool) -> Logger {
     .build();
   let filter = LevelFilter::new(drain, log_level);
   let logger = Logger::root(filter.fuse(), o!());
-  debug!(logger, "Logger ready" ; "level" => format!("{:?}", log_level));
+  info!(logger, "Logger ready" ; "level" => format!("{:?}", log_level));
   logger
 }
 
@@ -64,7 +64,7 @@ fn main() {
                          .required(true)))
     .get_matches();
 
-  let logger = logger_from_verbosity(&matches.occurrences_of("v"), &matches.is_present("q"));
+  let logger = logger_from_verbosity(matches.occurrences_of("v"), &matches.is_present("q"));
   let config = config::get_config();
 
   let subcommand_name = matches
