@@ -19,10 +19,11 @@ use clap::{Arg, App, SubCommand, AppSettings};
 use errors::AppError;
 use std::time::SystemTime;
 
-fn logger_from_verbosity(verbosity: &u64) -> Logger {
-  let log_level: Level = match *verbosity {
-    0 => Level::Info,
-    1 => Level::Debug,
+fn logger_from_verbosity(verbosity: &u64, quiet: &bool) -> Logger {
+  let log_level: Level = match verbosity {
+    _ if *quiet => Level::Warning,
+    &0 => Level::Info,
+    &1 => Level::Debug,
     _ => Level::Trace,
   };
 
@@ -46,6 +47,7 @@ fn main() {
            .short("v")
            .multiple(true)
            .help("Sets the level of verbosity"))
+    .arg(Arg::with_name("q").short("q").help("Make fw quiet"))
     .subcommand(SubCommand::with_name("sync").about("Sync workspace"))
     .subcommand(SubCommand::with_name("setup")
                   .about("Setup config from existing workspace")
@@ -62,7 +64,7 @@ fn main() {
                          .required(true)))
     .get_matches();
 
-  let logger = logger_from_verbosity(&matches.occurrences_of("v"));
+  let logger = logger_from_verbosity(&matches.occurrences_of("v"), &matches.is_present("q"));
   let config = config::get_config();
 
   let subcommand_name = matches

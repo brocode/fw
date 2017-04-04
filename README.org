@@ -23,7 +23,7 @@
    You will also want to add the following hack to your ~.zshrc.local~ or the ~workon~ automation will not work:
    #+BEGIN_SRC bash
    workon () {
-     SCRIPT="$(~/.cargo/bin/fw gen-workon $@)"
+     SCRIPT="$(~/.cargo/bin/fw -q gen-workon $@)"
      if [ $? -eq 0 ]; then
        eval "$SCRIPT"
      else
