@@ -4,6 +4,12 @@ use config::Project;
 use std::path::PathBuf;
 
 
+pub fn ls(maybe_config: Result<config::Config, AppError>) -> Result<(), AppError> {
+  let config = try!(maybe_config);
+  config.projects.into_iter().map(|(_, p)| println!("{}", p.name)).collect::<Vec<()>>();
+  Ok(())
+}
+
 pub fn gen(name: &str) -> Result<(), AppError> {
   let config = try!(config::get_config());
   let project: &Project =

@@ -56,6 +56,7 @@ fn main() {
                          .index(1)
                          .required(true)))
     .subcommand(SubCommand::with_name("projectile").about("Write projectile bookmarks"))
+    .subcommand(SubCommand::with_name("ls").about("List projects"))
     .subcommand(SubCommand::with_name("gen-workon")
                   .about("Generate sourceable shell code to work on project")
                   .arg(Arg::with_name("PROJECT_NAME")
@@ -90,6 +91,7 @@ fn main() {
                       .expect("argument required by clap.rs"))
       }
       "projectile" => projectile::projectile(config, &subcommand_logger),
+      "ls" => workon::ls(config),
       _ => Result::Err(AppError::InternalError("Command not implemented")),
     }
     .and_then(|_| now.elapsed().map_err(|e| AppError::ClockError(e)))
