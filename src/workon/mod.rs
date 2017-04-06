@@ -10,8 +10,8 @@ pub fn ls(maybe_config: Result<config::Config, AppError>) -> Result<(), AppError
   Ok(())
 }
 
-pub fn gen(name: &str) -> Result<(), AppError> {
-  let config = try!(config::get_config());
+pub fn gen(name: &str, maybe_config: Result<config::Config, AppError>) -> Result<(), AppError> {
+  let config = try!(maybe_config);
   let project: &Project =
     try!(config
            .projects

@@ -88,7 +88,7 @@ fn main() {
       "gen-workon" => {
         workon::gen(subcommand_matches
                       .value_of("PROJECT_NAME")
-                      .expect("argument required by clap.rs"))
+                      .expect("argument required by clap.rs"), config)
       }
       "projectile" => projectile::projectile(config, &subcommand_logger),
       "ls" => workon::ls(config),
