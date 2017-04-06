@@ -33,7 +33,7 @@ fn logger_from_verbosity(verbosity: u64, quiet: &bool) -> Logger {
     .build();
   let filter = LevelFilter::new(drain, log_level);
   let logger = Logger::root(filter.fuse(), o!());
-  info!(logger, "Logger ready" ; "level" => format!("{:?}", log_level));
+  debug!(logger, "Logger ready" ; "level" => format!("{:?}", log_level));
   logger
 }
 
