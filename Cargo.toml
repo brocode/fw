@@ -1,7 +1,11 @@
 [package]
 name = "fw"
-version = "0.1.0"
+version = "0.1.1"
 authors = ["mriehl <max@flatmap.ninja>"]
+description = "faster workspace management"
+license = "WTFPL"
+categories = ["command-line-utilities"]
+travis-ci = { repository = "https://github.com/mriehl/fw", branch = "master" }
 
 [dependencies]
 clap = "2.22.0"
