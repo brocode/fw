@@ -56,17 +56,14 @@ pub fn foreach(maybe_config: Result<Config, AppError>, cmd: &str, logger: &Logge
                              .par_iter()
                              .map(|(_, p)| {
                                     let path = Path::new(workspace.clone().as_str()).join(p.name.as_str());
-                                    let project_logger =
-                                      logger.new(o!("project" => p.name.clone()));
+                                    let project_logger = logger.new(o!("project" => p.name.clone()));
                                     info!(project_logger, "Entering");
                                     spawn_maybe(cmd, &path, &project_logger)
                                   })
                              .collect::<Vec<Result<(), AppError>>>();
 
   script_results.into_iter()
-                .fold(Result::Ok(()), |accu, maybe_error| {
-    accu.and(maybe_error)
-  })
+                .fold(Result::Ok(()), |accu, maybe_error| accu.and(maybe_error))
 }
 
 
@@ -76,8 +73,7 @@ pub fn synchronize(maybe_config: Result<Config, AppError>, logger: &Logger) -> R
     let workspace = config.settings.workspace;
     let results: Vec<Result<(), AppError>> = config.projects
                                                    .par_iter()
-                                                   .map(|(_,
-                                                          project)| {
+                                                   .map(|(_, project)| {
       let mut repo_builder = builder();
       let path = Path::new(workspace.clone().as_str()).join(project.name.as_str());
       let exists = path.exists();

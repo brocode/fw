@@ -42,8 +42,7 @@ pub fn config_path() -> Result<PathBuf, AppError> {
 fn determine_config() -> Result<File, AppError> {
   let config_file_path = config_path()?;
   let path = config_file_path.to_str()
-                             .ok_or(AppError::UserError("$HOME is not valid utf8"
-                                                          .to_owned()));
+                             .ok_or(AppError::UserError("$HOME is not valid utf8".to_owned()));
   path.and_then(|path| File::open(path).map_err(|err| AppError::IO(err)))
 }
 

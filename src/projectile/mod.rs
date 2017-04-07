@@ -27,11 +27,10 @@ fn persist<W>(logger: &Logger, writer: W, workspace: String, names: Vec<String>)
   where W: io::Write
 {
   let root: &Path = Path::new(&workspace);
-  let paths: Vec<String> =
-    names.into_iter()
-         .map(|n| root.join(n))
-         .flat_map(|path_buf| path_buf.to_str().map(|p| p.to_owned()))
-         .collect();
+  let paths: Vec<String> = names.into_iter()
+                                .map(|n| root.join(n))
+                                .flat_map(|path_buf| path_buf.to_str().map(|p| p.to_owned()))
+                                .collect();
   let mut buffer = io::BufWriter::new(writer);
   buffer.write_all(b"(")?;
   for path in paths {

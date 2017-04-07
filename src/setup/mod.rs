@@ -31,47 +31,41 @@ fn determine_projects(path: PathBuf, logger: &Logger) -> Result<HashMap<String, 
     .and_then(|project_entries: Vec<fs::DirEntry>| {
       let projects: Vec<Result<Project, AppError>> =
         project_entries.into_iter()
-                       .map(|entry: fs::DirEntry| {
-          match entry.file_name().into_string() {
-          Ok(name) => {
-            let project_logger = logger.new(o!("project" => name.clone()));
-            let mut path_to_repo = workspace_path.clone();
-            path_to_repo.push(name.clone());
-            let repo = Repository::open(path_to_repo)?;
-            let all = repo.remotes()?;
-            debug!(project_logger, "remotes"; "found" => format!("{:?}", all.len()));
-            let remote = repo.find_remote("origin")?;
-            let url = remote.url()
-                            .ok_or(AppError::UserError(format!("invalid remote origin at {:?}",
-                                                               repo.path())))?;
-            info!(project_logger, "git config validated");
-            Ok(Project {
-                 name: name,
-                 git: url.to_owned(),
-                 after_clone: None,
-                 after_workon: None,
-               })
-          }
-          Err(invalid_unicode) => Err(AppError::Utf8Error(invalid_unicode)),
-          }
-        })
+                       .map(|entry: fs::DirEntry| match entry.file_name().into_string() {
+                            Ok(name) => {
+          let project_logger = logger.new(o!("project" => name.clone()));
+          let mut path_to_repo = workspace_path.clone();
+          path_to_repo.push(name.clone());
+          let repo = Repository::open(path_to_repo)?;
+          let all = repo.remotes()?;
+          debug!(project_logger, "remotes"; "found" => format!("{:?}", all.len()));
+          let remote = repo.find_remote("origin")?;
+          let url = remote.url()
+                          .ok_or(AppError::UserError(format!("invalid remote origin at {:?}", repo.path())))?;
+          info!(project_logger, "git config validated");
+          Ok(Project {
+               name: name,
+               git: url.to_owned(),
+               after_clone: None,
+               after_workon: None,
+             })
+        }
+                            Err(invalid_unicode) => Err(AppError::Utf8Error(invalid_unicode)),
+                            })
                        .collect();
 
       let acc: HashMap<String, Project> = HashMap::new();
       projects.into_iter()
               .fold(Ok(acc),
-                    |maybe_accu: Result<HashMap<String, Project>, AppError>,
-                     project: Result<Project, AppError>| {
-        match project {
-        Ok(p) => {
-          maybe_accu.and_then(|mut accu| {
-                                accu.insert(p.clone().name, p);
-                                Ok(accu)
-                              })
-        }
-        Err(e) => Err(e),
-        }
-      })
+                    |maybe_accu: Result<HashMap<String, Project>, AppError>, project: Result<Project, AppError>| match project {
+                    Ok(p) => {
+                      maybe_accu.and_then(|mut accu| {
+                                            accu.insert(p.clone().name, p);
+                                            Ok(accu)
+                                          })
+                    }
+                    Err(e) => Err(e),
+                    })
     })
 }
 

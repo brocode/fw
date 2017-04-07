@@ -15,15 +15,13 @@ pub fn ls(maybe_config: Result<config::Config, AppError>) -> Result<(), AppError
 
 pub fn gen(name: &str, maybe_config: Result<config::Config, AppError>) -> Result<(), AppError> {
   let config = maybe_config?;
-  let project: &Project =
-    config.projects
-          .get(name)
-          .ok_or(AppError::UserError(format!("project key {} not found in ~/.fw.json", name)))?;
+  let project: &Project = config.projects
+                                .get(name)
+                                .ok_or(AppError::UserError(format!("project key {} not found in ~/.fw.json", name)))?;
   let mut canonical_project_path = PathBuf::from(config.settings.workspace);
   canonical_project_path.push(project.name.clone());
-  let path =
-    canonical_project_path.to_str()
-                          .ok_or(AppError::InternalError("project path is not valid unicode"))?;
+  let path = canonical_project_path.to_str()
+                                   .ok_or(AppError::InternalError("project path is not valid unicode"))?;
   if !canonical_project_path.exists() {
     Err(AppError::UserError(format!("project key {} found but path {} does not exist",
                                     name,

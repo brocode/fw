@@ -81,31 +81,30 @@ fn main() {
                                   .expect("subcommand matches enforced by clap.rs");
   let subcommand_logger = logger.new(o!("command" => subcommand_name.clone()));
   let now = SystemTime::now();
-  let result: Result<String, AppError> =
-    match subcommand_name.as_ref() {
-    "sync" => sync::synchronize(config, &subcommand_logger),
-    "setup" => {
-      setup::setup(subcommand_matches.value_of("WORKSPACE_DIR")
-                                     .expect("argument required by clap.rs"),
-                   &subcommand_logger)
-    }
-    "gen-workon" => {
-      workon::gen(subcommand_matches.value_of("PROJECT_NAME")
-                                    .expect("argument required by clap.rs"),
-                  config)
-    }
-    "projectile" => projectile::projectile(config, &subcommand_logger),
-    "foreach" => {
-      sync::foreach(config,
-                    subcommand_matches.value_of("CMD")
-                                      .expect("argument required by clap.rs"),
-                    &subcommand_logger)
-    }
-    "ls" => workon::ls(config),
-    _ => Result::Err(AppError::InternalError("Command not implemented")),
-    }
-    .and_then(|_| now.elapsed().map_err(|e| AppError::ClockError(e)))
-    .map(|duration| format!("{}sec", duration.as_secs()));
+  let result: Result<String, AppError> = match subcommand_name.as_ref() {
+                                         "sync" => sync::synchronize(config, &subcommand_logger),
+                                         "setup" => {
+                                           setup::setup(subcommand_matches.value_of("WORKSPACE_DIR")
+                                                                          .expect("argument required by clap.rs"),
+                                                        &subcommand_logger)
+                                         }
+                                         "gen-workon" => {
+                                           workon::gen(subcommand_matches.value_of("PROJECT_NAME")
+                                                                         .expect("argument required by clap.rs"),
+                                                       config)
+                                         }
+                                         "projectile" => projectile::projectile(config, &subcommand_logger),
+                                         "foreach" => {
+                                           sync::foreach(config,
+                                                         subcommand_matches.value_of("CMD")
+                                                                           .expect("argument required by clap.rs"),
+                                                         &subcommand_logger)
+                                         }
+                                         "ls" => workon::ls(config),
+                                         _ => Result::Err(AppError::InternalError("Command not implemented")),
+                                         }
+                                         .and_then(|_| now.elapsed().map_err(|e| AppError::ClockError(e)))
+                                         .map(|duration| format!("{}sec", duration.as_secs()));
 
   match result {
   Ok(time) => info!(subcommand_logger, "Done"; "time" => time),
