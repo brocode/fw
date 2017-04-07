@@ -6,6 +6,6 @@ if ! command -v fw > /dev/null 2>&1; then
 
 else
     local ret=1
-    _arguments -C '1: :(projectile sync foreach)' && ret=0
+    _arguments -C '1: :(projectile sync foreach add)' && ret=0
 
 fi

@@ -1,5 +1,6 @@
 use errors::AppError;
 use serde_json;
+use slog::Logger;
 use std::collections::HashMap;
 use std::env;
 use std::fs::File;
@@ -50,4 +51,34 @@ pub fn get_config() -> Result<Config, AppError> {
   let config_file = determine_config();
   let reader = config_file.map(|f| BufReader::new(f));
   read_config(reader)
+}
+
+pub fn add_entry(maybe_config: Result<Config, AppError>, name: &str, url: &str, logger: &Logger) -> Result<(), AppError> {
+  let mut config: Config = maybe_config?;
+  info!(logger, "Prepare new project entry"; "name" => name, "url" => url);
+  if name.starts_with("http") || name.starts_with("git@") {
+    Err(AppError::UserError(format!("{} looks like a repo URL and not like a project name, please fix",
+                                    name)))
+  } else if config.projects.contains_key(name) {
+    Err(AppError::UserError(format!("Project key {} already exists, not gonna overwrite it for you",
+                                    name)))
+  } else {
+    config.projects
+          .insert(name.to_owned(),
+                  Project {
+                    git: url.to_owned(),
+                    name: name.to_owned(),
+                    after_clone: None,
+                    after_workon: None,
+                  });
+    info!(logger, "Updated config"; "config" => format!("{:?}", config));
+    write_config(config, logger)
+  }
+}
+
+pub fn write_config(config: Config, logger: &Logger) -> Result<(), AppError> {
+  let config_path = config_path()?;
+  info!(logger, "Writing config"; "path" => format!("{:?}", config_path));
+  let mut buffer = File::create(config_path)?;
+  serde_json::ser::to_writer_pretty(&mut buffer, &config).map_err(|e| AppError::BadJson(e))
 }

@@ -55,6 +55,16 @@ fn main() {
                          .value_name("WORKSPACE_DIR")
                          .index(1)
                          .required(true)))
+    .subcommand(SubCommand::with_name("add")
+                  .about("Add project to config")
+                  .arg(Arg::with_name("NAME")
+                         .value_name("NAME")
+                         .index(1)
+                         .required(true))
+                  .arg(Arg::with_name("URL")
+                         .value_name("URL")
+                         .index(2)
+                         .required(true)))
     .subcommand(SubCommand::with_name("foreach")
                   .about("Run script on each project")
                   .arg(Arg::with_name("CMD")
@@ -83,6 +93,14 @@ fn main() {
   let now = SystemTime::now();
   let result: Result<String, AppError> = match subcommand_name.as_ref() {
                                          "sync" => sync::synchronize(config, &subcommand_logger),
+                                         "add" => {
+                                           config::add_entry(config,
+                                                             subcommand_matches.value_of("NAME")
+                                                                               .expect("argument required by clap.rs"),
+                                                             subcommand_matches.value_of("URL")
+                                                                               .expect("argument required by clap.rs"),
+                                                             &subcommand_logger)
+                                         }
                                          "setup" => {
                                            setup::setup(subcommand_matches.value_of("WORKSPACE_DIR")
                                                                           .expect("argument required by clap.rs"),

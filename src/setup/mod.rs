@@ -2,7 +2,6 @@ use config;
 use config::{Config, Project, Settings};
 use errors::AppError;
 use git2::Repository;
-use serde_json::ser;
 use slog::Logger;
 use std::collections::HashMap;
 use std::fs;
@@ -75,8 +74,5 @@ fn write_config(projects: HashMap<String, Project>, logger: &Logger, workspace_d
     settings: Settings { workspace: workspace_dir.to_owned() },
   };
   debug!(logger, "Finished"; "projects" => format!("{:?}", config.projects.len()));
-  let config_path = config::config_path()?;
-  info!(logger, "Writing config"; "path" => format!("{:?}", config_path));
-  let mut buffer = fs::File::create(config_path)?;
-  ser::to_writer_pretty(&mut buffer, &config).map_err(|e| AppError::BadJson(e))
+  config::write_config(config, logger)
 }
