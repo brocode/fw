@@ -12,12 +12,12 @@
 *** If you can live with all of the above, you get:
     - workspace persistence (I can ~rm -rf~ my entire workspace and have it back in a few minutes)
     - ZERO overhead project switching with the ~workon~ function (need to activate ~nvm~? Run ~sbt~? Set LCD brightness to 100%? ~fw~ will do all that for you)
-    - (WIP) zsh completions on the project names for ~workon~
+    - zsh completions on the project names for ~workon~
     - generate projectile configuration for all your project (no need to ~projectile-add-known-project~ every time you clone some shit, it will just work)
 
 ** Installation
    #+BEGIN_SRC bash
-   cargo install
+   cargo install fw
    #+END_SRC
 
    You will also want to add the following hack to your ~.zshrc.local~ or the ~workon~ automation will not work:
@@ -33,6 +33,15 @@
    #+END_SRC
 
    I suggest you thoroughly think this through because it will eval the stdout created by ~fw~ in your shell when you run the ~workon~ function.
+
+   Another thing that will make you much more productive is to use the ~zsh~ completions from this repo (if you're not using the ~zsh~ I guess
+   you would get a bigger productivity boost by switching to ~zsh~ first).
+   I suggest dropping them here: ~/usr/share/zsh/functions/Completion/Linux/~.
+   After cloning this repo you could do this:
+
+   #+BEGIN_SRC bash
+   cp completions/zsh/* /usr/share/zsh/functions/Completion/Linux/
+   #+END_SRC
 
 ** Usage
    Initial setup is done with
