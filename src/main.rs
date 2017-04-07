@@ -55,6 +55,12 @@ fn main() {
                          .value_name("WORKSPACE_DIR")
                          .index(1)
                          .required(true)))
+    .subcommand(SubCommand::with_name("foreach")
+                  .about("Run script on each project")
+                  .arg(Arg::with_name("CMD")
+                         .value_name("CMD")
+                         .index(1)
+                         .required(true)))
     .subcommand(SubCommand::with_name("projectile").about("Write projectile bookmarks"))
     .subcommand(SubCommand::with_name("ls").about("List projects"))
     .subcommand(SubCommand::with_name("gen-workon")
@@ -88,9 +94,17 @@ fn main() {
       "gen-workon" => {
         workon::gen(subcommand_matches
                       .value_of("PROJECT_NAME")
-                      .expect("argument required by clap.rs"), config)
+                      .expect("argument required by clap.rs"),
+                    config)
       }
       "projectile" => projectile::projectile(config, &subcommand_logger),
+      "foreach" => {
+        sync::foreach(config,
+                      subcommand_matches
+                        .value_of("CMD")
+                        .expect("argument required by clap.rs"),
+                      &subcommand_logger)
+      }
       "ls" => workon::ls(config),
       _ => Result::Err(AppError::InternalError("Command not implemented")),
     }
