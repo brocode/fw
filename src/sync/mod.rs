@@ -51,7 +51,7 @@ pub fn synchronize(maybe_config: Result<Config, AppError>,
             .and_then(|_| match project.clone().after_clone {
                         Some(cmd) => {
               info!(project_logger, "Handling post hooks"; "after_clone" => cmd);
-              let result = try!(Command::new("sh").arg("-c").arg(cmd).output());
+              let result = try!(Command::new("sh").arg("-c").arg(cmd).current_dir(&path).output());
               match result {
                 Output {
                   status,
