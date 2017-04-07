@@ -14,17 +14,17 @@ extern crate rayon;
 
 extern crate core;
 
-use slog::{Level, Logger, LevelFilter, DrainExt};
-use clap::{Arg, App, SubCommand, AppSettings};
+use clap::{App, AppSettings, Arg, SubCommand};
 use errors::AppError;
+use slog::{DrainExt, Level, LevelFilter, Logger};
 use std::time::SystemTime;
 
 fn logger_from_verbosity(verbosity: u64, quiet: &bool) -> Logger {
   let log_level: Level = match verbosity {
-    _ if *quiet => Level::Warning,
-    0 => Level::Info,
-    1 => Level::Debug,
-    2 | _ => Level::Trace,
+  _ if *quiet => Level::Warning,
+  0 => Level::Info,
+  1 => Level::Debug,
+  2 | _ => Level::Trace,
   };
 
   let drain = slog_term::StreamerBuilder::new()
@@ -74,49 +74,45 @@ fn main() {
   let logger = logger_from_verbosity(matches.occurrences_of("v"), &matches.is_present("q"));
   let config = config::get_config();
 
-  let subcommand_name = matches
-    .subcommand_name()
-    .expect("subcommand required by clap.rs")
-    .to_owned();
-  let subcommand_matches = matches
-    .subcommand_matches(&subcommand_name)
-    .expect("subcommand matches enforced by clap.rs");
+  let subcommand_name = matches.subcommand_name()
+                               .expect("subcommand required by clap.rs")
+                               .to_owned();
+  let subcommand_matches = matches.subcommand_matches(&subcommand_name)
+                                  .expect("subcommand matches enforced by clap.rs");
   let subcommand_logger = logger.new(o!("command" => subcommand_name.clone()));
   let now = SystemTime::now();
-  let result: Result<String, AppError> = match subcommand_name.as_ref() {
-      "sync" => sync::synchronize(config, &subcommand_logger),
-      "setup" => {
-        setup::setup(subcommand_matches
-                       .value_of("WORKSPACE_DIR")
-                       .expect("argument required by clap.rs"),
-                     &subcommand_logger)
-      }
-      "gen-workon" => {
-        workon::gen(subcommand_matches
-                      .value_of("PROJECT_NAME")
-                      .expect("argument required by clap.rs"),
-                    config)
-      }
-      "projectile" => projectile::projectile(config, &subcommand_logger),
-      "foreach" => {
-        sync::foreach(config,
-                      subcommand_matches
-                        .value_of("CMD")
-                        .expect("argument required by clap.rs"),
-                      &subcommand_logger)
-      }
-      "ls" => workon::ls(config),
-      _ => Result::Err(AppError::InternalError("Command not implemented")),
+  let result: Result<String, AppError> =
+    match subcommand_name.as_ref() {
+    "sync" => sync::synchronize(config, &subcommand_logger),
+    "setup" => {
+      setup::setup(subcommand_matches.value_of("WORKSPACE_DIR")
+                                     .expect("argument required by clap.rs"),
+                   &subcommand_logger)
+    }
+    "gen-workon" => {
+      workon::gen(subcommand_matches.value_of("PROJECT_NAME")
+                                    .expect("argument required by clap.rs"),
+                  config)
+    }
+    "projectile" => projectile::projectile(config, &subcommand_logger),
+    "foreach" => {
+      sync::foreach(config,
+                    subcommand_matches.value_of("CMD")
+                                      .expect("argument required by clap.rs"),
+                    &subcommand_logger)
+    }
+    "ls" => workon::ls(config),
+    _ => Result::Err(AppError::InternalError("Command not implemented")),
     }
     .and_then(|_| now.elapsed().map_err(|e| AppError::ClockError(e)))
     .map(|duration| format!("{}sec", duration.as_secs()));
 
   match result {
-    Ok(time) => info!(subcommand_logger, "Done"; "time" => time),
-    Err(error) => {
-      crit!(subcommand_logger, "Error running command"; "error" => format!("{:?}", error));
-      std::process::exit(1)
-    }
+  Ok(time) => info!(subcommand_logger, "Done"; "time" => time),
+  Err(error) => {
+    crit!(subcommand_logger, "Error running command"; "error" => format!("{:?}", error));
+    std::process::exit(1)
+  }
 
   }
 }
