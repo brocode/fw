@@ -1,5 +1,36 @@
 * fw [[https://travis-ci.org/mriehl/fw.svg?branch=master]]
 
+** Why fw?
+   With ~fw~ you have a JSON file describing your workspace.
+   It takes care of cloning projects and can run commands across your entire workspace.
+   It also "sets up" your environment when you start working on a project (compile stuff, run ~make~, activate ~virtualenv~ or ~nvm~, fire up ~sbt~ shell, etc.)
+
+   Here's an example configuration that should be easy to grasp:
+
+   #+BEGIN_SRC json
+{
+  "projects": {
+    "pybuilder": {
+      "name": "pybuilder",
+      "git": "git@github.com:pybuilder/pybuilder.git",
+      "after_clone": "virtualenv venv && source venv/bin/activate && ./build.py install_dependencies",
+      "after_workon": "source venv/bin/activate"
+    },
+    "fw": {
+      "name": "fw",
+      "git": "git@github.com:mriehl/fw.git",
+      "after_clone": "cargo build",
+      "after_workon": "git remote update --prune && cargo test"
+    }
+  },
+  "settings": {
+    "workspace": "/home/mriehl/workspace"
+  }
+}
+
+
+   #+END_SRC
+
 ** What this is, and isn't
    ~fw~ is a tool I wrote to do my bidding. It might not work for you if your workflow differs a lot from mine or might require adjustments.
    Here are the assumptions:
