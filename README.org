@@ -84,6 +84,7 @@
    #+END_SRC
 
 ** Usage
+*** Migrating to ~fw~ / Configuration
    Initial setup is done with
 
   #+BEGIN_SRC bash
@@ -92,7 +93,11 @@
 
   This will look through ~DIR~ (flat structure!) and inspect all git repositories, then write ~.fw.json~ in your home.
   You can edit that file manually to add stuff.
+  The ~fw.json~ file is portable as long as you change the ~workspace~ attribute, so you can share the file with your colleagues.
+  You can also add shell code to the ~after_clone~ and ~after_workon~ fields on a per-project basis.
+  ~after_clone~ will be executed after cloning the project (interpreter is ~sh~) and ~after_workon~ will be executed each time you ~workon~ into the project.
 
+*** Turn ~fw~ configuration into reality
   From now on you can
 
   #+BEGIN_SRC bash
@@ -100,23 +105,23 @@
   #+END_SRC
 
   which will clone all missing projects that are described by ~.fw.json~ but not present in your workspace.
-  The ~fw.json~ file is portable as long as you change the ~workspace~ attribute, so you can share the file with your colleagues.
-  You can also add shell code to the ~after_clone~ and ~after_workon~ fields on a per-project basis.
-  ~after_clone~ will be executed after cloning the project (interpreter is ~sh~) and ~after_workon~ will be executed each time you ~workon~ into the project.
 
+*** Running command across all projects
   There is also
   #+BEGIN_SRC bash
   fw foreach 'git remote update --prune'
   #+END_SRC
   which will run the command in all your projects using ~sh~.
 
-  Adding a new project to your ~.fw.json~ can be done using the tool with
+*** Updating ~fw~ configuration (adding new project)
+  Instead of cloning new projects you want to work on, I suggest
+  adding a new project to your ~.fw.json~. This can be done using the tool with
 
   #+BEGIN_SRC bash
   fw add example git@github.com:mriehl/fw.git
   #+END_SRC
 
-  (you will still need to run ~fw~ sync afterwards!)
+  (you should run ~fw~ sync afterwards!)
 
   If you're an emacs user you should always run
   #+BEGIN_SRC bash
