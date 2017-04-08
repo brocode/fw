@@ -13,7 +13,7 @@ pub fn ls(maybe_config: Result<config::Config, AppError>) -> Result<(), AppError
   Ok(())
 }
 
-pub fn gen(name: &str, maybe_config: Result<config::Config, AppError>) -> Result<(), AppError> {
+pub fn gen(name: &str, maybe_config: Result<config::Config, AppError>, quick: bool) -> Result<(), AppError> {
   let config = maybe_config?;
   let project: &Project = config.projects
                                 .get(name)
@@ -27,10 +27,14 @@ pub fn gen(name: &str, maybe_config: Result<config::Config, AppError>) -> Result
                                     name,
                                     path)))
   } else {
-    let after_workon = project.after_workon
-                              .clone()
-                              .map(|cmd| format!(" && {}", cmd))
-                              .unwrap_or("".to_owned());
+    let after_workon = if !quick {
+      project.after_workon
+             .clone()
+             .map(|cmd| format!(" && {}", cmd))
+             .unwrap_or("".to_owned())
+    } else {
+      String::new()
+    };
     println!("cd {}{}", path, after_workon);
     Ok(())
   }

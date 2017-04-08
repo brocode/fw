@@ -61,6 +61,15 @@
        printf "$SCRIPT\n"
      fi
    }
+
+   nworkon () {
+     SCRIPT="$(~/.cargo/bin/fw -q gen-workon -x $@)"
+     if [ $? -eq 0 ]; then
+       eval "$SCRIPT"
+     else
+       printf "$SCRIPT\n"
+     fi
+   }
    #+END_SRC
 
    I suggest you thoroughly think this through because it will eval the stdout created by ~fw~ in your shell when you run the ~workon~ function.
@@ -123,4 +132,11 @@
   workon MYPROJECT
   #+END_SRC
 
-It will drop you into the project folder and execute all the hooks.
+  It will drop you into the project folder and execute all the hooks.
+
+  If you're in a pinch and just want to check something real quick, then you can user
+
+  #+BEGIN_SRC
+  nworkon MYPROJECT
+  #+END_SRC
+  as that will no execute any post-workon hooks and simply drop you into the folder.

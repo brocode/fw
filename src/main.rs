@@ -78,7 +78,11 @@ fn main() {
                   .arg(Arg::with_name("PROJECT_NAME")
                          .value_name("PROJECT_NAME")
                          .index(1)
-                         .required(true)))
+                         .required(true))
+                  .arg(Arg::with_name("quick")
+                         .required(false)
+                         .short("x")
+                         .help("Don't generate post_workon shell code, only cd into the folder")))
     .get_matches();
 
   let logger = logger_from_verbosity(matches.occurrences_of("v"), &matches.is_present("q"));
@@ -109,7 +113,8 @@ fn main() {
                                          "gen-workon" => {
                                            workon::gen(subcommand_matches.value_of("PROJECT_NAME")
                                                                          .expect("argument required by clap.rs"),
-                                                       config)
+                                                       config,
+                                                       subcommand_matches.is_present("quick"))
                                          }
                                          "projectile" => projectile::projectile(config, &subcommand_logger),
                                          "foreach" => {
