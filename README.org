@@ -139,7 +139,7 @@
 
   It will drop you into the project folder and execute all the hooks.
 
-  If you're in a pinch and just want to check something real quick, then you can user
+  If you're in a pinch and just want to check something real quick, then you can use
 
   #+BEGIN_SRC
   nworkon MYPROJECT
