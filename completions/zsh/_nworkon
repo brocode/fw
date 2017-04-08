@@ -1,0 +1,19 @@
+#compdef nworkon
+
+__workon_projects(){
+    local names;
+    fw -q ls | while read line; do
+        names+=( $line )
+    done
+    _describe -t names 'project names' names
+}
+
+# no fw in $PATH
+if ! command -v fw > /dev/null 2>&1; then
+    _message "fw not installed"
+
+else
+    local ret=1
+    __workon_projects
+
+fi
