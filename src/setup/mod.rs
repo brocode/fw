@@ -24,48 +24,46 @@ pub fn setup(workspace_dir: &str, logger: &Logger) -> Result<(), AppError> {
 fn determine_projects(path: PathBuf, logger: &Logger) -> Result<HashMap<String, Project>, AppError> {
   let workspace_path = path.clone();
 
-  fs::read_dir(path)
+  let project_entries: Vec<fs::DirEntry> = fs::read_dir(path)
     .and_then(|base| base.collect())
-    .map_err(|e| AppError::IO(e))
-    .and_then(|project_entries: Vec<fs::DirEntry>| {
-      let projects: Vec<Result<Project, AppError>> =
-        project_entries.into_iter()
-                       .map(|entry: fs::DirEntry| match entry.file_name().into_string() {
-                            Ok(name) => {
-          let project_logger = logger.new(o!("project" => name.clone()));
-          let mut path_to_repo = workspace_path.clone();
-          path_to_repo.push(name.clone());
-          let repo = Repository::open(path_to_repo)?;
-          let all = repo.remotes()?;
-          debug!(project_logger, "remotes"; "found" => format!("{:?}", all.len()));
-          let remote = repo.find_remote("origin")?;
-          let url = remote.url()
-                          .ok_or(AppError::UserError(format!("invalid remote origin at {:?}", repo.path())))?;
-          info!(project_logger, "git config validated");
-          Ok(Project {
-               name: name,
-               git: url.to_owned(),
-               after_clone: None,
-               after_workon: None,
-             })
-        }
-                            Err(invalid_unicode) => Err(AppError::Utf8Error(invalid_unicode)),
-                            })
-                       .collect();
+    .map_err(|e| AppError::IO(e))?;
+  let projects: Vec<Result<Project, AppError>> =
+    project_entries.into_iter()
+                   .map(|entry: fs::DirEntry| match entry.file_name().into_string() {
+                        Ok(name) => {
+      let project_logger = logger.new(o!("project" => name.clone()));
+      let mut path_to_repo = workspace_path.clone();
+      path_to_repo.push(name.clone());
+      let repo = Repository::open(path_to_repo)?;
+      let all = repo.remotes()?;
+      debug!(project_logger, "remotes"; "found" => format!("{:?}", all.len()));
+      let remote = repo.find_remote("origin")?;
+      let url = remote.url()
+                      .ok_or(AppError::UserError(format!("invalid remote origin at {:?}", repo.path())))?;
+      info!(project_logger, "git config validated");
+      Ok(Project {
+           name: name,
+           git: url.to_owned(),
+           after_clone: None,
+           after_workon: None,
+         })
+    }
+                        Err(invalid_unicode) => Err(AppError::Utf8Error(invalid_unicode)),
+                        })
+                   .collect();
 
-      let acc: HashMap<String, Project> = HashMap::new();
-      projects.into_iter()
-              .fold(Ok(acc),
-                    |maybe_accu: Result<HashMap<String, Project>, AppError>, project: Result<Project, AppError>| match project {
-                    Ok(p) => {
-                      maybe_accu.and_then(|mut accu| {
-                                            accu.insert(p.clone().name, p);
-                                            Ok(accu)
-                                          })
-                    }
-                    Err(e) => Err(e),
-                    })
-    })
+  let acc: HashMap<String, Project> = HashMap::new();
+  projects.into_iter()
+          .fold(Ok(acc),
+                |maybe_accu: Result<HashMap<String, Project>, AppError>, project: Result<Project, AppError>| match project {
+                Ok(p) => {
+                  maybe_accu.and_then(|mut accu| {
+                                        accu.insert(p.clone().name, p);
+                                        Ok(accu)
+                                      })
+                }
+                Err(e) => Err(e),
+                })
 }
 
 fn write_config(projects: HashMap<String, Project>, logger: &Logger, workspace_dir: &str) -> Result<(), AppError> {
