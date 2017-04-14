@@ -94,7 +94,7 @@ pub fn synchronize(maybe_config: Result<Config, AppError>, logger: &Logger) -> R
                     .and_then(|_| match project.clone().after_clone {
                               Some(cmd) => {
           info!(project_logger, "Handling post hooks"; "after_clone" => cmd);
-          spawn_maybe(&cmd, &path, &logger)
+          spawn_maybe(&cmd, &path, logger)
         }
                               None => Ok(()),
                               })

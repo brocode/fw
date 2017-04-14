@@ -126,7 +126,7 @@ fn main() {
                                          "ls" => workon::ls(config),
                                          _ => Result::Err(AppError::InternalError("Command not implemented")),
                                          }
-                                         .and_then(|_| now.elapsed().map_err(|e| AppError::ClockError(e)))
+                                         .and_then(|_| now.elapsed().map_err(AppError::ClockError))
                                          .map(|duration| format!("{}sec", duration.as_secs()));
 
   match result {

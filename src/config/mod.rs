@@ -30,12 +30,12 @@ pub struct Config {
 fn read_config<R>(reader: Result<R, AppError>) -> Result<Config, AppError>
   where R: Read
 {
-  reader.and_then(|r| serde_json::de::from_reader(r).map_err(|error| AppError::BadJson(error)))
+  reader.and_then(|r| serde_json::de::from_reader(r).map_err(AppError::BadJson))
 }
 
 pub fn config_path() -> Result<PathBuf, AppError> {
   let mut home: PathBuf = env::home_dir()
-    .ok_or(AppError::UserError("$HOME not set".to_owned()))?;
+    .ok_or_else(|| AppError::UserError("$HOME not set".to_owned()))?;
   home.push(".fw.json");
   Ok(home)
 }
@@ -43,13 +43,13 @@ pub fn config_path() -> Result<PathBuf, AppError> {
 fn determine_config() -> Result<File, AppError> {
   let config_file_path = config_path()?;
   let path = config_file_path.to_str()
-                             .ok_or(AppError::UserError("$HOME is not valid utf8".to_owned()));
-  path.and_then(|path| File::open(path).map_err(|err| AppError::IO(err)))
+                             .ok_or_else(|| AppError::UserError("$HOME is not valid utf8".to_owned()));
+  path.and_then(|path| File::open(path).map_err(AppError::IO))
 }
 
 pub fn get_config() -> Result<Config, AppError> {
   let config_file = determine_config();
-  let reader = config_file.map(|f| BufReader::new(f));
+  let reader = config_file.map(BufReader::new);
   read_config(reader)
 }
 
@@ -72,13 +72,13 @@ pub fn add_entry(maybe_config: Result<Config, AppError>, name: &str, url: &str, 
                     after_workon: None,
                   });
     info!(logger, "Updated config"; "config" => format!("{:?}", config));
-    write_config(config, logger)
+    write_config(&config, logger)
   }
 }
 
-pub fn write_config(config: Config, logger: &Logger) -> Result<(), AppError> {
+pub fn write_config(config: &Config, logger: &Logger) -> Result<(), AppError> {
   let config_path = config_path()?;
   info!(logger, "Writing config"; "path" => format!("{:?}", config_path));
   let mut buffer = File::create(config_path)?;
-  serde_json::ser::to_writer_pretty(&mut buffer, &config).map_err(|e| AppError::BadJson(e))
+  serde_json::ser::to_writer_pretty(&mut buffer, &config).map_err(AppError::BadJson)
 }

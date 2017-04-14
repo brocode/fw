@@ -8,7 +8,7 @@ use std::fs;
 use std::path::PathBuf;
 
 pub fn setup(workspace_dir: &str, logger: &Logger) -> Result<(), AppError> {
-  let setup_logger = logger.new(o!("workspace" => format!("{}", workspace_dir)));
+  let setup_logger = logger.new(o!("workspace" => workspace_dir.to_owned()));
   debug!(setup_logger, "Entering setup");
   let path = PathBuf::from(workspace_dir);
   let maybe_path = if path.exists() {
@@ -26,7 +26,7 @@ fn determine_projects(path: PathBuf, logger: &Logger) -> Result<HashMap<String, 
 
   let project_entries: Vec<fs::DirEntry> = fs::read_dir(path)
     .and_then(|base| base.collect())
-    .map_err(|e| AppError::IO(e))?;
+    .map_err(AppError::IO)?;
   let projects: Vec<Result<Project, AppError>> =
     project_entries.into_iter()
                    .map(|entry: fs::DirEntry| match entry.file_name().into_string() {
@@ -39,7 +39,7 @@ fn determine_projects(path: PathBuf, logger: &Logger) -> Result<HashMap<String, 
       debug!(project_logger, "remotes"; "found" => format!("{:?}", all.len()));
       let remote = repo.find_remote("origin")?;
       let url = remote.url()
-                      .ok_or(AppError::UserError(format!("invalid remote origin at {:?}", repo.path())))?;
+                      .ok_or_else(|| AppError::UserError(format!("invalid remote origin at {:?}", repo.path())))?;
       info!(project_logger, "git config validated");
       Ok(Project {
            name: name,
@@ -72,5 +72,5 @@ fn write_config(projects: HashMap<String, Project>, logger: &Logger, workspace_d
     settings: Settings { workspace: workspace_dir.to_owned() },
   };
   debug!(logger, "Finished"; "projects" => format!("{:?}", config.projects.len()));
-  config::write_config(config, logger)
+  config::write_config(&config, logger)
 }

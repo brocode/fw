@@ -25,7 +25,7 @@ impl fmt::Display for AppError {
     AppError::IO(ref err) => write!(f, "IO error: {}", err),
     AppError::UserError(ref str) => write!(f, "User error: {}", str),
     AppError::BadJson(ref err) => write!(f, "JSON error: {}", err),
-    AppError::InternalError(ref str) => write!(f, "Internal error: {}", str),
+    AppError::InternalError(str) => write!(f, "Internal error: {}", str),
     AppError::ClockError(ref err) => write!(f, "System clock error: {}", err),
     AppError::GitError(ref err) => write!(f, "Git error: {}", err),
     AppError::Utf8Error(ref err) => write!(f, "UTF8 conversion error: {:?}", err),
@@ -40,7 +40,7 @@ impl error::Error for AppError {
     AppError::IO(ref err) => err.description(),
     AppError::UserError(ref str) => str.as_ref(),
     AppError::BadJson(ref err) => err.description(),
-    AppError::InternalError(ref str) => str.as_ref(),
+    AppError::InternalError(str) => str.as_ref(),
     AppError::ClockError(ref err) => err.description(),
     AppError::GitError(ref err) => err.description(),
     AppError::Utf8Error(_) => "invalid utf8",
@@ -51,12 +51,12 @@ impl error::Error for AppError {
   fn cause(&self) -> Option<&error::Error> {
     match *self {
     AppError::IO(ref err) => Some(err),
-    AppError::UserError(_) => None,
+    AppError::UserError(_) |
+    AppError::InternalError(_) |
+    AppError::Utf8Error(_) => None,
     AppError::BadJson(ref err) => Some(err),
-    AppError::InternalError(_) => None,
     AppError::ClockError(ref err) => Some(err),
     AppError::GitError(ref err) => Some(err),
-    AppError::Utf8Error(_) => None,
     AppError::Utf8ConversionError(ref err) => Some(err),
     }
   }

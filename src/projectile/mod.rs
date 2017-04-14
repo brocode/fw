@@ -16,14 +16,14 @@ pub fn projectile(maybe_config: Result<Config, AppError>, logger: &Logger) -> Re
                                           .map(|(_, p)| p.name)
                                           .collect();
   let mut projectile_bookmarks = env::home_dir()
-    .ok_or(AppError::UserError("$HOME not set".to_owned()))?;
+    .ok_or_else(|| AppError::UserError("$HOME not set".to_owned()))?;
   projectile_bookmarks.push(".emacs.d");
   projectile_bookmarks.push("projectile-bookmarks.eld");
   let writer = fs::File::create(projectile_bookmarks)?;
-  persist(logger, writer, workspace, projects_names)
+  persist(logger, writer, &workspace, projects_names)
 }
 
-fn persist<W>(logger: &Logger, writer: W, workspace: String, names: Vec<String>) -> Result<(), AppError>
+fn persist<W>(logger: &Logger, writer: W, workspace: &str, names: Vec<String>) -> Result<(), AppError>
   where W: io::Write
 {
   let root: &Path = Path::new(&workspace);
@@ -55,7 +55,7 @@ fn test_persists_projectile_config() {
                             o!());
   let names = vec!["test".to_owned(), "other".to_owned()];
 
-  persist(&logger, &mut buffer, "/home/mriehl".to_owned(), names).unwrap();
+  persist(&logger, &mut buffer, "/home/mriehl", names).unwrap();
 
   assert_eq!(str::from_utf8(buffer.get_ref()).unwrap(),
              "(\"/home/mriehl/test\" \"/home/mriehl/other\" )");
