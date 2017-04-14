@@ -3,6 +3,7 @@
 ** Why fw?
    With ~fw~ you have a JSON file describing your workspace.
    It takes care of cloning projects and can run commands across your entire workspace.
+   You can start working on any project quickly, even if it's not in your flat structured workspace (better than ~CDPATH~!).
    It also "sets up" your environment when you start working on a project (compile stuff, run ~make~, activate ~virtualenv~ or ~nvm~, fire up ~sbt~ shell, etc.)
 
    Here's an example configuration that should be easy to grasp:
@@ -21,21 +22,24 @@
       "git": "git@github.com:mriehl/fw.git",
       "after_clone": "cargo build",
       "after_workon": "git remote update --prune && cargo test"
+    },
+    "docker": {
+      "name": "docker",
+      "git": "git@github.com:docker/docker.git",
+      "override_path": "/home/mriehl/go/src/github.com/docker/docker"
     }
   },
   "settings": {
     "workspace": "/home/mriehl/workspace"
   }
 }
-
-
    #+END_SRC
+   Per default projects are cloned into ~${settings.workspace}/${project.name}~ but you can override that by setting an ~override_path~ attribute as seen above.
 
 ** What this is, and isn't
    ~fw~ is a tool I wrote to do my bidding. It might not work for you if your workflow differs a lot from mine or might require adjustments.
    Here are the assumptions:
 
-   - flat project structure (I have everything in a ~workspace~ directory)
    - only git repositories
    - only ssh clone (easily resolveable by putting more work in the git2 bindings usage)
    - ~ssh-agent~ based authentication
@@ -92,8 +96,8 @@
   #+END_SRC
 
   This will look through ~DIR~ (flat structure!) and inspect all git repositories, then write ~.fw.json~ in your home.
-  You can edit that file manually to add stuff.
-  The ~fw.json~ file is portable as long as you change the ~workspace~ attribute, so you can share the file with your colleagues.
+  You can edit that file manually to add stuff. If you have repositories elsewhere you will need to add them manually and set the ~override_path~ property.
+  The ~fw.json~ file is portable as long as you change the ~workspace~ attribute, so you can share the file with your colleagues (projects with ~override_path~ set won't be portable obviously.
   You can also add shell code to the ~after_clone~ and ~after_workon~ fields on a per-project basis.
   ~after_clone~ will be executed after cloning the project (interpreter is ~sh~) and ~after_workon~ will be executed each time you ~workon~ into the project.
 

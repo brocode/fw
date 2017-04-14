@@ -6,7 +6,7 @@ use std::env;
 use std::fs::File;
 use std::io::BufReader;
 use std::io::Read;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Settings {
@@ -19,6 +19,7 @@ pub struct Project {
   pub git: String,
   pub after_clone: Option<String>,
   pub after_workon: Option<String>,
+  pub override_path: Option<String>,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -70,6 +71,7 @@ pub fn add_entry(maybe_config: Result<Config, AppError>, name: &str, url: &str, 
                     name: name.to_owned(),
                     after_clone: None,
                     after_workon: None,
+                    override_path: None,
                   });
     info!(logger, "Updated config"; "config" => format!("{:?}", config));
     write_config(&config, logger)
@@ -81,4 +83,11 @@ pub fn write_config(config: &Config, logger: &Logger) -> Result<(), AppError> {
   info!(logger, "Writing config"; "path" => format!("{:?}", config_path));
   let mut buffer = File::create(config_path)?;
   serde_json::ser::to_writer_pretty(&mut buffer, &config).map_err(AppError::BadJson)
+}
+
+pub fn actual_path_to_project(workspace: &str, project: &Project) -> PathBuf {
+  project.override_path
+         .clone()
+         .map(PathBuf::from)
+         .unwrap_or_else(|| Path::new(workspace).join(project.name.as_str()))
 }

@@ -46,6 +46,7 @@ fn determine_projects(path: PathBuf, logger: &Logger) -> Result<HashMap<String, 
            git: url.to_owned(),
            after_clone: None,
            after_workon: None,
+           override_path: None,
          })
     }
                         Err(invalid_unicode) => Err(AppError::Utf8Error(invalid_unicode)),

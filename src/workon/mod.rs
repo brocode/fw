@@ -1,7 +1,6 @@
 use config;
 use config::Project;
 use errors::AppError;
-use std::path::PathBuf;
 
 
 pub fn ls(maybe_config: Result<config::Config, AppError>) -> Result<(), AppError> {
@@ -18,8 +17,7 @@ pub fn gen(name: &str, maybe_config: Result<config::Config, AppError>, quick: bo
   let project: &Project = config.projects
                                 .get(name)
                                 .ok_or_else(|| AppError::UserError(format!("project key {} not found in ~/.fw.json", name)))?;
-  let mut canonical_project_path = PathBuf::from(config.settings.workspace);
-  canonical_project_path.push(project.name.clone());
+  let canonical_project_path = config::actual_path_to_project(&config.settings.workspace, project);
   let path = canonical_project_path.to_str()
                                    .ok_or(AppError::InternalError("project path is not valid unicode"))?;
   if !canonical_project_path.exists() {

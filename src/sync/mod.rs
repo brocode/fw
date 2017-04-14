@@ -1,3 +1,4 @@
+use config;
 use config::Config;
 use errors::AppError;
 use git2;
@@ -7,7 +8,7 @@ use git2::build::RepoBuilder;
 use rayon::prelude::*;
 use slog::Logger;
 use std;
-use std::path::{Path, PathBuf};
+use std::path::PathBuf;
 use std::process::{Command, Output};
 
 fn builder<'a>() -> RepoBuilder<'a> {
@@ -55,7 +56,7 @@ pub fn foreach(maybe_config: Result<Config, AppError>, cmd: &str, logger: &Logge
   let script_results = config.projects
                              .par_iter()
                              .map(|(_, p)| {
-                                    let path = Path::new(workspace.clone().as_str()).join(p.name.as_str());
+                                    let path = config::actual_path_to_project(&workspace, p);
                                     let project_logger = logger.new(o!("project" => p.name.clone()));
                                     info!(project_logger, "Entering");
                                     spawn_maybe(cmd, &path, &project_logger)
@@ -67,42 +68,43 @@ pub fn foreach(maybe_config: Result<Config, AppError>, cmd: &str, logger: &Logge
 }
 
 
+
 pub fn synchronize(maybe_config: Result<Config, AppError>, logger: &Logger) -> Result<(), AppError> {
   info!(logger, "Synchronizing everything");
-  maybe_config.and_then(|config| {
-    let workspace = config.settings.workspace;
-    let results: Vec<Result<(), AppError>> = config.projects
-                                                   .par_iter()
-                                                   .map(|(_, project)| {
-      let mut repo_builder = builder();
-      let path = Path::new(workspace.clone().as_str()).join(project.name.as_str());
-      let exists = path.exists();
-      let project_logger = logger.new(o!(
-          "project" => project.name.clone(),
-          "git" => project.git.clone(),
-          "exists" => exists));
-      if exists {
-        info!(project_logger, "NOP");
-        Result::Ok(())
-      } else {
-        info!(project_logger, "Cloning project");
-        repo_builder.clone(project.git.as_str(), &path)
-                    .map_err(|error| {
-                               warn!(project_logger, "Error cloning repo"; "error" => format!("{}", error));
-                               AppError::GitError(error)
-                             })
-                    .and_then(|_| match project.clone().after_clone {
-                              Some(cmd) => {
-          info!(project_logger, "Handling post hooks"; "after_clone" => cmd);
-          spawn_maybe(&cmd, &path, logger)
-        }
-                              None => Ok(()),
-                              })
+  let config = maybe_config?;
+  let workspace = config.settings.workspace;
+  let results: Vec<Result<(), AppError>> = config.projects
+                                                 .par_iter()
+                                                 .map(|(_, project)| {
+    let mut repo_builder = builder();
+    let path = config::actual_path_to_project(&workspace, project);
+    let exists = path.exists();
+    let project_logger = logger.new(o!(
+        "git" => project.git.clone(),
+        "exists" => exists,
+        "path" => format!("{:?}", path),
+      ));
+    if exists {
+      info!(project_logger, "NOP");
+      Result::Ok(())
+    } else {
+      info!(project_logger, "Cloning project");
+      repo_builder.clone(project.git.as_str(), &path)
+                  .map_err(|error| {
+                             warn!(project_logger, "Error cloning repo"; "error" => format!("{}", error));
+                             AppError::GitError(error)
+                           })
+                  .and_then(|_| match project.clone().after_clone {
+                            Some(cmd) => {
+        info!(project_logger, "Handling post hooks"; "after_clone" => cmd);
+        spawn_maybe(&cmd, &path, logger)
       }
-    })
-                                                   .collect();
-
-    results.into_iter()
-           .fold(Result::Ok(()), |accu, maybe_error| accu.and(maybe_error))
+                            None => Ok(()),
+                            })
+    }
   })
+                                                 .collect();
+
+  results.into_iter()
+         .fold(Result::Ok(()), |accu, maybe_error| accu.and(maybe_error))
 }
