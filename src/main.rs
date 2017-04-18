@@ -1,3 +1,4 @@
+#[macro_use]
 extern crate clap;
 
 #[macro_use]
@@ -39,7 +40,7 @@ fn logger_from_verbosity(verbosity: u64, quiet: &bool) -> Logger {
 
 fn main() {
   let matches = App::new("fw")
-    .version("0.1")
+    .version(crate_version!())
     .author("Maximilien Riehl <max@flatmap.ninja>")
     .about("fast workspace manager")
     .setting(AppSettings::SubcommandRequired)
