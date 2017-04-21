@@ -76,7 +76,7 @@ fn test_persists_projectile_config() {
                    PathBuf::from("/home/mriehl/go/src/github.com/test2")];
 
   let home_dir = Path::new("/home/blubb").to_path_buf();
-  persist(&logger, home_dir, &mut buffer, paths).unwrap();
+  persist(&logger, &home_dir, &mut buffer, paths).unwrap();
 
   assert_that(&str::from_utf8(buffer.get_ref()).unwrap()).is_equal_to(
              "(\"/home/mriehl/test\" \"/home/mriehl/go/src/github.com/test2\" )");
