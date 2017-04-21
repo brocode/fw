@@ -1,4 +1,6 @@
-* fw [[https://travis-ci.org/mriehl/fw.svg?branch=master]]
+* fw
+  [[https://travis-ci.org/mriehl/fw][file:https://travis-ci.org/mriehl/fw.svg?branch=master]]
+  [[https://crates.io/crates/fw][file:https://img.shields.io/crates/v/fw.svg]]
 
 ** Why fw?
    With ~fw~ you have a JSON file describing your workspace.
