@@ -11,6 +11,8 @@ use std::path::{Path, PathBuf};
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Settings {
   pub workspace: String,
+  pub default_after_workon: Option<String>,
+  pub default_after_clone: Option<String>
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -69,8 +71,8 @@ pub fn add_entry(maybe_config: Result<Config, AppError>, name: &str, url: &str, 
                   Project {
                     git: url.to_owned(),
                     name: name.to_owned(),
-                    after_clone: None,
-                    after_workon: None,
+                    after_clone: config.settings.default_after_clone.clone(),
+                    after_workon: config.settings.default_after_workon.clone(),
                     override_path: None,
                   });
     info!(logger, "Updated config"; "config" => format!("{:?}", config));

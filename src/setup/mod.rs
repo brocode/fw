@@ -70,7 +70,7 @@ fn determine_projects(path: PathBuf, logger: &Logger) -> Result<HashMap<String, 
 fn write_config(projects: HashMap<String, Project>, logger: &Logger, workspace_dir: &str) -> Result<(), AppError> {
   let config = Config {
     projects: projects,
-    settings: Settings { workspace: workspace_dir.to_owned() },
+    settings: Settings { workspace: workspace_dir.to_owned(), default_after_workon: None, default_after_clone: None },
   };
   debug!(logger, "Finished"; "projects" => format!("{:?}", config.projects.len()));
   config::write_config(&config, logger)
