@@ -14,7 +14,12 @@ serde = "0.9"
 serde_derive = "0.9"
 git2 = "0.6"
 rayon = "0.6.0"
+regex = "0.2"
+#spectral = "0.6"
 
 [dependencies.slog]
 version = "1.5.2"
 features = ["release_max_level_trace", "max_level_trace"]
+
+[dev-dependencies]
+spectral = "0.6.0"

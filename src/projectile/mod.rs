@@ -1,6 +1,7 @@
 use config;
 use config::Config;
 use errors::AppError;
+use regex::Regex;
 use slog::Logger;
 use std::env;
 use std::fs;
@@ -16,15 +17,16 @@ pub fn projectile(maybe_config: Result<Config, AppError>, logger: &Logger) -> Re
                                            .into_iter()
                                            .map(|(_, p)| config::actual_path_to_project(&workspace, &p))
                                            .collect();
-  let mut projectile_bookmarks = env::home_dir()
+  let home_dir: PathBuf = env::home_dir()
     .ok_or_else(|| AppError::UserError("$HOME not set".to_owned()))?;
+  let mut projectile_bookmarks: PathBuf = home_dir.clone();
   projectile_bookmarks.push(".emacs.d");
   projectile_bookmarks.push("projectile-bookmarks.eld");
   let writer = fs::File::create(projectile_bookmarks)?;
-  persist(logger, writer, projects_paths)
+  persist(logger, home_dir, writer, projects_paths)
 }
 
-fn persist<W>(logger: &Logger, writer: W, paths: Vec<PathBuf>) -> Result<(), AppError>
+fn persist<W>(logger: &Logger, home_dir: PathBuf, writer: W, paths: Vec<PathBuf>) -> Result<(), AppError>
   where W: io::Write
 {
   let paths: Vec<String> = paths.into_iter()
@@ -33,6 +35,7 @@ fn persist<W>(logger: &Logger, writer: W, paths: Vec<PathBuf>) -> Result<(), App
   let mut buffer = io::BufWriter::new(writer);
   buffer.write_all(b"(")?;
   for path in paths {
+    let path = replace_path_with_tilde(&path, home_dir.clone()).unwrap_or(path);
     debug!(logger, "Writing projectile entry"; "entry" => path);
     buffer.write_all(format!("\"{}\"", path).as_bytes())?;
     buffer.write_all(b" ")?;
@@ -40,6 +43,23 @@ fn persist<W>(logger: &Logger, writer: W, paths: Vec<PathBuf>) -> Result<(), App
   buffer.write_all(b")")?;
   Ok(())
 }
+
+fn replace_path_with_tilde(path: &str, path_to_replace: PathBuf) -> Result<String, AppError> {
+  let replace_string = path_to_replace
+    .into_os_string()
+    .into_string()
+    .expect("path should be a valid string");
+  let mut pattern: String = "^".to_string();
+  pattern.push_str(&replace_string);
+  let regex = try!(Regex::new(&pattern));
+  Ok(regex.replace_all(&path, "~").into_owned())
+}
+
+#[cfg(test)]
+mod tests {
+  use super::*;
+  use std::path::Path;
+  use spectral::prelude::*;
 
 #[test]
 fn test_persists_projectile_config() {
@@ -55,8 +75,20 @@ fn test_persists_projectile_config() {
   let paths = vec![PathBuf::from("/home/mriehl/test"),
                    PathBuf::from("/home/mriehl/go/src/github.com/test2")];
 
-  persist(&logger, &mut buffer, paths).unwrap();
+  let home_dir = Path::new("/home/blubb").to_path_buf();
+  persist(&logger, home_dir, &mut buffer, paths).unwrap();
 
-  assert_eq!(str::from_utf8(buffer.get_ref()).unwrap(),
+  assert_that(&str::from_utf8(buffer.get_ref()).unwrap()).is_equal_to(
              "(\"/home/mriehl/test\" \"/home/mriehl/go/src/github.com/test2\" )");
+}
+
+#[test]
+fn test_replace_path_with_tilde() {
+  let home_dir = Path::new("/home/blubb").to_path_buf();
+
+  let replaced_string = replace_path_with_tilde("/home/blubb/moep/home/blubb/test.txt", home_dir).expect("should succeed");
+  assert_that(&replaced_string).is_equal_to("~/moep/home/blubb/test.txt".to_string());
+
+}
+
 }
