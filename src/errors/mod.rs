@@ -6,6 +6,7 @@ use std::ffi::OsString;
 use std::fmt;
 use std::io;
 use std::time::SystemTimeError;
+use regex;
 
 #[derive(Debug)]
 pub enum AppError {
@@ -17,6 +18,7 @@ pub enum AppError {
   GitError(git2::Error),
   Utf8Error(OsString),
   Utf8ConversionError(core::str::Utf8Error),
+  Regex(regex::Error),
 }
 
 impl fmt::Display for AppError {
@@ -30,6 +32,7 @@ impl fmt::Display for AppError {
     AppError::GitError(ref err) => write!(f, "Git error: {}", err),
     AppError::Utf8Error(ref err) => write!(f, "UTF8 conversion error: {:?}", err),
     AppError::Utf8ConversionError(ref err) => write!(f, "UTF8 conversion error: {:?}", err),
+    AppError::Regex(ref err) => write!(f, "Regex error: {}", err),
     }
   }
 }
@@ -45,6 +48,7 @@ impl error::Error for AppError {
     AppError::GitError(ref err) => err.description(),
     AppError::Utf8Error(_) => "invalid utf8",
     AppError::Utf8ConversionError(ref err) => err.description(),
+    AppError::Regex(ref err) => err.description(),
     }
   }
 
@@ -58,6 +62,7 @@ impl error::Error for AppError {
     AppError::ClockError(ref err) => Some(err),
     AppError::GitError(ref err) => Some(err),
     AppError::Utf8ConversionError(ref err) => Some(err),
+    AppError::Regex(ref err) => Some(err),
     }
   }
 }
@@ -84,5 +89,11 @@ impl From<serde_json::Error> for AppError {
 impl From<core::str::Utf8Error> for AppError {
   fn from(err: core::str::Utf8Error) -> AppError {
     AppError::Utf8ConversionError(err)
+  }
+}
+
+impl From<regex::Error> for AppError {
+  fn from(err: regex::Error) -> AppError {
+    AppError::Regex(err)
   }
 }

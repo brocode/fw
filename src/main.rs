@@ -15,6 +15,11 @@ extern crate rayon;
 
 extern crate core;
 
+extern crate regex;
+
+#[cfg(test)]
+extern crate spectral;
+
 use clap::{App, AppSettings, Arg, SubCommand};
 use errors::AppError;
 use slog::{DrainExt, Level, LevelFilter, Logger};
