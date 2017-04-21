@@ -23,10 +23,10 @@ pub fn projectile(maybe_config: Result<Config, AppError>, logger: &Logger) -> Re
   projectile_bookmarks.push(".emacs.d");
   projectile_bookmarks.push("projectile-bookmarks.eld");
   let writer = fs::File::create(projectile_bookmarks)?;
-  persist(logger, home_dir, writer, projects_paths)
+  persist(logger, &home_dir, writer, projects_paths)
 }
 
-fn persist<W>(logger: &Logger, home_dir: PathBuf, writer: W, paths: Vec<PathBuf>) -> Result<(), AppError>
+fn persist<W>(logger: &Logger, home_dir: &PathBuf, writer: W, paths: Vec<PathBuf>) -> Result<(), AppError>
   where W: io::Write
 {
   let paths: Vec<String> = paths.into_iter()
@@ -52,7 +52,7 @@ fn replace_path_with_tilde(path: &str, path_to_replace: PathBuf) -> Result<Strin
   let mut pattern: String = "^".to_string();
   pattern.push_str(&replace_string);
   let regex = try!(Regex::new(&pattern));
-  Ok(regex.replace_all(&path, "~").into_owned())
+  Ok(regex.replace_all(path, "~").into_owned())
 }
 
 #[cfg(test)]
