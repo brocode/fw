@@ -124,10 +124,15 @@
   adding a new project to your ~.fw.json~. This can be done using the tool with
 
   #+BEGIN_SRC bash
-  fw add example git@github.com:mriehl/fw.git
+  fw add git@github.com:mriehl/fw.git
   #+END_SRC
 
   (you should run ~fw~ sync afterwards!)
+  In case you don't like the computed project name (the above case would be ~fw~) you can override this (like with ~git clone~ semantics):
+
+  #+BEGIN_SRC bash
+  fw add git@github.com:mriehl/fw.git my-fw-clone
+  #+END_SRC
 
   If you're an emacs user you should always run
   #+BEGIN_SRC bash

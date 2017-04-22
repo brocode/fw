@@ -65,11 +65,11 @@ fn main() {
                   .about("Add project to config")
                   .arg(Arg::with_name("NAME")
                          .value_name("NAME")
-                         .index(1)
-                         .required(true))
+                         .index(2)
+                         .required(false))
                   .arg(Arg::with_name("URL")
                          .value_name("URL")
-                         .index(2)
+                         .index(1)
                          .required(true)))
     .subcommand(SubCommand::with_name("foreach")
                   .about("Run script on each project")
@@ -105,8 +105,7 @@ fn main() {
                                          "sync" => sync::synchronize(config, &subcommand_logger),
                                          "add" => {
                                            config::add_entry(config,
-                                                             subcommand_matches.value_of("NAME")
-                                                                               .expect("argument required by clap.rs"),
+                                                             subcommand_matches.value_of("NAME"),
                                                              subcommand_matches.value_of("URL")
                                                                                .expect("argument required by clap.rs"),
                                                              &subcommand_logger)
