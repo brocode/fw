@@ -12,7 +12,7 @@ use std::path::{Path, PathBuf};
 pub struct Settings {
   pub workspace: String,
   pub default_after_workon: Option<String>,
-  pub default_after_clone: Option<String>
+  pub default_after_clone: Option<String>,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -57,19 +57,25 @@ pub fn get_config() -> Result<Config, AppError> {
 }
 
 fn repo_name_from_url(url: &str) -> Result<&str, AppError> {
-  let last_fragment = url.rsplit('/').next().ok_or_else(|| AppError::UserError(format!("Given URL {} does not have path fragments so cannot determine project name. Please give one.", url)))?;
+  let last_fragment = url.rsplit('/')
+                         .next()
+                         .ok_or_else(|| {
+                                       AppError::UserError(format!("Given URL {} does not have path fragments so cannot determine project name. Please give \
+                                                                    one.",
+                                                                   url))
+                                     })?;
 
   // trim_right_matches is more efficient but would fuck us up with repos like git@github.com:bauer/test.git.git (which is legal)
-  Ok (
-  if last_fragment.ends_with(".git") {
-    last_fragment.split_at(last_fragment.len() - 4).0
-  }
-  else { last_fragment }
-  )
+  Ok(if last_fragment.ends_with(".git") {
+       last_fragment.split_at(last_fragment.len() - 4).0
+     } else {
+       last_fragment
+     })
 }
 
 pub fn add_entry(maybe_config: Result<Config, AppError>, maybe_name: Option<&str>, url: &str, logger: &Logger) -> Result<(), AppError> {
-  let name = maybe_name.ok_or_else(|| AppError::UserError(format!("No project name specified for {}", url))).or_else(|_| repo_name_from_url(url))?;
+  let name = maybe_name.ok_or_else(|| AppError::UserError(format!("No project name specified for {}", url)))
+                       .or_else(|_| repo_name_from_url(url))?;
   let mut config: Config = maybe_config?;
   info!(logger, "Prepare new project entry"; "name" => name, "url" => url);
   if name.starts_with("http") || name.starts_with("git@") {
@@ -110,26 +116,26 @@ pub fn actual_path_to_project(workspace: &str, project: &Project) -> PathBuf {
 #[cfg(test)]
 mod tests {
   use super::*;
-  use std::path::Path;
   use spectral::prelude::*;
+  use std::path::Path;
 
-#[test]
-fn test_repo_name_from_url() {
-  let https_url = "https://github.com:mriehl/fw";
-  let name = repo_name_from_url(&https_url).unwrap().to_owned();
-  assert_that(&name).is_equal_to("fw".to_owned());
-}
-#[test]
-fn test_repo_name_from_ssh_pragma() {
-  let ssh_pragma = "git@github.com:mriehl/fw.git";
-  let name = repo_name_from_url(&ssh_pragma).unwrap().to_owned();
-  assert_that(&name).is_equal_to("fw".to_owned());
-}
-#[test]
-fn test_repo_name_from_ssh_pragma_with_multiple_git_endings() {
-  let ssh_pragma = "git@github.com:mriehl/fw.git.git";
-  let name = repo_name_from_url(&ssh_pragma).unwrap().to_owned();
-  assert_that(&name).is_equal_to("fw.git".to_owned());
-}
+  #[test]
+  fn test_repo_name_from_url() {
+    let https_url = "https://github.com:mriehl/fw";
+    let name = repo_name_from_url(&https_url).unwrap().to_owned();
+    assert_that(&name).is_equal_to("fw".to_owned());
+  }
+  #[test]
+  fn test_repo_name_from_ssh_pragma() {
+    let ssh_pragma = "git@github.com:mriehl/fw.git";
+    let name = repo_name_from_url(&ssh_pragma).unwrap().to_owned();
+    assert_that(&name).is_equal_to("fw".to_owned());
+  }
+  #[test]
+  fn test_repo_name_from_ssh_pragma_with_multiple_git_endings() {
+    let ssh_pragma = "git@github.com:mriehl/fw.git.git";
+    let name = repo_name_from_url(&ssh_pragma).unwrap().to_owned();
+    assert_that(&name).is_equal_to("fw.git".to_owned());
+  }
 
 }

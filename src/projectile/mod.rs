@@ -45,50 +45,48 @@ fn persist<W>(logger: &Logger, home_dir: &PathBuf, writer: W, paths: Vec<PathBuf
 }
 
 fn replace_path_with_tilde(path: &str, path_to_replace: PathBuf) -> Result<String, AppError> {
-  let replace_string = path_to_replace
-    .into_os_string()
-    .into_string()
-    .expect("path should be a valid string");
+  let replace_string = path_to_replace.into_os_string()
+                                      .into_string()
+                                      .expect("path should be a valid string");
   let mut pattern: String = "^".to_string();
   pattern.push_str(&replace_string);
-  let regex = try!(Regex::new(&pattern));
+  let regex = Regex::new(&pattern)?;
   Ok(regex.replace_all(path, "~").into_owned())
 }
 
 #[cfg(test)]
 mod tests {
   use super::*;
-  use std::path::Path;
   use spectral::prelude::*;
+  use std::path::Path;
 
-#[test]
-fn test_persists_projectile_config() {
-  use std::io::Cursor;
-  use slog_term;
-  use slog::{DrainExt, Level, LevelFilter};
-  use std::str;
-  let mut buffer = Cursor::new(vec![0; 61]);
-  let logger = Logger::root(LevelFilter::new(slog_term::StreamerBuilder::new().stdout().build(),
-                                             Level::Info)
-                              .fuse(),
-                            o!());
-  let paths = vec![PathBuf::from("/home/mriehl/test"),
-                   PathBuf::from("/home/mriehl/go/src/github.com/test2")];
+  #[test]
+  fn test_persists_projectile_config() {
+    use std::io::Cursor;
+    use slog_term;
+    use slog::{DrainExt, Level, LevelFilter};
+    use std::str;
+    let mut buffer = Cursor::new(vec![0; 61]);
+    let logger = Logger::root(LevelFilter::new(slog_term::StreamerBuilder::new().stdout().build(),
+                                               Level::Info)
+                                .fuse(),
+                              o!());
+    let paths = vec![PathBuf::from("/home/mriehl/test"),
+                     PathBuf::from("/home/mriehl/go/src/github.com/test2")];
 
-  let home_dir = Path::new("/home/blubb").to_path_buf();
-  persist(&logger, &home_dir, &mut buffer, paths).unwrap();
+    let home_dir = Path::new("/home/blubb").to_path_buf();
+    persist(&logger, &home_dir, &mut buffer, paths).unwrap();
 
-  assert_that(&str::from_utf8(buffer.get_ref()).unwrap()).is_equal_to(
-             "(\"/home/mriehl/test\" \"/home/mriehl/go/src/github.com/test2\" )");
-}
+    assert_that(&str::from_utf8(buffer.get_ref()).unwrap()).is_equal_to("(\"/home/mriehl/test\" \"/home/mriehl/go/src/github.com/test2\" )");
+  }
 
-#[test]
-fn test_replace_path_with_tilde() {
-  let home_dir = Path::new("/home/blubb").to_path_buf();
+  #[test]
+  fn test_replace_path_with_tilde() {
+    let home_dir = Path::new("/home/blubb").to_path_buf();
 
-  let replaced_string = replace_path_with_tilde("/home/blubb/moep/home/blubb/test.txt", home_dir).expect("should succeed");
-  assert_that(&replaced_string).is_equal_to("~/moep/home/blubb/test.txt".to_string());
+    let replaced_string = replace_path_with_tilde("/home/blubb/moep/home/blubb/test.txt", home_dir).expect("should succeed");
+    assert_that(&replaced_string).is_equal_to("~/moep/home/blubb/test.txt".to_string());
 
-}
+  }
 
 }
