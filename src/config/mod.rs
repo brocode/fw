@@ -117,7 +117,6 @@ pub fn actual_path_to_project(workspace: &str, project: &Project) -> PathBuf {
 mod tests {
   use super::*;
   use spectral::prelude::*;
-  use std::path::Path;
 
   #[test]
   fn test_repo_name_from_url() {
