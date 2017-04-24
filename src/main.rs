@@ -89,6 +89,29 @@ fn main() {
                          .required(false)
                          .short("x")
                          .help("Don't generate post_workon shell code, only cd into the folder")))
+    .subcommand(SubCommand::with_name("update")
+                  .about("Modifies project settings.")
+                  .arg(Arg::with_name("NAME").value_name("NAME").required(true))
+                  .arg(Arg::with_name("git")
+                         .value_name("URL")
+                         .long("git-url")
+                         .takes_value(true)
+                         .required(false))
+                  .arg(Arg::with_name("override-path")
+                         .value_name("override-path")
+                         .long("override-path")
+                         .takes_value(true)
+                         .required(false))
+                  .arg(Arg::with_name("after-workon")
+                         .value_name("after-workon")
+                         .long("after-workon")
+                         .takes_value(true)
+                         .required(false))
+                  .arg(Arg::with_name("after-clone")
+                         .value_name("after-clone")
+                         .long("after-clone")
+                         .takes_value(true)
+                         .required(false)))
     .get_matches();
 
   let logger = logger_from_verbosity(matches.occurrences_of("v"), &matches.is_present("q"));
@@ -109,6 +132,15 @@ fn main() {
                                                              subcommand_matches.value_of("URL")
                                                                                .expect("argument required by clap.rs"),
                                                              &subcommand_logger)
+                                         }
+                                         "update" => {
+                                           let name: &str = subcommand_matches.value_of("NAME")
+                                                             .expect("argument required by clap.rs");
+                                           let git: Option<String> = subcommand_matches.value_of("git").map(str::to_string);
+                                           let after_workon: Option<String> = subcommand_matches.value_of("after-workon").map(str::to_string);
+                                           let after_clone: Option<String> = subcommand_matches.value_of("after-clone").map(str::to_string);
+                                           let override_path: Option<String> = subcommand_matches.value_of("override-path").map(str::to_string);
+                                           config::update_entry(config, name, git, after_workon, after_clone, override_path, &subcommand_logger)
                                          }
                                          "setup" => {
                                            setup::setup(subcommand_matches.value_of("WORKSPACE_DIR")
