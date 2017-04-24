@@ -99,6 +99,31 @@ pub fn add_entry(maybe_config: Result<Config, AppError>, maybe_name: Option<&str
   }
 }
 
+pub fn update_entry(maybe_config: Result<Config, AppError>, name: &str, git: Option<String>, after_workon: Option<String>, after_clone: Option<String>, override_path: Option<String>, logger: &Logger) -> Result<(), AppError> {
+  let mut config: Config = maybe_config?;
+  info!(logger, "Update project entry"; "name" => name);
+  if name.starts_with("http") || name.starts_with("git@") {
+    Err(AppError::UserError(format!("{} looks like a repo URL and not like a project name, please fix",
+                                    name)))
+  } else if !config.projects.contains_key(name) {
+    Err(AppError::UserError(format!("Project key {} does not exists. Can not update.",
+                                    name)))
+  } else {
+    let old_project_config: Project = config.projects.get(name).expect("Already checked in the if above").clone();
+    config.projects
+          .insert(name.to_owned(),
+                  Project {
+                    git: git.unwrap_or(old_project_config.git),
+                    name: old_project_config.name,
+                    after_clone: after_clone.or(old_project_config.after_clone),
+                    after_workon: after_workon.or(old_project_config.after_workon),
+                    override_path: override_path.or(old_project_config.override_path),
+                  });
+    info!(logger, "Updated config"; "config" => format!("{:?}", config));
+    write_config(&config, logger)
+  }
+}
+
 pub fn write_config(config: &Config, logger: &Logger) -> Result<(), AppError> {
   let config_path = config_path()?;
   info!(logger, "Writing config"; "path" => format!("{:?}", config_path));
