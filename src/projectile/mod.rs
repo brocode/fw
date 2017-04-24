@@ -37,7 +37,7 @@ fn persist<W>(logger: &Logger, home_dir: &PathBuf, writer: W, paths: Vec<PathBuf
   for path in paths {
     let path = replace_path_with_tilde(&path, home_dir.clone()).unwrap_or(path);
     debug!(logger, "Writing projectile entry"; "entry" => path);
-    buffer.write_all(format!("\"{}\"", path).as_bytes())?;
+    buffer.write_all(format!("\"{}/\"", path).as_bytes())?;
     buffer.write_all(b" ")?;
   }
   buffer.write_all(b")")?;
@@ -77,7 +77,7 @@ mod tests {
     let home_dir = Path::new("/home/blubb").to_path_buf();
     persist(&logger, &home_dir, &mut buffer, paths).unwrap();
 
-    assert_that(&str::from_utf8(buffer.get_ref()).unwrap()).is_equal_to("(\"/home/mriehl/test\" \"/home/mriehl/go/src/github.com/test2\" )");
+    assert_that(&str::from_utf8(buffer.get_ref()).unwrap()).is_equal_to("(\"/home/mriehl/test/\" \"/home/mriehl/go/src/github.com/test2/\" )");
   }
 
   #[test]
