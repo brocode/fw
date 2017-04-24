@@ -78,10 +78,7 @@ pub fn add_entry(maybe_config: Result<Config, AppError>, maybe_name: Option<&str
                        .or_else(|_| repo_name_from_url(url))?;
   let mut config: Config = maybe_config?;
   info!(logger, "Prepare new project entry"; "name" => name, "url" => url);
-  if name.starts_with("http") || name.starts_with("git@") {
-    Err(AppError::UserError(format!("{} looks like a repo URL and not like a project name, please fix",
-                                    name)))
-  } else if config.projects.contains_key(name) {
+  if config.projects.contains_key(name) {
     Err(AppError::UserError(format!("Project key {} already exists, not gonna overwrite it for you",
                                     name)))
   } else {
