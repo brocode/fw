@@ -56,6 +56,9 @@
    #+BEGIN_SRC bash
    cargo install fw
    #+END_SRC
+   
+   If you are using `OSX` make sure that you got the rust toolchain from [[https://rustup.rs/][rustup]] and not from homebrew.
+   If you're using the homebrew formula you will run into [[https://github.com/mriehl/fw/issues/11][issues]].
 
    You will also want to add the following hack to your ~.zshrc.local~ or the ~workon~ automation will not work:
    #+BEGIN_SRC bash
