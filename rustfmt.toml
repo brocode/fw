@@ -6,5 +6,5 @@ report_fixme = "Always"
 chain_indent = "Visual"
 reorder_imports = true
 reorder_imported_names = true
-format_strings = true
+format_strings = false
 indent_match_arms = false

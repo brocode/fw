@@ -60,37 +60,20 @@
    If you are using `OSX` make sure that you got the rust toolchain from [[https://rustup.rs/][rustup]] and not from homebrew.
    If you're using the homebrew formula you will run into [[https://github.com/mriehl/fw/issues/11][issues]].
 
-   You will also want to add the following hack to your ~.zshrc.local~ or the ~workon~ automation will not work:
-   #+BEGIN_SRC bash
-   workon () {
-     SCRIPT="$(~/.cargo/bin/fw -q gen-workon $@)"
-     if [ $? -eq 0 ]; then
-       eval "$SCRIPT"
-     else
-       printf "$SCRIPT\n"
-     fi
-   }
 
-   nworkon () {
-     SCRIPT="$(~/.cargo/bin/fw -q gen-workon -x $@)"
-     if [ $? -eq 0 ]; then
-       eval "$SCRIPT"
-     else
-       printf "$SCRIPT\n"
-     fi
-   }
-   #+END_SRC
-
-   I suggest you thoroughly think this through because it will eval the stdout created by ~fw~ in your shell when you run the ~workon~ function.
-
-   Another thing that will make you much more productive is to use the ~zsh~ completions from this repo (if you're not using the ~zsh~ I guess
+   Another thing that will make you much more productive is to use the ~zsh~ completions (if you're not using the ~zsh~ I guess
    you would get a bigger productivity boost by switching to ~zsh~ first).
-   I suggest dropping them here: ~/usr/share/zsh/functions/Completion/Linux/~.
-   After cloning this repo you could do this:
 
-   #+BEGIN_SRC bash
-   cp completions/zsh/* /usr/share/zsh/functions/Completion/Linux/
+   In your zshrc you should do this
+
+   #+BEGIN_SRC shell-script
+   if [[ -x "$(command -v fw)" ]];
+   then
+     eval $(fw print-zsh-setup 2>/dev/null);
+   fi;
    #+END_SRC
+
+   This also defines the two function ~workon~ and ~nworkon~.
 
 ** Usage
 *** Migrating to ~fw~ / Configuration

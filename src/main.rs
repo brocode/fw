@@ -55,6 +55,7 @@ fn main() {
            .help("Sets the level of verbosity"))
     .arg(Arg::with_name("q").short("q").help("Make fw quiet"))
     .subcommand(SubCommand::with_name("sync").about("Sync workspace"))
+    .subcommand(SubCommand::with_name("print-zsh-setup").about("Prints zsh completion code."))
     .subcommand(SubCommand::with_name("setup")
                   .about("Setup config from existing workspace")
                   .arg(Arg::with_name("WORKSPACE_DIR")
@@ -169,6 +170,7 @@ fn main() {
                                                                            .expect("argument required by clap.rs"),
                                                          &subcommand_logger)
                                          }
+                                         "print-zsh-setup" => print_zsh_setup(),
                                          "ls" => workon::ls(config),
                                          _ => Result::Err(AppError::InternalError("Command not implemented")),
                                          }
@@ -183,6 +185,56 @@ fn main() {
   }
 
   }
+}
+
+fn print_zsh_setup() -> Result<(), AppError> {
+  let completion = "
+workon () {
+  SCRIPT=\"$(~/.cargo/bin/fw -q gen-workon $@)\";
+  if [ $? -eq 0 ]; then
+    eval \"$SCRIPT\";
+  else
+    printf \"$SCRIPT\\n\";
+  fi
+};
+
+nworkon () {
+  SCRIPT=\"$(~/.cargo/bin/fw -q gen-workon -x $@)\";
+  if [ $? -eq 0 ]; then
+    eval \"$SCRIPT\";
+  else
+    printf \"$SCRIPT\\n\";
+  fi
+};
+
+_fw() {
+  if ! command -v fw > /dev/null 2>&1; then
+      _message \"fw not installed\";
+  else
+      local ret=1;
+      _arguments -C '1: :(projectile sync foreach add update)' && ret=0;
+  fi
+};
+compdef _fw fw;
+
+_workon() {
+  if ! command -v fw > /dev/null 2>&1; then
+      _message \"fw not installed\";
+  else
+      local ret=1;
+      local names;
+      fw -q ls | while read line; do
+          names+=( $line );
+      done;
+      _describe -t names 'project names' names;
+  fi
+};
+
+compdef _workon workon;
+compdef _workon nworkon;
+";
+  println!("{}", completion);
+  Ok(())
 }
 
 mod errors;
