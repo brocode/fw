@@ -43,7 +43,7 @@ fn spawn_maybe(cmd: &str, workdir: &PathBuf, logger: &Logger) -> Result<(), AppE
     if status.success() {
       Ok(())
     } else {
-      Err(AppError::UserError("cmd blew up".to_owned()))
+      Err(AppError::UserError(format!("cmd {} blew up in project at {:?} (this was the first error, there might have been more subsequent failures)", cmd, workdir)))
     }
   }
   }
