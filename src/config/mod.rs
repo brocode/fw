@@ -1,7 +1,7 @@
 use errors::AppError;
 use serde_json;
 use slog::Logger;
-use std::collections::HashMap;
+use std::collections::BTreeMap;
 use std::env;
 use std::fs::File;
 use std::io::BufReader;
@@ -26,7 +26,7 @@ pub struct Project {
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Config {
-  pub projects: HashMap<String, Project>,
+  pub projects: BTreeMap<String, Project>,
   pub settings: Settings,
 }
 

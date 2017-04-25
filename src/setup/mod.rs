@@ -3,7 +3,7 @@ use config::{Config, Project, Settings};
 use errors::AppError;
 use git2::Repository;
 use slog::Logger;
-use std::collections::HashMap;
+use std::collections::BTreeMap;
 use std::fs;
 use std::path::PathBuf;
 
@@ -21,7 +21,7 @@ pub fn setup(workspace_dir: &str, logger: &Logger) -> Result<(), AppError> {
             .and_then(|projects| write_config(projects, logger, workspace_dir))
 }
 
-fn determine_projects(path: PathBuf, logger: &Logger) -> Result<HashMap<String, Project>, AppError> {
+fn determine_projects(path: PathBuf, logger: &Logger) -> Result<BTreeMap<String, Project>, AppError> {
   let workspace_path = path.clone();
 
   let project_entries: Vec<fs::DirEntry> = fs::read_dir(path)
@@ -53,10 +53,10 @@ fn determine_projects(path: PathBuf, logger: &Logger) -> Result<HashMap<String, 
                         })
                    .collect();
 
-  let acc: HashMap<String, Project> = HashMap::new();
+  let acc: BTreeMap<String, Project> = BTreeMap::new();
   projects.into_iter()
           .fold(Ok(acc),
-                |maybe_accu: Result<HashMap<String, Project>, AppError>, project: Result<Project, AppError>| match project {
+                |maybe_accu: Result<BTreeMap<String, Project>, AppError>, project: Result<Project, AppError>| match project {
                 Ok(p) => {
                   maybe_accu.and_then(|mut accu| {
                                         accu.insert(p.clone().name, p);
@@ -67,7 +67,7 @@ fn determine_projects(path: PathBuf, logger: &Logger) -> Result<HashMap<String, 
                 })
 }
 
-fn write_config(projects: HashMap<String, Project>, logger: &Logger, workspace_dir: &str) -> Result<(), AppError> {
+fn write_config(projects: BTreeMap<String, Project>, logger: &Logger, workspace_dir: &str) -> Result<(), AppError> {
   let config = Config {
     projects: projects,
     settings: Settings {
