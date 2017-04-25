@@ -211,8 +211,35 @@ _fw() {
   if ! command -v fw > /dev/null 2>&1; then
       _message "fw not installed";
   else
-      local ret=1;
-      _arguments -C '1:command:(projectile sync foreach add update)' && ret=0;
+      _arguments '1: :->cmd' '2: :->maybe_project' '3: :->maybe_update_option';
+
+      case $state in
+        cmd)
+          _arguments '*:command:(projectile sync foreach add update)';
+        ;;
+        maybe_project)
+          case $words[2] in
+            update)
+              local projects;
+              fw -q ls | while read line; do
+                  projects+=( $line );
+              done;
+              _describe -t projects 'project names' projects;
+            ;;
+            *)
+            ;;
+          esac
+        ;;
+        maybe_update_option)
+          case $words[2] in
+            update)
+              _arguments '*:option:(--override-path --git-url --after-clone --after-workon)';
+            ;;
+            *)
+            ;;
+          esac
+        ;;
+       esac
   fi
 };
 compdef _fw fw;
