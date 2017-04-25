@@ -151,7 +151,7 @@ mod tests {
 
   #[test]
   fn test_repo_name_from_url() {
-    let https_url = "https://github.com:mriehl/fw";
+    let https_url = "https://github.com/mriehl/fw";
     let name = repo_name_from_url(&https_url).unwrap().to_owned();
     assert_that(&name).is_equal_to("fw".to_owned());
   }
