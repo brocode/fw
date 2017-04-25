@@ -36,7 +36,9 @@ impl Project {
     if path.is_absolute() {
       Ok(())
     } else {
-      Err(AppError::UserError(format!("Misconfigured project {}: resolved path {:?} is relative which is not allowed", &self.name, &path)))
+      Err(AppError::UserError(format!("Misconfigured project {}: resolved path {:?} is relative which is not allowed",
+                                      &self.name,
+                                      &path)))
     }
   }
 }
@@ -44,7 +46,7 @@ impl Project {
 impl Config {
   fn check_sanity(self) -> Result<Config, AppError> {
     for (_, project) in &self.projects {
-      try!(project.check_sanity(&self.settings.workspace))
+      project.check_sanity(&self.settings.workspace)?
     }
     Ok(self)
   }
@@ -53,9 +55,8 @@ impl Config {
 fn read_config<R>(reader: Result<R, AppError>) -> Result<Config, AppError>
   where R: Read
 {
-  reader
-    .and_then(|r| serde_json::de::from_reader(r).map_err(AppError::BadJson))
-    .and_then(|c: Config| c.check_sanity())
+  reader.and_then(|r| serde_json::de::from_reader(r).map_err(AppError::BadJson))
+        .and_then(|c: Config| c.check_sanity())
 }
 
 pub fn config_path() -> Result<PathBuf, AppError> {
@@ -155,17 +156,17 @@ pub fn update_entry(maybe_config: Result<Config, AppError>,
 pub fn write_config(config: Config, logger: &Logger) -> Result<(), AppError> {
   let config_path = config_path()?;
   info!(logger, "Writing config"; "path" => format!("{:?}", config_path));
-  config
-    .check_sanity()
-    .and_then(|c| {
-      let mut buffer = File::create(config_path)?;
-      serde_json::ser::to_writer_pretty(&mut buffer, &c).map_err(AppError::BadJson)
-    })
+  config.check_sanity()
+        .and_then(|c| {
+                    let mut buffer = File::create(config_path)?;
+                    serde_json::ser::to_writer_pretty(&mut buffer, &c).map_err(AppError::BadJson)
+                  })
 }
 
 fn do_expand(path: PathBuf, home_dir: Option<PathBuf>) -> PathBuf {
   if let Some(home) = home_dir {
-    home.join(path.strip_prefix("~").expect("only doing this if path starts with ~"))
+    home.join(path.strip_prefix("~")
+                  .expect("only doing this if path starts with ~"))
   } else {
     path
   }
@@ -173,17 +174,17 @@ fn do_expand(path: PathBuf, home_dir: Option<PathBuf>) -> PathBuf {
 
 pub fn expand_path(path: PathBuf) -> PathBuf {
   if path.starts_with("~") {
-      do_expand(path, env::home_dir())
-    } else {
-      path
-    }
+    do_expand(path, env::home_dir())
+  } else {
+    path
+  }
 }
 
 pub fn actual_path_to_project(workspace: &str, project: &Project) -> PathBuf {
   let path = project.override_path
-         .clone()
-         .map(PathBuf::from)
-         .unwrap_or_else(|| Path::new(workspace).join(project.name.as_str()));
+                    .clone()
+                    .map(PathBuf::from)
+                    .unwrap_or_else(|| Path::new(workspace).join(project.name.as_str()));
   expand_path(path)
 }
 
