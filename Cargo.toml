@@ -1,6 +1,6 @@
 [package]
 name = "fw"
-version = "0.3.0"
+version = "0.3.1-pre"
 authors = ["mriehl <max@flatmap.ninja>"]
 description = "faster workspace management"
 license = "WTFPL"
