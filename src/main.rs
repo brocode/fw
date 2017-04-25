@@ -188,28 +188,28 @@ fn main() {
 }
 
 fn print_zsh_setup() -> Result<(), AppError> {
-  let completion = "
+  let completion = r#"
 workon () {
-  SCRIPT=\"$(~/.cargo/bin/fw -q gen-workon $@)\";
+  SCRIPT="$(~/.cargo/bin/fw -q gen-workon $@)";
   if [ $? -eq 0 ]; then
-    eval \"$SCRIPT\";
+    eval "$SCRIPT";
   else
-    printf \"$SCRIPT\\n\";
+    printf "$SCRIPT\n";
   fi
 };
 
 nworkon () {
-  SCRIPT=\"$(~/.cargo/bin/fw -q gen-workon -x $@)\";
+  SCRIPT="$(~/.cargo/bin/fw -q gen-workon -x $@)";
   if [ $? -eq 0 ]; then
-    eval \"$SCRIPT\";
+    eval "$SCRIPT";
   else
-    printf \"$SCRIPT\\n\";
+    printf "$SCRIPT\n";
   fi
 };
 
 _fw() {
   if ! command -v fw > /dev/null 2>&1; then
-      _message \"fw not installed\";
+      _message "fw not installed";
   else
       local ret=1;
       _arguments -C '1: :(projectile sync foreach add update)' && ret=0;
@@ -219,7 +219,7 @@ compdef _fw fw;
 
 _workon() {
   if ! command -v fw > /dev/null 2>&1; then
-      _message \"fw not installed\";
+      _message "fw not installed";
   else
       local ret=1;
       local names;
@@ -232,7 +232,7 @@ _workon() {
 
 compdef _workon workon;
 compdef _workon nworkon;
-";
+"#;
   println!("{}", completion);
   Ok(())
 }
