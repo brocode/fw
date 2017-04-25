@@ -1,5 +1,5 @@
 * fw
-  [[https://travis-ci.org/mriehl/fw][file:https://travis-ci.org/mriehl/fw.svg?branch=master]]
+  [[https://travis-ci.org/mriehl/fw][file:https://travis-ci.org/brocode/fw.svg?branch=master]]
   [[https://crates.io/crates/fw][file:https://img.shields.io/crates/v/fw.svg]]
 
 ** Why fw?
@@ -21,18 +21,18 @@
     },
     "fw": {
       "name": "fw",
-      "git": "git@github.com:mriehl/fw.git",
+      "git": "git@github.com:brocode/fw.git",
       "after_clone": "cargo build",
       "after_workon": "git remote update --prune && cargo test"
     },
     "docker": {
       "name": "docker",
       "git": "git@github.com:docker/docker.git",
-      "override_path": "/home/mriehl/go/src/github.com/docker/docker"
+      "override_path": "/home/brocode/go/src/github.com/docker/docker"
     }
   },
   "settings": {
-    "workspace": "/home/mriehl/workspace"
+    "workspace": "/home/brocode/workspace"
   }
 }
    #+END_SRC
@@ -127,14 +127,14 @@
   adding a new project to your ~.fw.json~. This can be done using the tool with
 
   #+BEGIN_SRC bash
-  fw add git@github.com:mriehl/fw.git
+  fw add git@github.com:brocode/fw.git
   #+END_SRC
 
   (you should run ~fw~ sync afterwards!)
   In case you don't like the computed project name (the above case would be ~fw~) you can override this (like with ~git clone~ semantics):
 
   #+BEGIN_SRC bash
-  fw add git@github.com:mriehl/fw.git my-fw-clone
+  fw add git@github.com:brocode/fw.git my-fw-clone
   #+END_SRC
 
   If you're an emacs user you should always run
