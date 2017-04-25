@@ -163,11 +163,28 @@ pub fn write_config(config: Config, logger: &Logger) -> Result<(), AppError> {
     })
 }
 
+fn do_expand(path: PathBuf, home_dir: Option<PathBuf>) -> PathBuf {
+  if let Some(home) = home_dir {
+    home.join(path.strip_prefix("~").expect("only doing this if path starts with ~"))
+  } else {
+    path
+  }
+}
+
+pub fn expand_path(path: PathBuf) -> PathBuf {
+  if path.starts_with("~") {
+      do_expand(path, env::home_dir())
+    } else {
+      path
+    }
+}
+
 pub fn actual_path_to_project(workspace: &str, project: &Project) -> PathBuf {
-  project.override_path
+  let path = project.override_path
          .clone()
          .map(PathBuf::from)
-         .unwrap_or_else(|| Path::new(workspace).join(project.name.as_str()))
+         .unwrap_or_else(|| Path::new(workspace).join(project.name.as_str()));
+  expand_path(path)
 }
 
 #[cfg(test)]
@@ -192,5 +209,16 @@ mod tests {
     let ssh_pragma = "git@github.com:mriehl/fw.git.git";
     let name = repo_name_from_url(&ssh_pragma).unwrap().to_owned();
     assert_that(&name).is_equal_to("fw.git".to_owned());
+  }
+  #[test]
+  fn test_do_not_expand_path_without_tilde() {
+    let path = PathBuf::from("/foo/bar");
+    assert_that(&expand_path(path.clone())).is_equal_to(&path);
+  }
+  #[test]
+  fn test_do_expand_path() {
+    let path = PathBuf::from("~/foo/bar");
+    let home = PathBuf::from("/my/home");
+    assert_that(&do_expand(path, Some(home))).is_equal_to(PathBuf::from("/my/home/foo/bar"));
   }
 }
