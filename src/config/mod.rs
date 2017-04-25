@@ -30,10 +30,32 @@ pub struct Config {
   pub settings: Settings,
 }
 
+impl Project {
+  fn check_sanity(&self, workspace: &str) -> Result<(), AppError> {
+    let path = actual_path_to_project(&workspace, &self);
+    if path.is_absolute() {
+      Ok(())
+    } else {
+      Err(AppError::UserError(format!("Misconfigured project {}: resolved path {:?} is relative which is not allowed", &self.name, &path)))
+    }
+  }
+}
+
+impl Config {
+  fn check_sanity(self) -> Result<Config, AppError> {
+    for (_, project) in &self.projects {
+      try!(project.check_sanity(&self.settings.workspace))
+    }
+    Ok(self)
+  }
+}
+
 fn read_config<R>(reader: Result<R, AppError>) -> Result<Config, AppError>
   where R: Read
 {
-  reader.and_then(|r| serde_json::de::from_reader(r).map_err(AppError::BadJson))
+  reader
+    .and_then(|r| serde_json::de::from_reader(r).map_err(AppError::BadJson))
+    .and_then(|c: Config| c.check_sanity())
 }
 
 pub fn config_path() -> Result<PathBuf, AppError> {
@@ -92,7 +114,7 @@ pub fn add_entry(maybe_config: Result<Config, AppError>, maybe_name: Option<&str
                     override_path: None,
                   });
     info!(logger, "Updated config"; "config" => format!("{:?}", config));
-    write_config(&config, logger)
+    write_config(config, logger)
   }
 }
 
@@ -126,15 +148,19 @@ pub fn update_entry(maybe_config: Result<Config, AppError>,
                     override_path: override_path.or(old_project_config.override_path),
                   });
     info!(logger, "Updated config"; "config" => format!("{:?}", config));
-    write_config(&config, logger)
+    write_config(config, logger)
   }
 }
 
-pub fn write_config(config: &Config, logger: &Logger) -> Result<(), AppError> {
+pub fn write_config(config: Config, logger: &Logger) -> Result<(), AppError> {
   let config_path = config_path()?;
   info!(logger, "Writing config"; "path" => format!("{:?}", config_path));
-  let mut buffer = File::create(config_path)?;
-  serde_json::ser::to_writer_pretty(&mut buffer, &config).map_err(AppError::BadJson)
+  config
+    .check_sanity()
+    .and_then(|c| {
+      let mut buffer = File::create(config_path)?;
+      serde_json::ser::to_writer_pretty(&mut buffer, &c).map_err(AppError::BadJson)
+    })
 }
 
 pub fn actual_path_to_project(workspace: &str, project: &Project) -> PathBuf {
@@ -167,5 +193,4 @@ mod tests {
     let name = repo_name_from_url(&ssh_pragma).unwrap().to_owned();
     assert_that(&name).is_equal_to("fw.git".to_owned());
   }
-
 }

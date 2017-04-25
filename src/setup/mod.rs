@@ -77,5 +77,5 @@ fn write_config(projects: BTreeMap<String, Project>, logger: &Logger, workspace_
     },
   };
   debug!(logger, "Finished"; "projects" => format!("{:?}", config.projects.len()));
-  config::write_config(&config, logger)
+  config::write_config(config, logger)
 }
