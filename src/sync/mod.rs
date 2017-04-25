@@ -85,7 +85,7 @@ pub fn synchronize(maybe_config: Result<Config, AppError>, logger: &Logger) -> R
         "path" => format!("{:?}", path),
       ));
     if exists {
-      info!(project_logger, "NOP");
+      debug!(project_logger, "NOP");
       Result::Ok(())
     } else {
       info!(project_logger, "Cloning project");
