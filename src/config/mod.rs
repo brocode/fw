@@ -32,7 +32,7 @@ pub struct Config {
 
 impl Project {
   fn check_sanity(&self, workspace: &str) -> Result<(), AppError> {
-    let path = actual_path_to_project(&workspace, &self);
+    let path = actual_path_to_project(workspace, self);
     if path.is_absolute() {
       Ok(())
     } else {
@@ -45,7 +45,7 @@ impl Project {
 
 impl Config {
   fn check_sanity(self) -> Result<Config, AppError> {
-    for (_, project) in &self.projects {
+    for project in self.projects.values() {
       project.check_sanity(&self.settings.workspace)?
     }
     Ok(self)
