@@ -35,7 +35,7 @@ fn logger_from_verbosity(verbosity: u64, quiet: &bool) -> Logger {
 
   let drain = slog_term::StreamerBuilder::new()
     .auto_color()
-    .stdout()
+    .stderr()
     .build();
   let filter = LevelFilter::new(drain, log_level);
   let logger = Logger::root(filter.fuse(), o!());
