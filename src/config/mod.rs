@@ -13,6 +13,13 @@ pub struct Settings {
   pub workspace: String,
   pub default_after_workon: Option<String>,
   pub default_after_clone: Option<String>,
+  pub tags: Option<BTreeMap<String, Tag>>,
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct Tag {
+  pub after_clone: Option<String>,
+  pub after_workon: Option<String>,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -22,6 +29,7 @@ pub struct Project {
   pub after_clone: Option<String>,
   pub after_workon: Option<String>,
   pub override_path: Option<String>,
+  pub tags: Option<Vec<String>>,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -49,6 +57,29 @@ impl Config {
       project.check_sanity(&self.settings.workspace)?
     }
     Ok(self)
+  }
+
+  pub fn resolve_workon_from_tags(&self, maybe_tags: Option<Vec<String>>, logger: &Logger) -> Option<String> {
+    let tag_logger = logger.new(o!("tags" => format!("{:?}", maybe_tags)));
+    debug!(tag_logger, "Resolving");
+    if maybe_tags.is_none() || self.settings.tags.is_none() {
+      None
+    } else {
+      let tags: Vec<String> = maybe_tags.unwrap();
+      let settings_tags = self.clone().settings.tags.unwrap();
+      let resolved_after_workon: Vec<String> = tags.iter().flat_map(|t| {
+          match settings_tags.get(t) {
+            None => {
+              warn!(tag_logger, "Ignoring tag since it was not found in the config"; "missing_tag" => format!("{}", t));
+              None
+            },
+            Some(actual_tag) => actual_tag.after_workon.clone(),
+          }
+      }).collect();
+      let after_workon_cmd = resolved_after_workon.join(" && ");
+      debug!(tag_logger, format!("resolved {:?}", after_workon_cmd));
+      Some(after_workon_cmd)
+      }
   }
 }
 
@@ -113,6 +144,7 @@ pub fn add_entry(maybe_config: Result<Config, AppError>, maybe_name: Option<&str
                     after_clone: config.settings.default_after_clone.clone(),
                     after_workon: config.settings.default_after_workon.clone(),
                     override_path: None,
+                    tags: None,
                   });
     info!(logger, "Updated config"; "config" => format!("{:?}", config));
     write_config(config, logger)
@@ -147,6 +179,7 @@ pub fn update_entry(maybe_config: Result<Config, AppError>,
                     after_clone: after_clone.or(old_project_config.after_clone),
                     after_workon: after_workon.or(old_project_config.after_workon),
                     override_path: override_path.or(old_project_config.override_path),
+                    tags: None,
                   });
     info!(logger, "Updated config"; "config" => format!("{:?}", config));
     write_config(config, logger)
