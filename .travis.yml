@@ -15,6 +15,12 @@ addons:
       - libcurl4-openssl-dev
       - libelf-dev
       - libdw-dev
+      - zsh
+
+script:
+  - cargo build --verbose
+  - cargo test --verbose
+  - zsh -c "source smoke/resources/zshrc && eval $(cargo run -- print-zsh-setup 2>/dev/null)"
 
 notifications:
   email:
