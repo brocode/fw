@@ -212,7 +212,7 @@ _fw() {
       _message "fw not installed";
   else
       local ret=1;
-      _arguments -C '1: :(projectile sync foreach add update)' && ret=0;
+      _arguments -C '1:command:(projectile sync foreach add update)' && ret=0;
   fi
 };
 compdef _fw fw;
