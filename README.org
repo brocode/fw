@@ -23,7 +23,7 @@
       "name": "fw",
       "git": "git@github.com:brocode/fw.git",
       "after_clone": "cargo build",
-      "after_workon": "git remote update --prune && cargo test"
+      "tags": ["git", "rust"]
     },
     "docker": {
       "name": "docker",
@@ -33,6 +33,18 @@
   },
   "settings": {
     "workspace": "/home/brocode/workspace"
+    "tags": {
+      "git": {
+        "after_workon": "git remote update --prune"
+      },
+      "js": {
+        "after_workon": "source ~/.nvm/nvm.sh"
+      },
+      "rust": {
+        "after_clone": "cargo build",
+        "after_workon": "cargo test && rustup run nightly cargo clippy"
+      }
+    }
   }
 }
    #+END_SRC
