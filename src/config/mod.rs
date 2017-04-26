@@ -343,12 +343,46 @@ mod tests {
   }
 
   fn a_config() -> Config {
-    let project = Project { name: "test1".to_owned(), git: "irrelevant".to_owned(), tags: Some(vec!["tag1".to_owned(), "tag2".to_owned()]), after_clone: None, after_workon: None, override_path: None};
-    let project2 = Project { name: "test2".to_owned(), git: "irrelevant".to_owned(), tags: Some(vec!["tag1".to_owned(), "tag-does-not-exist".to_owned()]), after_clone: None, after_workon: None, override_path: None};
-    let project3 = Project { name: "test3".to_owned(), git: "irrelevant".to_owned(), tags: Some(vec!["tag1".to_owned()]), after_clone: Some("clone override in project".to_owned()), after_workon: Some("workon override in project".to_owned()), override_path: None};
-    let project4 = Project { name: "test4".to_owned(), git: "irrelevant".to_owned(), tags: Some(vec!["tag-does-not-exist".to_owned()]), after_clone: None, after_workon: None, override_path: None};
-    let tag1 = Tag { after_clone: Some("clone1".to_owned()), after_workon: Some("workon1".to_owned())};
-    let tag2 = Tag { after_clone: Some("clone2".to_owned()), after_workon: Some("workon2".to_owned())};
+    let project = Project {
+      name: "test1".to_owned(),
+      git: "irrelevant".to_owned(),
+      tags: Some(vec!["tag1".to_owned(), "tag2".to_owned()]),
+      after_clone: None,
+      after_workon: None,
+      override_path: None,
+    };
+    let project2 = Project {
+      name: "test2".to_owned(),
+      git: "irrelevant".to_owned(),
+      tags: Some(vec!["tag1".to_owned(), "tag-does-not-exist".to_owned()]),
+      after_clone: None,
+      after_workon: None,
+      override_path: None,
+    };
+    let project3 = Project {
+      name: "test3".to_owned(),
+      git: "irrelevant".to_owned(),
+      tags: Some(vec!["tag1".to_owned()]),
+      after_clone: Some("clone override in project".to_owned()),
+      after_workon: Some("workon override in project".to_owned()),
+      override_path: None,
+    };
+    let project4 = Project {
+      name: "test4".to_owned(),
+      git: "irrelevant".to_owned(),
+      tags: Some(vec!["tag-does-not-exist".to_owned()]),
+      after_clone: None,
+      after_workon: None,
+      override_path: None,
+    };
+    let tag1 = Tag {
+      after_clone: Some("clone1".to_owned()),
+      after_workon: Some("workon1".to_owned()),
+    };
+    let tag2 = Tag {
+      after_clone: Some("clone2".to_owned()),
+      after_workon: Some("workon2".to_owned()),
+    };
     let mut projects: BTreeMap<String, Project> = BTreeMap::new();
     projects.insert("test1".to_owned(), project);
     projects.insert("test2".to_owned(), project2);
@@ -357,16 +391,24 @@ mod tests {
     let mut tags: BTreeMap<String, Tag> = BTreeMap::new();
     tags.insert("tag1".to_owned(), tag1);
     tags.insert("tag2".to_owned(), tag2);
-    let settings = Settings { workspace: "/test".to_owned(), default_after_workon: None, default_after_clone: None, tags: Some(tags)};
-    Config { projects: projects, settings: settings}
+    let settings = Settings {
+      workspace: "/test".to_owned(),
+      default_after_workon: None,
+      default_after_clone: None,
+      tags: Some(tags),
+    };
+    Config {
+      projects: projects,
+      settings: settings,
+    }
   }
 
   fn a_logger() -> Logger {
     use slog_term;
     use slog::{DrainExt, Level, LevelFilter};
     Logger::root(LevelFilter::new(slog_term::StreamerBuilder::new().stdout().build(),
-                                               Level::Info)
-                                .fuse(),
-                              o!())
+                                  Level::Info)
+                   .fuse(),
+                 o!())
   }
 }
