@@ -161,7 +161,7 @@ fn main() {
                                            workon::gen(subcommand_matches.value_of("PROJECT_NAME")
                                                                          .expect("argument required by clap.rs"),
                                                        config,
-                                                       subcommand_matches.is_present("quick"))
+                                                       subcommand_matches.is_present("quick"), &subcommand_logger)
                                          }
                                          "projectile" => projectile::projectile(config, &subcommand_logger),
                                          "foreach" => {

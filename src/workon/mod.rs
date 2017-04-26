@@ -1,6 +1,7 @@
 use config;
 use config::Project;
 use errors::AppError;
+use slog::Logger;
 
 
 pub fn ls(maybe_config: Result<config::Config, AppError>) -> Result<(), AppError> {
@@ -12,7 +13,7 @@ pub fn ls(maybe_config: Result<config::Config, AppError>) -> Result<(), AppError
   Ok(())
 }
 
-pub fn gen(name: &str, maybe_config: Result<config::Config, AppError>, quick: bool) -> Result<(), AppError> {
+pub fn gen(name: &str, maybe_config: Result<config::Config, AppError>, quick: bool, logger: &Logger) -> Result<(), AppError> {
   let config = maybe_config?;
   let project: &Project = config.projects
                                 .get(name)
@@ -28,7 +29,8 @@ pub fn gen(name: &str, maybe_config: Result<config::Config, AppError>, quick: bo
     let after_workon = if !quick {
       project.after_workon
              .clone()
-             .map(|cmd| format!(" && {}", cmd))
+             .map(|cmd| prepare_workon(cmd))
+             .or_else(|| config.resolve_workon_from_tags(project.tags.clone(), logger).map(prepare_workon))
              .unwrap_or_else(|| "".to_owned())
     } else {
       String::new()
@@ -36,4 +38,8 @@ pub fn gen(name: &str, maybe_config: Result<config::Config, AppError>, quick: bo
     println!("cd {}{}", path, after_workon);
     Ok(())
   }
+}
+
+fn prepare_workon(workon: String) -> String {
+  format!(" && {}", workon)
 }

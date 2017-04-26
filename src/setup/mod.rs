@@ -47,6 +47,7 @@ fn determine_projects(path: PathBuf, logger: &Logger) -> Result<BTreeMap<String,
            after_clone: None,
            after_workon: None,
            override_path: None,
+           tags: None,
          })
     }
                         Err(invalid_unicode) => Err(AppError::Utf8Error(invalid_unicode)),
@@ -74,6 +75,7 @@ fn write_config(projects: BTreeMap<String, Project>, logger: &Logger, workspace_
       workspace: workspace_dir.to_owned(),
       default_after_workon: None,
       default_after_clone: None,
+      tags: Some(BTreeMap::new()),
     },
   };
   debug!(logger, "Finished"; "projects" => format!("{:?}", config.projects.len()));
