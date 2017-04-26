@@ -32,7 +32,7 @@
     }
   },
   "settings": {
-    "workspace": "/home/brocode/workspace"
+    "workspace": "/home/brocode/workspace",
     "tags": {
       "git": {
         "after_workon": "git remote update --prune"
