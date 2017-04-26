@@ -55,11 +55,10 @@ impl Config {
   pub fn resolve_after_workon(&self, logger: &Logger, project: &Project) -> String {
     project.after_workon
            .clone()
-           .map(|cmd| prepare_workon(cmd))
            .or_else(|| {
                       self.resolve_workon_from_tags(project.tags.clone(), logger)
-                          .map(prepare_workon)
                     })
+           .map(|c| prepare_workon(&c))
            .unwrap_or_else(|| "".to_owned())
   }
 
@@ -83,7 +82,7 @@ impl Config {
         tags.iter()
             .flat_map(|t| match settings_tags.get(t) {
                       None => {
-          warn!(tag_logger, "Ignoring tag since it was not found in the config"; "missing_tag" => format!("{}", t));
+          warn!(tag_logger, "Ignoring tag since it was not found in the config"; "missing_tag" => t.clone());
           None
         }
                       Some(actual_tag) => actual_tag.after_workon.clone(),
@@ -96,7 +95,7 @@ impl Config {
   }
 }
 
-fn prepare_workon(workon: String) -> String {
+fn prepare_workon(workon: &str) -> String {
   format!(" && {}", workon)
 }
 
