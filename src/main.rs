@@ -215,7 +215,15 @@ _fw() {
 
       case $state in
         cmd)
-          _arguments '*:command:(projectile sync foreach add update)';
+          actions=(
+            'sync:Sync workspace'
+            'add:Add project to workspace'
+            'foreach:Run script on each project'
+            'projectile:Create projectile bookmarks'
+            'ls:List projects'
+            'update:Update project settings'
+          );
+          _describe action actions && ret=0;
         ;;
         maybe_project)
           case $words[2] in
