@@ -281,4 +281,72 @@ mod tests {
     let home = PathBuf::from("/my/home");
     assert_that(&do_expand(path, Some(home))).is_equal_to(PathBuf::from("/my/home/foo/bar"));
   }
+  #[test]
+  fn test_workon_from_tags() {
+    let config = a_config();
+    let logger = a_logger();
+    let resolved = config.resolve_after_workon(&logger, config.projects.get("test1").unwrap());
+    assert_that(&resolved).is_equal_to(" && workon1 && workon2".to_owned());
+  }
+  #[test]
+  fn test_after_clone_from_tags() {
+    let config = a_config();
+    let logger = a_logger();
+    let resolved = config.resolve_after_clone(&logger, config.projects.get("test1").unwrap());
+    assert_that(&resolved).is_equal_to(Some("clone1 && clone2".to_owned()));
+  }
+  #[test]
+  fn test_workon_from_tags_missing_one_tag_graceful() {
+    let config = a_config();
+    let logger = a_logger();
+    let resolved = config.resolve_after_workon(&logger, config.projects.get("test2").unwrap());
+    assert_that(&resolved).is_equal_to(" && workon1".to_owned());
+  }
+  #[test]
+  fn test_after_clone_override_from_project() {
+    let config = a_config();
+    let logger = a_logger();
+    let resolved = config.resolve_after_clone(&logger, config.projects.get("test2").unwrap());
+    assert_that(&resolved).is_equal_to(Some("clone1".to_owned()));
+  }
+  #[test]
+  fn test_workon_override_from_project() {
+    let config = a_config();
+    let logger = a_logger();
+    let resolved = config.resolve_after_workon(&logger, config.projects.get("test3").unwrap());
+    assert_that(&resolved).is_equal_to(" && workon override in project".to_owned());
+  }
+  #[test]
+  fn test_after_clone_from_tags_missing_one_tag_graceful() {
+    let config = a_config();
+    let logger = a_logger();
+    let resolved = config.resolve_after_clone(&logger, config.projects.get("test3").unwrap());
+    assert_that(&resolved).is_equal_to(Some("clone override in project".to_owned()));
+  }
+
+  fn a_config() -> Config {
+    let project = Project { name: "test1".to_owned(), git: "irrelevant".to_owned(), tags: Some(vec!["tag1".to_owned(), "tag2".to_owned()]), after_clone: None, after_workon: None, override_path: None};
+    let project2 = Project { name: "test2".to_owned(), git: "irrelevant".to_owned(), tags: Some(vec!["tag1".to_owned(), "tag-does-not-exist".to_owned()]), after_clone: None, after_workon: None, override_path: None};
+    let project3 = Project { name: "test3".to_owned(), git: "irrelevant".to_owned(), tags: Some(vec!["tag1".to_owned(), "tag-does-not-exist".to_owned()]), after_clone: Some("clone override in project".to_owned()), after_workon: Some("workon override in project".to_owned()), override_path: None};
+    let tag1 = Tag { after_clone: Some("clone1".to_owned()), after_workon: Some("workon1".to_owned())};
+    let tag2 = Tag { after_clone: Some("clone2".to_owned()), after_workon: Some("workon2".to_owned())};
+    let mut projects: BTreeMap<String, Project> = BTreeMap::new();
+    projects.insert("test1".to_owned(), project);
+    projects.insert("test2".to_owned(), project2);
+    projects.insert("test3".to_owned(), project3);
+    let mut tags: BTreeMap<String, Tag> = BTreeMap::new();
+    tags.insert("tag1".to_owned(), tag1);
+    tags.insert("tag2".to_owned(), tag2);
+    let settings = Settings { workspace: "/test".to_owned(), default_after_workon: None, default_after_clone: None, tags: Some(tags)};
+    Config { projects: projects, settings: settings}
+  }
+
+  fn a_logger() -> Logger {
+    use slog_term;
+    use slog::{DrainExt, Level, LevelFilter};
+    Logger::root(LevelFilter::new(slog_term::StreamerBuilder::new().stdout().build(),
+                                               Level::Info)
+                                .fuse(),
+                              o!())
+  }
 }
