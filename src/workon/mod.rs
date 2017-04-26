@@ -35,4 +35,3 @@ pub fn gen(name: &str, maybe_config: Result<config::Config, AppError>, quick: bo
     Ok(())
   }
 }
-

@@ -39,7 +39,6 @@ pub struct Config {
 }
 
 impl Project {
-
   fn check_sanity(&self, workspace: &str) -> Result<(), AppError> {
     let path = actual_path_to_project(workspace, self);
     if path.is_absolute() {
@@ -53,13 +52,15 @@ impl Project {
 }
 
 impl Config {
-
   pub fn resolve_after_workon(&self, logger: &Logger, project: &Project) -> String {
-      project.after_workon
-             .clone()
-             .map(|cmd| prepare_workon(cmd))
-             .or_else(|| self.resolve_workon_from_tags(project.tags.clone(), logger).map(prepare_workon))
-             .unwrap_or_else(|| "".to_owned())
+    project.after_workon
+           .clone()
+           .map(|cmd| prepare_workon(cmd))
+           .or_else(|| {
+                      self.resolve_workon_from_tags(project.tags.clone(), logger)
+                          .map(prepare_workon)
+                    })
+           .unwrap_or_else(|| "".to_owned())
   }
 
   fn check_sanity(self) -> Result<Config, AppError> {
@@ -78,19 +79,20 @@ impl Config {
     } else {
       let tags: Vec<String> = maybe_tags.unwrap();
       let settings_tags = self.clone().settings.tags.unwrap();
-      let resolved_after_workon: Vec<String> = tags.iter().flat_map(|t| {
-          match settings_tags.get(t) {
-            None => {
-              warn!(tag_logger, "Ignoring tag since it was not found in the config"; "missing_tag" => format!("{}", t));
-              None
-            },
-            Some(actual_tag) => actual_tag.after_workon.clone(),
-          }
-      }).collect();
+      let resolved_after_workon: Vec<String> =
+        tags.iter()
+            .flat_map(|t| match settings_tags.get(t) {
+                      None => {
+          warn!(tag_logger, "Ignoring tag since it was not found in the config"; "missing_tag" => format!("{}", t));
+          None
+        }
+                      Some(actual_tag) => actual_tag.after_workon.clone(),
+                      })
+            .collect();
       let after_workon_cmd = resolved_after_workon.join(" && ");
       debug!(tag_logger, format!("resolved {:?}", after_workon_cmd));
       Some(after_workon_cmd)
-      }
+    }
   }
 }
 
