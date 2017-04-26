@@ -74,7 +74,7 @@ pub fn foreach(maybe_config: Result<Config, AppError>, cmd: &str, logger: &Logge
 pub fn synchronize(maybe_config: Result<Config, AppError>, logger: &Logger) -> Result<(), AppError> {
   info!(logger, "Synchronizing everything");
   let config = maybe_config?;
-  let workspace = config.settings.workspace;
+  let workspace = config.settings.workspace.clone();
   let results: Vec<Result<(), AppError>> = config.projects
                                                  .par_iter()
                                                  .map(|(_, project)| {
@@ -96,7 +96,7 @@ pub fn synchronize(maybe_config: Result<Config, AppError>, logger: &Logger) -> R
                              warn!(project_logger, "Error cloning repo"; "error" => format!("{}", error));
                              AppError::GitError(error)
                            })
-                  .and_then(|_| match project.clone().after_clone {
+                  .and_then(|_| match config.resolve_after_clone(&project_logger, project) {
                             Some(cmd) => {
         info!(project_logger, "Handling post hooks"; "after_clone" => cmd);
         spawn_maybe(&cmd, &path, logger)

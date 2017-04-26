@@ -52,12 +52,15 @@ impl Project {
 }
 
 impl Config {
+  pub fn resolve_after_clone(&self, logger: &Logger, project: &Project) -> Option<String> {
+    project.after_clone
+           .clone()
+           .or_else(|| self.resolve_after_clone_from_tags(project.tags.clone(), logger))
+  }
   pub fn resolve_after_workon(&self, logger: &Logger, project: &Project) -> String {
     project.after_workon
            .clone()
-           .or_else(|| {
-                      self.resolve_workon_from_tags(project.tags.clone(), logger)
-                    })
+           .or_else(|| self.resolve_workon_from_tags(project.tags.clone(), logger))
            .map(|c| prepare_workon(&c))
            .unwrap_or_else(|| "".to_owned())
   }
@@ -91,6 +94,29 @@ impl Config {
       let after_workon_cmd = resolved_after_workon.join(" && ");
       debug!(tag_logger, format!("resolved {:?}", after_workon_cmd));
       Some(after_workon_cmd)
+    }
+  }
+  pub fn resolve_after_clone_from_tags(&self, maybe_tags: Option<Vec<String>>, logger: &Logger) -> Option<String> {
+    let tag_logger = logger.new(o!("tags" => format!("{:?}", maybe_tags)));
+    debug!(tag_logger, "Resolving");
+    if maybe_tags.is_none() || self.settings.tags.is_none() {
+      None
+    } else {
+      let tags: Vec<String> = maybe_tags.unwrap();
+      let settings_tags = self.clone().settings.tags.unwrap();
+      let resolved_after_clone: Vec<String> =
+        tags.iter()
+            .flat_map(|t| match settings_tags.get(t) {
+                      None => {
+          warn!(tag_logger, "Ignoring tag since it was not found in the config"; "missing_tag" => t.clone());
+          None
+        }
+                      Some(actual_tag) => actual_tag.after_clone.clone(),
+                      })
+            .collect();
+      let after_clone_cmd = resolved_after_clone.join(" && ");
+      debug!(tag_logger, format!("resolved {:?}", after_clone_cmd));
+      Some(after_clone_cmd)
     }
   }
 }
