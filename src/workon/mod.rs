@@ -27,11 +27,7 @@ pub fn gen(name: &str, maybe_config: Result<config::Config, AppError>, quick: bo
                                     path)))
   } else {
     let after_workon = if !quick {
-      project.after_workon
-             .clone()
-             .map(|cmd| prepare_workon(cmd))
-             .or_else(|| config.resolve_workon_from_tags(project.tags.clone(), logger).map(prepare_workon))
-             .unwrap_or_else(|| "".to_owned())
+      config.resolve_after_workon(logger, project)
     } else {
       String::new()
     };
@@ -40,6 +36,3 @@ pub fn gen(name: &str, maybe_config: Result<config::Config, AppError>, quick: bo
   }
 }
 
-fn prepare_workon(workon: String) -> String {
-  format!(" && {}", workon)
-}

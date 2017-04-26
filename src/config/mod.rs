@@ -39,6 +39,7 @@ pub struct Config {
 }
 
 impl Project {
+
   fn check_sanity(&self, workspace: &str) -> Result<(), AppError> {
     let path = actual_path_to_project(workspace, self);
     if path.is_absolute() {
@@ -52,12 +53,22 @@ impl Project {
 }
 
 impl Config {
+
+  pub fn resolve_after_workon(&self, logger: &Logger, project: &Project) -> String {
+      project.after_workon
+             .clone()
+             .map(|cmd| prepare_workon(cmd))
+             .or_else(|| self.resolve_workon_from_tags(project.tags.clone(), logger).map(prepare_workon))
+             .unwrap_or_else(|| "".to_owned())
+  }
+
   fn check_sanity(self) -> Result<Config, AppError> {
     for project in self.projects.values() {
       project.check_sanity(&self.settings.workspace)?
     }
     Ok(self)
   }
+
 
   pub fn resolve_workon_from_tags(&self, maybe_tags: Option<Vec<String>>, logger: &Logger) -> Option<String> {
     let tag_logger = logger.new(o!("tags" => format!("{:?}", maybe_tags)));
@@ -81,6 +92,10 @@ impl Config {
       Some(after_workon_cmd)
       }
   }
+}
+
+fn prepare_workon(workon: String) -> String {
+  format!(" && {}", workon)
 }
 
 fn read_config<R>(reader: Result<R, AppError>) -> Result<Config, AppError>
