@@ -212,7 +212,7 @@ _fw() {
   if ! command -v fw > /dev/null 2>&1; then
       _message "fw not installed";
   else
-      _arguments '1: :->cmd' '2: :->maybe_project' '3: :->maybe_update_option';
+      _arguments '1: :->cmd' '2: :->maybe_project' '*: :->maybe_update_option';
 
       case $state in
         cmd)
