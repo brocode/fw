@@ -17,7 +17,7 @@ pub fn print_path(maybe_config: Result<config::Config, AppError>, name: &str) ->
   let config = maybe_config?;
   let project = config.projects
                       .get(name)
-                      .ok_or(AppError::UserError(format!("project {} not found", name)))?;
+                      .ok_or_else(|| AppError::UserError(format!("project {} not found", name)))?;
   let canonical_project_path = config::actual_path_to_project(&config.settings.workspace, project);
   let path = canonical_project_path.to_str()
                                    .ok_or(AppError::InternalError("project path is not valid unicode"))?;
