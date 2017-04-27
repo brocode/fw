@@ -211,7 +211,7 @@ pub fn update_entry(maybe_config: Result<Config, AppError>,
                     override_path: override_path.or(old_project_config.override_path),
                     tags: None,
                   });
-    info!(logger, "Updated config"; "config" => format!("{:?}", config));
+    debug!(logger, "Updated config"; "config" => format!("{:?}", config));
     write_config(config, logger)
   }
 }
