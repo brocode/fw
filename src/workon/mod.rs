@@ -8,7 +8,7 @@ pub fn ls(maybe_config: Result<config::Config, AppError>) -> Result<(), AppError
   let config = maybe_config?;
   let output = config.projects
                      .into_iter()
-                     .map(|(_, p)| println!("{}", p.name));
+                     .map(|(name, _)| println!("{}", name));
   for _ in output {}
   Ok(())
 }
