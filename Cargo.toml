@@ -7,7 +7,7 @@ license = "WTFPL"
 categories = ["command-line-utilities"]
 repository = "https://github.com/brocode/fw"
 readme = "README.org"
-keywords = ["workspace", "productivity", "cli", "projects", "projectmanager", "automation", "emacs-support", "developer-tools" ]
+keywords = ["workspace", "productivity", "cli", "automation", "developer-tools" ]
 
 [dependencies]
 clap = "2.22.0"
