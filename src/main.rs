@@ -78,6 +78,12 @@ fn main() {
                          .value_name("CMD")
                          .index(1)
                          .required(true)))
+    .subcommand(SubCommand::with_name("print-path")
+                  .about("Print project path on stdout")
+                  .arg(Arg::with_name("PROJECT_NAME")
+                         .value_name("PROJECT_NAME")
+                         .index(1)
+                         .required(true)))
     .subcommand(SubCommand::with_name("projectile").about("Write projectile bookmarks"))
     .subcommand(SubCommand::with_name("ls").about("List projects"))
     .subcommand(SubCommand::with_name("gen-workon")
@@ -165,6 +171,11 @@ fn main() {
                                                        &subcommand_logger)
                                          }
                                          "projectile" => projectile::projectile(config, &subcommand_logger),
+                                         "print-path" => {
+                                           workon::print_path(config,
+                                                              subcommand_matches.value_of("PROJECT_NAME")
+                                                                                .expect("argument required by clap.rs"))
+                                         }
                                          "foreach" => {
                                            sync::foreach(config,
                                                          subcommand_matches.value_of("CMD")
