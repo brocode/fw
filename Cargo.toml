@@ -5,6 +5,9 @@ authors = ["mriehl <max@flatmap.ninja>"]
 description = "faster workspace management"
 license = "WTFPL"
 categories = ["command-line-utilities"]
+repository = "https://github.com/brocode/fw"
+readme = "README.org"
+keywords = ["workspace", "productivity", "cli", "projects", "projectmanager", "automation", "emacs-support", "developer-tools" ]
 
 [dependencies]
 clap = "2.22.0"
