@@ -1,7 +1,7 @@
 [package]
 name = "fw"
 version = "1.0.6-pre"
-authors = ["mriehl <max@flatmap.ninja>"]
+authors = ["brocode <bros@brocode.sh>"]
 description = "faster workspace management"
 license = "WTFPL"
 categories = ["command-line-utilities"]
