@@ -327,14 +327,22 @@ nworkon () {
   fi
 };
 
+__fw_projects() {
+  local projects;
+  fw -q ls | while read line; do
+      projects+=( $line );
+  done;
+  _describe -t projects 'project names' projects;
+};
+
 _fw() {
   if ! command -v fw > /dev/null 2>&1; then
       _message "fw not installed";
   else
-      _arguments '1: :->cmd' '2: :->maybe_project' '*: :->maybe_update_option';
+      _arguments '1: :->first' '2: :->second' '3: :->third';
 
       case $state in
-        cmd)
+        first)
           actions=(
             'sync:Sync workspace'
             'add:Add project to workspace'
@@ -342,26 +350,48 @@ _fw() {
             'projectile:Create projectile bookmarks'
             'ls:List projects'
             'update:Update project settings'
+            'tag:Manipulate tags'
           );
           _describe action actions && ret=0;
         ;;
-        maybe_project)
+        second)
           case $words[2] in
             update)
-              local projects;
-              fw -q ls | while read line; do
-                  projects+=( $line );
-              done;
-              _describe -t projects 'project names' projects;
+              __fw_projects;
+            ;;
+            tag)
+              actions=(
+                'add:Adds a tag'
+                'rm:Removes a tag'
+                'ls:Lists tags'
+                'tag-project:Add a tag to a project'
+                'untag-project:Remove a tag from a project'
+              );
+              _describe action actions && ret=0;
             ;;
             *)
             ;;
           esac
         ;;
-        maybe_update_option)
+        third)
           case $words[2] in
             update)
               _arguments '*:option:(--override-path --git-url --after-clone --after-workon)';
+            ;;
+            tag)
+              case $words[3] in
+              tag-project)
+                __fw_projects;
+              ;;
+              untag-project)
+                __fw_projects;
+              ;;
+              ls)
+                __fw_projects;
+              ;;
+              *)
+              ;;
+              esac
             ;;
             *)
             ;;
@@ -376,12 +406,7 @@ _workon() {
   if ! command -v fw > /dev/null 2>&1; then
       _message "fw not installed";
   else
-      local ret=1;
-      local names;
-      fw -q ls | while read line; do
-          names+=( $line );
-      done;
-      _describe -t names 'project names' names;
+    __fw_projects;
   fi
 };
 
