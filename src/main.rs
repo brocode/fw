@@ -148,6 +148,11 @@ fn main() {
                                 .arg(Arg::with_name("tag-name")
                                        .value_name("tag")
                                        .required(true)))
+                  .subcommand(SubCommand::with_name("rm")
+                                .about("Deletes a tag. Will not untag projects.")
+                                .arg(Arg::with_name("tag-name")
+                                       .value_name("tag name")
+                                       .required(true)))
                   .subcommand(SubCommand::with_name("add")
                                 .alias("update")
                                 .alias("create")
@@ -284,6 +289,12 @@ fn execute_tag_subcommand(maybe_config: Result<config::Config, AppError>,
                                       .expect("argument enforced by clap.rs");
     tag::remove_tag(maybe_config, project_name, tag_name, logger)
   },
+  "rm" => {
+    let tag_name: String = tag_matches.value_of("tag-name")
+                                      .map(str::to_string)
+                                      .expect("argument enforced by clap.rs");
+    tag::delete_tag(maybe_config, tag_name, logger)
+  }
   "add" => {
     let tag_name: String = tag_matches.value_of("tag-name")
                                       .map(str::to_string)
