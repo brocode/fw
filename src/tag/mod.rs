@@ -1,6 +1,9 @@
+use config;
 use config::Config;
+use config::Tag;
 use errors::AppError;
 use slog::Logger;
+use std::collections::BTreeMap;
 
 
 pub fn list_tags(maybe_config: Result<Config, AppError>, maybe_project_name: Option<String>, logger: &Logger) -> Result<(), AppError> {
@@ -12,6 +15,24 @@ pub fn list_tags(maybe_config: Result<Config, AppError>, maybe_project_name: Opt
     debug!(logger, "Listing tags");
     list_all_tags(config)
   }
+}
+
+pub fn create_tag(maybe_config: Result<Config, AppError>,
+                  tag_name: String,
+                  after_workon: Option<String>,
+                  after_clone: Option<String>,
+                  logger: &Logger)
+                  -> Result<(), AppError> {
+  let mut config: Config = maybe_config?;
+  let mut tags: BTreeMap<String, Tag>= config.settings.tags.unwrap_or(BTreeMap::new());
+  info!(logger, "Create tag");
+  let new_tag = Tag {
+    after_clone: after_clone,
+    after_workon: after_workon,
+  };
+  tags.insert(tag_name, new_tag);
+  config.settings.tags = Some(tags);
+  config::write_config(config, logger)
 }
 
 fn list_all_tags(config: Config) -> Result<(), AppError> {

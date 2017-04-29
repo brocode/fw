@@ -124,8 +124,25 @@ fn main() {
                   .about("Allows working with tags.")
                   .subcommand(SubCommand::with_name("ls")
                                 .alias("list")
+                                .about("Lists tags")
                                 .arg(Arg::with_name("PROJECT_NAME")
                                        .value_name("PROJECT_NAME")
+                                       .required(false)))
+                  .subcommand(SubCommand::with_name("create")
+                                .alias("update")
+                                .about("Creates a new tag. Replaces existing.")
+                                .arg(Arg::with_name("tag-name")
+                                       .value_name("tag name")
+                                       .required(true))
+                                .arg(Arg::with_name("after-workon")
+                                       .value_name("after-workon")
+                                       .long("after-workon")
+                                       .takes_value(true)
+                                       .required(false))
+                                .arg(Arg::with_name("after-clone")
+                                       .value_name("after-clone")
+                                       .long("after-clone")
+                                       .takes_value(true)
                                        .required(false))))
     .get_matches();
 
@@ -229,6 +246,14 @@ fn execute_tag_subcommand(maybe_config: Result<config::Config, AppError>,
   "ls" => {
     let maybe_project_name: Option<String> = tag_matches.value_of("PROJECT_NAME").map(str::to_string);
     tag::list_tags(maybe_config, maybe_project_name, logger)
+  }
+  "create" => {
+    let tag_name: String = tag_matches.value_of("tag-name")
+                                      .map(str::to_string)
+                                      .expect("argument enforced by clap.rs");
+    let after_workon: Option<String> = tag_matches.value_of("after-workon").map(str::to_string);
+    let after_clone: Option<String> = tag_matches.value_of("after-clone").map(str::to_string);
+    tag::create_tag(maybe_config, tag_name, after_workon, after_clone, logger)
   }
   _ => Result::Err(AppError::InternalError("Command not implemented")),
   }
