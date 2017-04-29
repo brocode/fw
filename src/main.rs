@@ -15,6 +15,10 @@ extern crate rayon;
 
 extern crate core;
 
+#[cfg(test)]
+#[macro_use]
+extern crate maplit;
+
 extern crate regex;
 
 #[cfg(test)]
@@ -119,6 +123,53 @@ fn main() {
                          .long("after-clone")
                          .takes_value(true)
                          .required(false)))
+    .subcommand(SubCommand::with_name("tag")
+                  .alias("tags")
+                  .about("Allows working with tags.")
+                  .subcommand(SubCommand::with_name("ls")
+                                .alias("list")
+                                .about("Lists tags")
+                                .arg(Arg::with_name("PROJECT_NAME")
+                                       .value_name("PROJECT_NAME")
+                                       .required(false)))
+                  .subcommand(SubCommand::with_name("tag-project")
+                                .about("Add tag to project")
+                                .arg(Arg::with_name("PROJECT_NAME")
+                                       .value_name("PROJECT_NAME")
+                                       .required(true))
+                                .arg(Arg::with_name("tag-name")
+                                       .value_name("tag")
+                                       .required(true)))
+                  .subcommand(SubCommand::with_name("untag-project")
+                                .about("Removes tag from project")
+                                .arg(Arg::with_name("PROJECT_NAME")
+                                       .value_name("PROJECT_NAME")
+                                       .required(true))
+                                .arg(Arg::with_name("tag-name")
+                                       .value_name("tag")
+                                       .required(true)))
+                  .subcommand(SubCommand::with_name("rm")
+                                .about("Deletes a tag. Will not untag projects.")
+                                .arg(Arg::with_name("tag-name")
+                                       .value_name("tag name")
+                                       .required(true)))
+                  .subcommand(SubCommand::with_name("add")
+                                .alias("update")
+                                .alias("create")
+                                .about("Creates a new tag. Replaces existing.")
+                                .arg(Arg::with_name("tag-name")
+                                       .value_name("tag name")
+                                       .required(true))
+                                .arg(Arg::with_name("after-workon")
+                                       .value_name("after-workon")
+                                       .long("after-workon")
+                                       .takes_value(true)
+                                       .required(false))
+                                .arg(Arg::with_name("after-clone")
+                                       .value_name("after-clone")
+                                       .long("after-clone")
+                                       .takes_value(true)
+                                       .required(false))))
     .get_matches();
 
   let logger = logger_from_verbosity(matches.occurrences_of("v"), &matches.is_present("q"));
@@ -183,6 +234,19 @@ fn main() {
                                                          &subcommand_logger)
                                          }
                                          "print-zsh-setup" => print_zsh_setup(),
+                                         "tag" => {
+    let subsubcommand_name: String = subcommand_matches.subcommand_name()
+                                                       .expect("subcommand matches enforced by clap.rs")
+                                                       .to_owned();
+    let subsubcommand_matches: clap::ArgMatches =
+      subcommand_matches.subcommand_matches(&subsubcommand_name)
+                        .expect("subcommand matches enforced by clap.rs")
+                        .to_owned();
+    execute_tag_subcommand(config,
+                           subsubcommand_name,
+                           subsubcommand_matches,
+                           &subcommand_logger)
+  }
                                          "ls" => workon::ls(config),
                                          _ => Result::Err(AppError::InternalError("Command not implemented")),
                                          }
@@ -190,7 +254,7 @@ fn main() {
                                          .map(|duration| format!("{}sec", duration.as_secs()));
 
   match result {
-  Ok(time) => info!(subcommand_logger, "Done"; "time" => time),
+  Ok(time) => debug!(subcommand_logger, "Done"; "time" => time),
   Err(error) => {
     crit!(subcommand_logger, "Error running command"; "error" => format!("{:?}", error));
     std::process::exit(1)
@@ -199,87 +263,52 @@ fn main() {
   }
 }
 
+fn execute_tag_subcommand(maybe_config: Result<config::Config, AppError>,
+                          tag_command_name: String,
+                          tag_matches: clap::ArgMatches,
+                          logger: &Logger)
+                          -> Result<(), AppError> {
+  match tag_command_name.as_ref() {
+  "ls" => {
+    let maybe_project_name: Option<String> = tag_matches.value_of("PROJECT_NAME").map(str::to_string);
+    tag::list_tags(maybe_config, maybe_project_name, logger)
+  },
+  "tag-project" => {
+    let project_name: String = tag_matches.value_of("PROJECT_NAME").map(str::to_string)
+                                      .expect("argument enforced by clap.rs");
+    let tag_name: String = tag_matches.value_of("tag-name")
+                                      .map(str::to_string)
+                                      .expect("argument enforced by clap.rs");
+    tag::add_tag(maybe_config, project_name, tag_name, logger)
+  },
+  "untag-project" => {
+    let project_name: String = tag_matches.value_of("PROJECT_NAME").map(str::to_string)
+                                      .expect("argument enforced by clap.rs");
+    let tag_name: String = tag_matches.value_of("tag-name")
+                                      .map(str::to_string)
+                                      .expect("argument enforced by clap.rs");
+    tag::remove_tag(maybe_config, project_name, tag_name, logger)
+  },
+  "rm" => {
+    let tag_name: String = tag_matches.value_of("tag-name")
+                                      .map(str::to_string)
+                                      .expect("argument enforced by clap.rs");
+    tag::delete_tag(maybe_config, tag_name, logger)
+  }
+  "add" => {
+    let tag_name: String = tag_matches.value_of("tag-name")
+                                      .map(str::to_string)
+                                      .expect("argument enforced by clap.rs");
+    let after_workon: Option<String> = tag_matches.value_of("after-workon").map(str::to_string);
+    let after_clone: Option<String> = tag_matches.value_of("after-clone").map(str::to_string);
+    tag::create_tag(maybe_config, tag_name, after_workon, after_clone, logger)
+  }
+  _ => Result::Err(AppError::InternalError("Command not implemented")),
+  }
+}
+
 fn print_zsh_setup() -> Result<(), AppError> {
-  let completion = r#"
-workon () {
-  SCRIPT="$(~/.cargo/bin/fw -q gen-workon $@)";
-  if [ $? -eq 0 ]; then
-    eval "$SCRIPT";
-  else
-    printf "$SCRIPT\n";
-  fi
-};
-
-nworkon () {
-  SCRIPT="$(~/.cargo/bin/fw -q gen-workon -x $@)";
-  if [ $? -eq 0 ]; then
-    eval "$SCRIPT";
-  else
-    printf "$SCRIPT\n";
-  fi
-};
-
-_fw() {
-  if ! command -v fw > /dev/null 2>&1; then
-      _message "fw not installed";
-  else
-      _arguments '1: :->cmd' '2: :->maybe_project' '*: :->maybe_update_option';
-
-      case $state in
-        cmd)
-          actions=(
-            'sync:Sync workspace'
-            'add:Add project to workspace'
-            'foreach:Run script on each project'
-            'projectile:Create projectile bookmarks'
-            'ls:List projects'
-            'update:Update project settings'
-          );
-          _describe action actions && ret=0;
-        ;;
-        maybe_project)
-          case $words[2] in
-            update)
-              local projects;
-              fw -q ls | while read line; do
-                  projects+=( $line );
-              done;
-              _describe -t projects 'project names' projects;
-            ;;
-            *)
-            ;;
-          esac
-        ;;
-        maybe_update_option)
-          case $words[2] in
-            update)
-              _arguments '*:option:(--override-path --git-url --after-clone --after-workon)';
-            ;;
-            *)
-            ;;
-          esac
-        ;;
-       esac
-  fi
-};
-compdef _fw fw;
-
-_workon() {
-  if ! command -v fw > /dev/null 2>&1; then
-      _message "fw not installed";
-  else
-      local ret=1;
-      local names;
-      fw -q ls | while read line; do
-          names+=( $line );
-      done;
-      _describe -t names 'project names' names;
-  fi
-};
-
-compdef _workon workon;
-compdef _workon nworkon;
-"#;
+  let completion = include_str!("setup.zsh");
   println!("{}", completion);
   Ok(())
 }
@@ -290,3 +319,4 @@ mod sync;
 mod setup;
 mod workon;
 mod projectile;
+mod tag;

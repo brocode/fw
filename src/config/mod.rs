@@ -1,7 +1,7 @@
 use errors::AppError;
 use serde_json;
 use slog::Logger;
-use std::collections::BTreeMap;
+use std::collections::{BTreeMap, BTreeSet};
 use std::env;
 use std::fs::File;
 use std::io::BufReader;
@@ -29,7 +29,7 @@ pub struct Project {
   pub after_clone: Option<String>,
   pub after_workon: Option<String>,
   pub override_path: Option<String>,
-  pub tags: Option<Vec<String>>,
+  pub tags: Option<BTreeSet<String>>,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -72,14 +72,14 @@ impl Config {
     Ok(self)
   }
 
-  fn resolve_workon_from_tags(&self, maybe_tags: Option<Vec<String>>, logger: &Logger) -> Option<String> {
+  fn resolve_workon_from_tags(&self, maybe_tags: Option<BTreeSet<String>>, logger: &Logger) -> Option<String> {
     self.resolve_from_tags(|t| t.clone().after_workon, maybe_tags, logger)
   }
-  fn resolve_after_clone_from_tags(&self, maybe_tags: Option<Vec<String>>, logger: &Logger) -> Option<String> {
+  fn resolve_after_clone_from_tags(&self, maybe_tags: Option<BTreeSet<String>>, logger: &Logger) -> Option<String> {
     self.resolve_from_tags(|t| t.clone().after_clone, maybe_tags, logger)
   }
 
-  fn resolve_from_tags<F>(&self, resolver: F, maybe_tags: Option<Vec<String>>, logger: &Logger) -> Option<String>
+  fn resolve_from_tags<F>(&self, resolver: F, maybe_tags: Option<BTreeSet<String>>, logger: &Logger) -> Option<String>
     where F: Fn(&Tag) -> Option<String>
   {
     let tag_logger = logger.new(o!("tags" => format!("{:?}", maybe_tags)));
@@ -87,7 +87,7 @@ impl Config {
     if maybe_tags.is_none() || self.settings.tags.is_none() {
       None
     } else {
-      let tags: Vec<String> = maybe_tags.unwrap();
+      let tags: BTreeSet<String> = maybe_tags.unwrap();
       let settings_tags = self.clone().settings.tags.unwrap();
       let resolved: Vec<String> = tags.iter()
                                       .flat_map(|t| match settings_tags.get(t) {
@@ -346,7 +346,7 @@ mod tests {
     let project = Project {
       name: "test1".to_owned(),
       git: "irrelevant".to_owned(),
-      tags: Some(vec!["tag1".to_owned(), "tag2".to_owned()]),
+      tags: Some(btreeset!["tag1".to_owned(), "tag2".to_owned()]),
       after_clone: None,
       after_workon: None,
       override_path: None,
@@ -354,7 +354,7 @@ mod tests {
     let project2 = Project {
       name: "test2".to_owned(),
       git: "irrelevant".to_owned(),
-      tags: Some(vec!["tag1".to_owned(), "tag-does-not-exist".to_owned()]),
+      tags: Some(btreeset!["tag1".to_owned(), "tag-does-not-exist".to_owned()]),
       after_clone: None,
       after_workon: None,
       override_path: None,
@@ -362,7 +362,7 @@ mod tests {
     let project3 = Project {
       name: "test3".to_owned(),
       git: "irrelevant".to_owned(),
-      tags: Some(vec!["tag1".to_owned()]),
+      tags: Some(btreeset!["tag1".to_owned()]),
       after_clone: Some("clone override in project".to_owned()),
       after_workon: Some("workon override in project".to_owned()),
       override_path: None,
@@ -370,7 +370,7 @@ mod tests {
     let project4 = Project {
       name: "test4".to_owned(),
       git: "irrelevant".to_owned(),
-      tags: Some(vec!["tag-does-not-exist".to_owned()]),
+      tags: Some(btreeset!["tag-does-not-exist".to_owned()]),
       after_clone: None,
       after_workon: None,
       override_path: None,
