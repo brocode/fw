@@ -52,10 +52,27 @@ pub fn add_tag(maybe_config: Result<Config, AppError>, project_name: String, tag
     new_tags.insert(tag_name);
     project.tags = Some(new_tags);
     config.projects.insert(project_name, project);
+    config::write_config(config, logger)
   } else {
-    return Result::Err(AppError::UserError(format!("Unknown project {}", project_name)));
+    Result::Err(AppError::UserError(format!("Unknown project {}", project_name)))
   }
-  config::write_config(config, logger)
+}
+
+pub fn remove_tag(maybe_config: Result<Config, AppError>, project_name: String, tag_name: String, logger: &Logger) -> Result<(), AppError> {
+  let mut config: Config = maybe_config?;
+
+  if let Some(mut project) = config.projects.get(&project_name).cloned() {
+    let mut new_tags: BTreeSet<String> = project.tags.clone().unwrap_or(BTreeSet::new());
+    if new_tags.remove(&tag_name) {
+      project.tags = Some(new_tags);
+      config.projects.insert(project_name, project);
+      config::write_config(config, logger)
+    } else {
+      Result::Ok(())
+    }
+  } else {
+    return Result::Err(AppError::UserError(format!("Unknown project {}", project_name)))
+  }
 }
 
 

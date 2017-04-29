@@ -132,7 +132,7 @@ fn main() {
                                 .arg(Arg::with_name("PROJECT_NAME")
                                        .value_name("PROJECT_NAME")
                                        .required(false)))
-                  .subcommand(SubCommand::with_name("add")
+                  .subcommand(SubCommand::with_name("tag-project")
                                 .about("Add tag to project")
                                 .arg(Arg::with_name("PROJECT_NAME")
                                        .value_name("PROJECT_NAME")
@@ -140,8 +140,17 @@ fn main() {
                                 .arg(Arg::with_name("tag-name")
                                        .value_name("tag")
                                        .required(true)))
-                  .subcommand(SubCommand::with_name("create")
+                  .subcommand(SubCommand::with_name("untag-project")
+                                .about("Removes tag from project")
+                                .arg(Arg::with_name("PROJECT_NAME")
+                                       .value_name("PROJECT_NAME")
+                                       .required(true))
+                                .arg(Arg::with_name("tag-name")
+                                       .value_name("tag")
+                                       .required(true)))
+                  .subcommand(SubCommand::with_name("add")
                                 .alias("update")
+                                .alias("create")
                                 .about("Creates a new tag. Replaces existing.")
                                 .arg(Arg::with_name("tag-name")
                                        .value_name("tag name")
@@ -259,7 +268,7 @@ fn execute_tag_subcommand(maybe_config: Result<config::Config, AppError>,
     let maybe_project_name: Option<String> = tag_matches.value_of("PROJECT_NAME").map(str::to_string);
     tag::list_tags(maybe_config, maybe_project_name, logger)
   },
-  "add" => {
+  "tag-project" => {
     let project_name: String = tag_matches.value_of("PROJECT_NAME").map(str::to_string)
                                       .expect("argument enforced by clap.rs");
     let tag_name: String = tag_matches.value_of("tag-name")
@@ -267,7 +276,15 @@ fn execute_tag_subcommand(maybe_config: Result<config::Config, AppError>,
                                       .expect("argument enforced by clap.rs");
     tag::add_tag(maybe_config, project_name, tag_name, logger)
   },
-  "create" => {
+  "untag-project" => {
+    let project_name: String = tag_matches.value_of("PROJECT_NAME").map(str::to_string)
+                                      .expect("argument enforced by clap.rs");
+    let tag_name: String = tag_matches.value_of("tag-name")
+                                      .map(str::to_string)
+                                      .expect("argument enforced by clap.rs");
+    tag::remove_tag(maybe_config, project_name, tag_name, logger)
+  },
+  "add" => {
     let tag_name: String = tag_matches.value_of("tag-name")
                                       .map(str::to_string)
                                       .expect("argument enforced by clap.rs");
