@@ -119,6 +119,14 @@ fn main() {
                          .long("after-clone")
                          .takes_value(true)
                          .required(false)))
+    .subcommand(SubCommand::with_name("tag")
+                  .alias("tags")
+                  .about("Allows working with tags.")
+                  .subcommand(SubCommand::with_name("ls")
+                                .alias("list")
+                                .arg(Arg::with_name("PROJECT_NAME")
+                                       .value_name("PROJECT_NAME")
+                                       .required(false))))
     .get_matches();
 
   let logger = logger_from_verbosity(matches.occurrences_of("v"), &matches.is_present("q"));
@@ -183,6 +191,19 @@ fn main() {
                                                          &subcommand_logger)
                                          }
                                          "print-zsh-setup" => print_zsh_setup(),
+                                         "tag" => {
+    let subsubcommand_name: String = subcommand_matches.subcommand_name()
+                                                       .expect("subcommand matches enforced by clap.rs")
+                                                       .to_owned();
+    let subsubcommand_matches: clap::ArgMatches =
+      subcommand_matches.subcommand_matches(&subsubcommand_name)
+                        .expect("subcommand matches enforced by clap.rs")
+                        .to_owned();
+    execute_tag_subcommand(config,
+                           subsubcommand_name,
+                           subsubcommand_matches,
+                           &subcommand_logger)
+  }
                                          "ls" => workon::ls(config),
                                          _ => Result::Err(AppError::InternalError("Command not implemented")),
                                          }
@@ -190,12 +211,26 @@ fn main() {
                                          .map(|duration| format!("{}sec", duration.as_secs()));
 
   match result {
-  Ok(time) => info!(subcommand_logger, "Done"; "time" => time),
+  Ok(time) => debug!(subcommand_logger, "Done"; "time" => time),
   Err(error) => {
     crit!(subcommand_logger, "Error running command"; "error" => format!("{:?}", error));
     std::process::exit(1)
   }
 
+  }
+}
+
+fn execute_tag_subcommand(maybe_config: Result<config::Config, AppError>,
+                          tag_command_name: String,
+                          tag_matches: clap::ArgMatches,
+                          logger: &Logger)
+                          -> Result<(), AppError> {
+  match tag_command_name.as_ref() {
+  "ls" => {
+    let maybe_project_name: Option<String> = tag_matches.value_of("PROJECT_NAME").map(str::to_string);
+    tag::list_tags(maybe_config, maybe_project_name, logger)
+  }
+  _ => Result::Err(AppError::InternalError("Command not implemented")),
   }
 }
 
@@ -290,3 +325,4 @@ mod sync;
 mod setup;
 mod workon;
 mod projectile;
+mod tag;
