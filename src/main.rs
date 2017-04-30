@@ -28,6 +28,7 @@ use clap::{App, AppSettings, Arg, SubCommand};
 use errors::AppError;
 use slog::{DrainExt, Level, LevelFilter, Logger};
 use std::time::SystemTime;
+use std::str::FromStr;
 
 fn logger_from_verbosity(verbosity: u64, quiet: &bool) -> Logger {
   let log_level: Level = match verbosity {
@@ -163,6 +164,11 @@ fn main() {
                                 .arg(Arg::with_name("after-workon")
                                        .value_name("after-workon")
                                        .long("after-workon")
+                                       .takes_value(true)
+                                       .required(false))
+                                .arg(Arg::with_name("priority")
+                                       .value_name("priority")
+                                       .long("priority")
                                        .takes_value(true)
                                        .required(false))
                                 .arg(Arg::with_name("after-clone")
@@ -303,7 +309,8 @@ fn execute_tag_subcommand(maybe_config: Result<config::Config, AppError>,
                                       .expect("argument enforced by clap.rs");
     let after_workon: Option<String> = tag_matches.value_of("after-workon").map(str::to_string);
     let after_clone: Option<String> = tag_matches.value_of("after-clone").map(str::to_string);
-    tag::create_tag(maybe_config, tag_name, after_workon, after_clone, logger)
+    let priority: Option<u8> = tag_matches.value_of("priority").map(u8::from_str).map(|p| p.expect("invalid tag priority value, must be an u8"));
+    tag::create_tag(maybe_config, tag_name, after_workon, after_clone, priority, logger)
   }
   _ => Result::Err(AppError::InternalError("Command not implemented")),
   }
