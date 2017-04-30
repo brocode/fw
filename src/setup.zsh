@@ -49,12 +49,16 @@ _fw() {
             'ls:List projects'
             'update:Update project settings'
             'tag:Manipulate tags'
+            'export:Exports a project as shell commands'
           );
           _describe action actions && ret=0;
         ;;
         second)
           case $words[2] in
             update)
+              __fw_projects;
+            ;;
+            export)
               __fw_projects;
             ;;
             tag)
