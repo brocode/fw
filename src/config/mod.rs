@@ -83,7 +83,7 @@ impl Config {
   fn tag_priority_or_fallback(&self, name: &str, tag: &Tag, logger: &Logger) -> u8 {
     match tag.priority {
     None => {
-      warn!(logger, r#"No tag priority set, will use default (50).
+      debug!(logger, r#"No tag priority set, will use default (50).
 Tags with low priority are applied first and if they all have the same priority
 they will be applied in alphabetical name order so it is recommended you make a
 conscious choice and set the value."#;
