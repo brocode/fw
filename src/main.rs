@@ -83,6 +83,12 @@ fn main() {
                          .value_name("CMD")
                          .index(1)
                          .required(true)))
+    .subcommand(SubCommand::with_name("export")
+                  .about("Exports project as fw shell script")
+                  .arg(Arg::with_name("PROJECT_NAME")
+                         .value_name("PROJECT_NAME")
+                         .index(1)
+                         .required(true)))
     .subcommand(SubCommand::with_name("print-path")
                   .about("Print project path on stdout")
                   .arg(Arg::with_name("PROJECT_NAME")
@@ -233,6 +239,11 @@ fn main() {
                                                               subcommand_matches.value_of("PROJECT_NAME")
                                                                                 .expect("argument required by clap.rs"))
                                          }
+                                         "export" => {
+                                           export::export_project(config,
+                                                              subcommand_matches.value_of("PROJECT_NAME")
+                                                                                .expect("argument required by clap.rs"))
+                                         }
                                          "foreach" => {
                                            sync::foreach(config,
                                                          subcommand_matches.value_of("CMD")
@@ -329,3 +340,4 @@ mod setup;
 mod workon;
 mod projectile;
 mod tag;
+mod export;
