@@ -305,11 +305,25 @@ mod tests {
     assert_that(&resolved).is_equal_to(" && workon1 && workon2".to_owned());
   }
   #[test]
+  fn test_workon_from_tags_prioritized() {
+    let config = a_config();
+    let logger = a_logger();
+    let resolved = config.resolve_after_workon(&logger, config.projects.get("test5").unwrap());
+    assert_that(&resolved).is_equal_to(" && workon4 && workon3".to_owned());
+  }
+  #[test]
   fn test_after_clone_from_tags() {
     let config = a_config();
     let logger = a_logger();
     let resolved = config.resolve_after_clone(&logger, config.projects.get("test1").unwrap());
     assert_that(&resolved).is_equal_to(Some("clone1 && clone2".to_owned()));
+  }
+  #[test]
+  fn test_after_clone_from_tags_prioritized() {
+    let config = a_config();
+    let logger = a_logger();
+    let resolved = config.resolve_after_clone(&logger, config.projects.get("test5").unwrap());
+    assert_that(&resolved).is_equal_to(Some("clone4 && clone3".to_owned()));
   }
   #[test]
   fn test_workon_from_tags_missing_one_tag_graceful() {
@@ -387,6 +401,14 @@ mod tests {
       after_workon: None,
       override_path: None,
     };
+    let project5 = Project {
+      name: "test5".to_owned(),
+      git: "irrelevant".to_owned(),
+      tags: Some(btreeset!["tag3".to_owned(), "tag4".to_owned()]),
+      after_clone: None,
+      after_workon: None,
+      override_path: None,
+    };
     let tag1 = Tag {
       after_clone: Some("clone1".to_owned()),
       after_workon: Some("workon1".to_owned()),
@@ -397,14 +419,27 @@ mod tests {
       after_workon: Some("workon2".to_owned()),
       priority: None,
     };
+    let tag3 = Tag {
+      after_clone: Some("clone3".to_owned()),
+      after_workon: Some("workon3".to_owned()),
+      priority: Some(100),
+    };
+    let tag4 = Tag {
+      after_clone: Some("clone4".to_owned()),
+      after_workon: Some("workon4".to_owned()),
+      priority: Some(0),
+    };
     let mut projects: BTreeMap<String, Project> = BTreeMap::new();
     projects.insert("test1".to_owned(), project);
     projects.insert("test2".to_owned(), project2);
     projects.insert("test3".to_owned(), project3);
     projects.insert("test4".to_owned(), project4);
+    projects.insert("test5".to_owned(), project5);
     let mut tags: BTreeMap<String, Tag> = BTreeMap::new();
     tags.insert("tag1".to_owned(), tag1);
     tags.insert("tag2".to_owned(), tag2);
+    tags.insert("tag3".to_owned(), tag3);
+    tags.insert("tag4".to_owned(), tag4);
     let settings = Settings {
       workspace: "/test".to_owned(),
       default_after_workon: None,
