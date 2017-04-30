@@ -20,6 +20,7 @@ pub struct Settings {
 pub struct Tag {
   pub after_clone: Option<String>,
   pub after_workon: Option<String>,
+  pub priority: Option<u8>,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -89,15 +90,19 @@ impl Config {
     } else {
       let tags: BTreeSet<String> = maybe_tags.unwrap();
       let settings_tags = self.clone().settings.tags.unwrap();
-      let resolved: Vec<String> = tags.iter()
+      let mut resolved_with_priority: Vec<(String, u8)> = tags.iter()
                                       .flat_map(|t| match settings_tags.get(t) {
                                                 None => {
         warn!(tag_logger, "Ignoring tag since it was not found in the config"; "missing_tag" => t.clone());
         None
       }
-                                                Some(actual_tag) => resolver(actual_tag).clone(),
+                                                Some(actual_tag) => resolver(actual_tag).clone().map(|val| (val, actual_tag.priority.unwrap_or(50))),
                                                 })
                                       .collect();
+      debug!(logger, "before sort"; "tags" => format!("{:?}", resolved_with_priority));
+      resolved_with_priority.sort_by_key(|resolved_and_priority| resolved_and_priority.1);
+      debug!(logger, "after sort"; "tags" => format!("{:?}", resolved_with_priority));
+      let resolved: Vec<String> = resolved_with_priority.into_iter().map(|r| r.0).collect();
       if resolved.is_empty() {
         None
       } else {
@@ -378,10 +383,12 @@ mod tests {
     let tag1 = Tag {
       after_clone: Some("clone1".to_owned()),
       after_workon: Some("workon1".to_owned()),
+      priority: None,
     };
     let tag2 = Tag {
       after_clone: Some("clone2".to_owned()),
       after_workon: Some("workon2".to_owned()),
+      priority: None,
     };
     let mut projects: BTreeMap<String, Project> = BTreeMap::new();
     projects.insert("test1".to_owned(), project);

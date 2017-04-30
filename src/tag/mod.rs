@@ -29,6 +29,7 @@ pub fn create_tag(maybe_config: Result<Config, AppError>,
   let new_tag = Tag {
     after_clone: after_clone,
     after_workon: after_workon,
+    priority: None,
   };
   tags.insert(tag_name, new_tag);
   config.settings.tags = Some(tags);
