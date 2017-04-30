@@ -272,23 +272,25 @@ fn execute_tag_subcommand(maybe_config: Result<config::Config, AppError>,
   "ls" => {
     let maybe_project_name: Option<String> = tag_matches.value_of("PROJECT_NAME").map(str::to_string);
     tag::list_tags(maybe_config, maybe_project_name, logger)
-  },
+  }
   "tag-project" => {
-    let project_name: String = tag_matches.value_of("PROJECT_NAME").map(str::to_string)
-                                      .expect("argument enforced by clap.rs");
+    let project_name: String = tag_matches.value_of("PROJECT_NAME")
+                                          .map(str::to_string)
+                                          .expect("argument enforced by clap.rs");
     let tag_name: String = tag_matches.value_of("tag-name")
                                       .map(str::to_string)
                                       .expect("argument enforced by clap.rs");
     tag::add_tag(maybe_config, project_name, tag_name, logger)
-  },
+  }
   "untag-project" => {
-    let project_name: String = tag_matches.value_of("PROJECT_NAME").map(str::to_string)
-                                      .expect("argument enforced by clap.rs");
+    let project_name: String = tag_matches.value_of("PROJECT_NAME")
+                                          .map(str::to_string)
+                                          .expect("argument enforced by clap.rs");
     let tag_name: String = tag_matches.value_of("tag-name")
                                       .map(str::to_string)
                                       .expect("argument enforced by clap.rs");
     tag::remove_tag(maybe_config, project_name, tag_name, logger)
-  },
+  }
   "rm" => {
     let tag_name: String = tag_matches.value_of("tag-name")
                                       .map(str::to_string)

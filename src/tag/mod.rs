@@ -36,10 +36,7 @@ pub fn create_tag(maybe_config: Result<Config, AppError>,
   config::write_config(config, logger)
 }
 
-pub fn delete_tag(maybe_config: Result<Config, AppError>,
-                  tag_name: String,
-                  logger: &Logger)
-                  -> Result<(), AppError> {
+pub fn delete_tag(maybe_config: Result<Config, AppError>, tag_name: String, logger: &Logger) -> Result<(), AppError> {
   let mut config: Config = maybe_config?;
   let mut tags: BTreeMap<String, Tag> = config.settings.tags.unwrap_or(BTreeMap::new());
   info!(logger, "Delete tag"; "tag" => tag_name);
@@ -89,7 +86,7 @@ pub fn remove_tag(maybe_config: Result<Config, AppError>, project_name: String, 
       Result::Ok(())
     }
   } else {
-    return Result::Err(AppError::UserError(format!("Unknown project {}", project_name)))
+    return Result::Err(AppError::UserError(format!("Unknown project {}", project_name)));
   }
 }
 

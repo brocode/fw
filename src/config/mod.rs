@@ -90,19 +90,26 @@ impl Config {
     } else {
       let tags: BTreeSet<String> = maybe_tags.unwrap();
       let settings_tags = self.clone().settings.tags.unwrap();
-      let mut resolved_with_priority: Vec<(String, u8)> = tags.iter()
-                                      .flat_map(|t| match settings_tags.get(t) {
-                                                None => {
-        warn!(tag_logger, "Ignoring tag since it was not found in the config"; "missing_tag" => t.clone());
-        None
-      }
-                                                Some(actual_tag) => resolver(actual_tag).clone().map(|val| (val, actual_tag.priority.unwrap_or(50))),
-                                                })
-                                      .collect();
+      let mut resolved_with_priority: Vec<(String, u8)> =
+        tags.iter()
+            .flat_map(|t| match settings_tags.get(t) {
+                      None => {
+          warn!(tag_logger, "Ignoring tag since it was not found in the config"; "missing_tag" => t.clone());
+          None
+        }
+                      Some(actual_tag) => {
+                        resolver(actual_tag)
+                          .clone()
+                          .map(|val| (val, actual_tag.priority.unwrap_or(50)))
+                      }
+                      })
+            .collect();
       debug!(logger, "before sort"; "tags" => format!("{:?}", resolved_with_priority));
       resolved_with_priority.sort_by_key(|resolved_and_priority| resolved_and_priority.1);
       debug!(logger, "after sort"; "tags" => format!("{:?}", resolved_with_priority));
-      let resolved: Vec<String> = resolved_with_priority.into_iter().map(|r| r.0).collect();
+      let resolved: Vec<String> = resolved_with_priority.into_iter()
+                                                        .map(|r| r.0)
+                                                        .collect();
       if resolved.is_empty() {
         None
       } else {
