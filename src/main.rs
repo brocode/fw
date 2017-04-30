@@ -243,8 +243,8 @@ fn main() {
                         .expect("subcommand matches enforced by clap.rs")
                         .to_owned();
     execute_tag_subcommand(config,
-                           subsubcommand_name,
-                           subsubcommand_matches,
+                           &subsubcommand_name,
+                           &subsubcommand_matches,
                            &subcommand_logger)
   }
                                          "ls" => workon::ls(config),
@@ -264,8 +264,8 @@ fn main() {
 }
 
 fn execute_tag_subcommand(maybe_config: Result<config::Config, AppError>,
-                          tag_command_name: String,
-                          tag_matches: clap::ArgMatches,
+                          tag_command_name: &str,
+                          tag_matches: &clap::ArgMatches,
                           logger: &Logger)
                           -> Result<(), AppError> {
   match tag_command_name.as_ref() {
@@ -289,13 +289,13 @@ fn execute_tag_subcommand(maybe_config: Result<config::Config, AppError>,
     let tag_name: String = tag_matches.value_of("tag-name")
                                       .map(str::to_string)
                                       .expect("argument enforced by clap.rs");
-    tag::remove_tag(maybe_config, project_name, tag_name, logger)
+    tag::remove_tag(maybe_config, project_name, &tag_name, logger)
   }
   "rm" => {
     let tag_name: String = tag_matches.value_of("tag-name")
                                       .map(str::to_string)
                                       .expect("argument enforced by clap.rs");
-    tag::delete_tag(maybe_config, tag_name, logger)
+    tag::delete_tag(maybe_config, &tag_name, logger)
   }
   "add" => {
     let tag_name: String = tag_matches.value_of("tag-name")

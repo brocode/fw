@@ -87,7 +87,7 @@ impl Config {
 Tags with low priority are applied first and if they all have the same priority
 they will be applied in alphabetical name order so it is recommended you make a
 conscious choice and set the value."#;
-            "tag_name" => format!("{}", name), "tag_def" => format!("{:?}", tag));
+            "tag_name" => name, "tag_def" => format!("{:?}", tag));
       50
     }
     Some(p) => p,
@@ -114,7 +114,7 @@ conscious choice and set the value."#;
                       Some(actual_tag) => {
                         resolver(actual_tag)
                           .clone()
-                          .map(|val| (val, self.tag_priority_or_fallback(t, actual_tag, &logger)))
+                          .map(|val| (val, self.tag_priority_or_fallback(t, actual_tag, logger)))
                       }
                       })
             .collect();
