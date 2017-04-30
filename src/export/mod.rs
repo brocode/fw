@@ -12,31 +12,31 @@ pub fn export_project(maybe_config: Result<Config, AppError>, name: &str) -> Res
 }
 
 fn project_to_shell_commands(config: &Config, project: &Project) -> Result<String, AppError> {
-  fn push_update(mut current: String, parameter_name :&str, maybe_value: &Option<String>, project_name: &str) -> String {
+  fn push_update(commands: &mut Vec<String>, parameter_name :&str, maybe_value: &Option<String>, project_name: &str) {
     if let &Some(ref value) = maybe_value {
-      current.push_str(&format!("fw update {} --{} \"{}\"\n", project_name, parameter_name, value));
+      commands.push(format!("fw update {} --{} \"{}\"", project_name, parameter_name, value))
     }
-    current
   }
 
-  let mut shell_commands = "# fw export\n".to_owned();
+  let mut shell_commands: Vec<String> = Vec::new();
+  shell_commands.push("# fw export".to_owned());
 
-  shell_commands.push_str(&format!("fw add {} {}\n", project.git, project.name));
-  shell_commands = push_update(shell_commands, "override-path", &project.override_path, &project.name);
-  shell_commands = push_update(shell_commands, "after-workon", &project.after_workon, &project.name);
-  shell_commands = push_update(shell_commands, "after-clone", &project.after_clone, &project.name);
+  shell_commands.push(format!("fw add {} {}", project.git, project.name));
+  push_update(&mut shell_commands, "override-path", &project.override_path, &project.name);
+  push_update(&mut shell_commands, "after-workon", &project.after_workon, &project.name);
+  push_update(&mut shell_commands, "after-clone", &project.after_clone, &project.name);
 
   if let Some(ref tags) = project.tags {
     for tag in tags {
       match tag_to_shell_commands(tag, config) {
-        Ok(commands) => shell_commands.push_str(&commands),
-        Err(e) => shell_commands.push_str(&format!("# Error exporting tag: {}\n", e.description()))
+        Ok(commands) => shell_commands.push(commands),
+        Err(e) => shell_commands.push(format!("# Error exporting tag: {}", e.description()))
       }
-      shell_commands.push_str(&format!("fw tag tag-project {} {}\n", project.name, tag));
+      shell_commands.push(format!("fw tag tag-project {} {}", project.name, tag));
     }
   }
 
-  Ok(shell_commands)
+  Ok(shell_commands.join("\n") + "\n")
 }
 
 fn tag_to_shell_commands(tag_name: &str, config: &Config) -> Result<String, AppError> {
@@ -45,12 +45,12 @@ fn tag_to_shell_commands(tag_name: &str, config: &Config) -> Result<String, AppE
       let after_workon = tag.after_workon.clone().map(|a| format!(" --after-workon=\"{}\"", a)).unwrap_or("".to_string());
       let after_clone = tag.after_clone.clone().map(|a| format!(" --after-clone=\"{}\"", a)).unwrap_or("".to_string());
       let priority = tag.priority.clone().map(|p| format!(" --priority=\"{}\"", p)).unwrap_or("".to_string());
-      Ok(format!("fw tag add {}{}{}{}\n", tag_name, after_workon, after_clone, priority))
+      Ok(format!("fw tag add {}{}{}{}", tag_name, after_workon, after_clone, priority))
     } else {
       Result::Err(AppError::UserError(format!("Unknown tag {}", tag_name)))
     }
   } else {
-    Result::Err(AppError::UserError("No tags configures".to_string()))
+    Result::Err(AppError::UserError("No tags configured".to_string()))
   }
 }
 
