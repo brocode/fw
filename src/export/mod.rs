@@ -13,7 +13,7 @@ pub fn export_project(maybe_config: Result<Config, AppError>, name: &str) -> Res
 
 fn project_to_shell_commands(config: &Config, project: &Project) -> Result<String, AppError> {
   fn push_update(commands: &mut Vec<String>, parameter_name :&str, maybe_value: &Option<String>, project_name: &str) {
-    if let &Some(ref value) = maybe_value {
+    if let Some(ref value) = *maybe_value {
       commands.push(format!("fw update {} --{} \"{}\"", project_name, parameter_name, value))
     }
   }
@@ -41,10 +41,10 @@ fn project_to_shell_commands(config: &Config, project: &Project) -> Result<Strin
 
 fn tag_to_shell_commands(tag_name: &str, config: &Config) -> Result<String, AppError> {
   if let Some(ref tags) = config.settings.tags {
-    if let Some(ref tag) = tags.get(tag_name) {
-      let after_workon = tag.after_workon.clone().map(|a| format!(" --after-workon=\"{}\"", a)).unwrap_or("".to_string());
-      let after_clone = tag.after_clone.clone().map(|a| format!(" --after-clone=\"{}\"", a)).unwrap_or("".to_string());
-      let priority = tag.priority.clone().map(|p| format!(" --priority=\"{}\"", p)).unwrap_or("".to_string());
+    if let Some(tag) = tags.get(tag_name) {
+      let after_workon = tag.after_workon.clone().map(|a| format!(" --after-workon=\"{}\"", a)).unwrap_or_else(|| "".to_string());
+      let after_clone = tag.after_clone.clone().map(|a| format!(" --after-clone=\"{}\"", a)).unwrap_or_else(|| "".to_string());
+      let priority = tag.priority.map(|p| format!(" --priority=\"{}\"", p)).unwrap_or_else(|| "".to_string());
       Ok(format!("fw tag add {}{}{}{}", tag_name, after_workon, after_clone, priority))
     } else {
       Result::Err(AppError::UserError(format!("Unknown tag {}", tag_name)))
