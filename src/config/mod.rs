@@ -20,6 +20,7 @@ pub struct Settings {
 pub struct Tag {
   pub after_clone: Option<String>,
   pub after_workon: Option<String>,
+  pub priority: Option<u8>,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -79,6 +80,20 @@ impl Config {
     self.resolve_from_tags(|t| t.clone().after_clone, maybe_tags, logger)
   }
 
+  fn tag_priority_or_fallback(&self, name: &str, tag: &Tag, logger: &Logger) -> u8 {
+    match tag.priority {
+    None => {
+      debug!(logger, r#"No tag priority set, will use default (50).
+Tags with low priority are applied first and if they all have the same priority
+they will be applied in alphabetical name order so it is recommended you make a
+conscious choice and set the value."#;
+            "tag_name" => name, "tag_def" => format!("{:?}", tag));
+      50
+    }
+    Some(p) => p,
+    }
+  }
+
   fn resolve_from_tags<F>(&self, resolver: F, maybe_tags: Option<BTreeSet<String>>, logger: &Logger) -> Option<String>
     where F: Fn(&Tag) -> Option<String>
   {
@@ -89,15 +104,26 @@ impl Config {
     } else {
       let tags: BTreeSet<String> = maybe_tags.unwrap();
       let settings_tags = self.clone().settings.tags.unwrap();
-      let resolved: Vec<String> = tags.iter()
-                                      .flat_map(|t| match settings_tags.get(t) {
-                                                None => {
-        warn!(tag_logger, "Ignoring tag since it was not found in the config"; "missing_tag" => t.clone());
-        None
-      }
-                                                Some(actual_tag) => resolver(actual_tag).clone(),
-                                                })
-                                      .collect();
+      let mut resolved_with_priority: Vec<(String, u8)> =
+        tags.iter()
+            .flat_map(|t| match settings_tags.get(t) {
+                      None => {
+          warn!(tag_logger, "Ignoring tag since it was not found in the config"; "missing_tag" => t.clone());
+          None
+        }
+                      Some(actual_tag) => {
+                        resolver(actual_tag)
+                          .clone()
+                          .map(|val| (val, self.tag_priority_or_fallback(t, actual_tag, logger)))
+                      }
+                      })
+            .collect();
+      debug!(logger, "before sort"; "tags" => format!("{:?}", resolved_with_priority));
+      resolved_with_priority.sort_by_key(|resolved_and_priority| resolved_and_priority.1);
+      debug!(logger, "after sort"; "tags" => format!("{:?}", resolved_with_priority));
+      let resolved: Vec<String> = resolved_with_priority.into_iter()
+                                                        .map(|r| r.0)
+                                                        .collect();
       if resolved.is_empty() {
         None
       } else {
@@ -293,11 +319,25 @@ mod tests {
     assert_that(&resolved).is_equal_to(" && workon1 && workon2".to_owned());
   }
   #[test]
+  fn test_workon_from_tags_prioritized() {
+    let config = a_config();
+    let logger = a_logger();
+    let resolved = config.resolve_after_workon(&logger, config.projects.get("test5").unwrap());
+    assert_that(&resolved).is_equal_to(" && workon4 && workon3".to_owned());
+  }
+  #[test]
   fn test_after_clone_from_tags() {
     let config = a_config();
     let logger = a_logger();
     let resolved = config.resolve_after_clone(&logger, config.projects.get("test1").unwrap());
     assert_that(&resolved).is_equal_to(Some("clone1 && clone2".to_owned()));
+  }
+  #[test]
+  fn test_after_clone_from_tags_prioritized() {
+    let config = a_config();
+    let logger = a_logger();
+    let resolved = config.resolve_after_clone(&logger, config.projects.get("test5").unwrap());
+    assert_that(&resolved).is_equal_to(Some("clone4 && clone3".to_owned()));
   }
   #[test]
   fn test_workon_from_tags_missing_one_tag_graceful() {
@@ -375,22 +415,45 @@ mod tests {
       after_workon: None,
       override_path: None,
     };
+    let project5 = Project {
+      name: "test5".to_owned(),
+      git: "irrelevant".to_owned(),
+      tags: Some(btreeset!["tag3".to_owned(), "tag4".to_owned()]),
+      after_clone: None,
+      after_workon: None,
+      override_path: None,
+    };
     let tag1 = Tag {
       after_clone: Some("clone1".to_owned()),
       after_workon: Some("workon1".to_owned()),
+      priority: None,
     };
     let tag2 = Tag {
       after_clone: Some("clone2".to_owned()),
       after_workon: Some("workon2".to_owned()),
+      priority: None,
+    };
+    let tag3 = Tag {
+      after_clone: Some("clone3".to_owned()),
+      after_workon: Some("workon3".to_owned()),
+      priority: Some(100),
+    };
+    let tag4 = Tag {
+      after_clone: Some("clone4".to_owned()),
+      after_workon: Some("workon4".to_owned()),
+      priority: Some(0),
     };
     let mut projects: BTreeMap<String, Project> = BTreeMap::new();
     projects.insert("test1".to_owned(), project);
     projects.insert("test2".to_owned(), project2);
     projects.insert("test3".to_owned(), project3);
     projects.insert("test4".to_owned(), project4);
+    projects.insert("test5".to_owned(), project5);
     let mut tags: BTreeMap<String, Tag> = BTreeMap::new();
     tags.insert("tag1".to_owned(), tag1);
     tags.insert("tag2".to_owned(), tag2);
+    tags.insert("tag3".to_owned(), tag3);
+    tags.insert("tag4".to_owned(), tag4);
     let settings = Settings {
       workspace: "/test".to_owned(),
       default_after_workon: None,

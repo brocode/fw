@@ -28,6 +28,7 @@ use clap::{App, AppSettings, Arg, SubCommand};
 use errors::AppError;
 use slog::{DrainExt, Level, LevelFilter, Logger};
 use std::time::SystemTime;
+use std::str::FromStr;
 
 fn logger_from_verbosity(verbosity: u64, quiet: &bool) -> Logger {
   let log_level: Level = match verbosity {
@@ -165,6 +166,11 @@ fn main() {
                                        .long("after-workon")
                                        .takes_value(true)
                                        .required(false))
+                                .arg(Arg::with_name("priority")
+                                       .value_name("priority")
+                                       .long("priority")
+                                       .takes_value(true)
+                                       .required(false))
                                 .arg(Arg::with_name("after-clone")
                                        .value_name("after-clone")
                                        .long("after-clone")
@@ -243,8 +249,8 @@ fn main() {
                         .expect("subcommand matches enforced by clap.rs")
                         .to_owned();
     execute_tag_subcommand(config,
-                           subsubcommand_name,
-                           subsubcommand_matches,
+                           &subsubcommand_name,
+                           &subsubcommand_matches,
                            &subcommand_logger)
   }
                                          "ls" => workon::ls(config),
@@ -264,36 +270,38 @@ fn main() {
 }
 
 fn execute_tag_subcommand(maybe_config: Result<config::Config, AppError>,
-                          tag_command_name: String,
-                          tag_matches: clap::ArgMatches,
+                          tag_command_name: &str,
+                          tag_matches: &clap::ArgMatches,
                           logger: &Logger)
                           -> Result<(), AppError> {
   match tag_command_name.as_ref() {
   "ls" => {
     let maybe_project_name: Option<String> = tag_matches.value_of("PROJECT_NAME").map(str::to_string);
     tag::list_tags(maybe_config, maybe_project_name, logger)
-  },
+  }
   "tag-project" => {
-    let project_name: String = tag_matches.value_of("PROJECT_NAME").map(str::to_string)
-                                      .expect("argument enforced by clap.rs");
+    let project_name: String = tag_matches.value_of("PROJECT_NAME")
+                                          .map(str::to_string)
+                                          .expect("argument enforced by clap.rs");
     let tag_name: String = tag_matches.value_of("tag-name")
                                       .map(str::to_string)
                                       .expect("argument enforced by clap.rs");
     tag::add_tag(maybe_config, project_name, tag_name, logger)
-  },
+  }
   "untag-project" => {
-    let project_name: String = tag_matches.value_of("PROJECT_NAME").map(str::to_string)
-                                      .expect("argument enforced by clap.rs");
+    let project_name: String = tag_matches.value_of("PROJECT_NAME")
+                                          .map(str::to_string)
+                                          .expect("argument enforced by clap.rs");
     let tag_name: String = tag_matches.value_of("tag-name")
                                       .map(str::to_string)
                                       .expect("argument enforced by clap.rs");
-    tag::remove_tag(maybe_config, project_name, tag_name, logger)
-  },
+    tag::remove_tag(maybe_config, project_name, &tag_name, logger)
+  }
   "rm" => {
     let tag_name: String = tag_matches.value_of("tag-name")
                                       .map(str::to_string)
                                       .expect("argument enforced by clap.rs");
-    tag::delete_tag(maybe_config, tag_name, logger)
+    tag::delete_tag(maybe_config, &tag_name, logger)
   }
   "add" => {
     let tag_name: String = tag_matches.value_of("tag-name")
@@ -301,7 +309,8 @@ fn execute_tag_subcommand(maybe_config: Result<config::Config, AppError>,
                                       .expect("argument enforced by clap.rs");
     let after_workon: Option<String> = tag_matches.value_of("after-workon").map(str::to_string);
     let after_clone: Option<String> = tag_matches.value_of("after-clone").map(str::to_string);
-    tag::create_tag(maybe_config, tag_name, after_workon, after_clone, logger)
+    let priority: Option<u8> = tag_matches.value_of("priority").map(u8::from_str).map(|p| p.expect("invalid tag priority value, must be an u8"));
+    tag::create_tag(maybe_config, tag_name, after_workon, after_clone, priority, logger)
   }
   _ => Result::Err(AppError::InternalError("Command not implemented")),
   }
