@@ -15,6 +15,12 @@ extern crate rayon;
 
 extern crate core;
 
+extern crate atty;
+
+extern crate ansi_term;
+
+extern crate rand;
+
 #[cfg(test)]
 #[macro_use]
 extern crate maplit;

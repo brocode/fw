@@ -19,7 +19,11 @@ git2 = "0.6"
 maplit = "0.1"
 rayon = "0.6"
 regex = "0.2"
+ansi_term = "0.9"
+atty = "0.2"
+rand = "0.3"
 #spectral = "0.6"
+
 
 [dependencies.slog]
 version = "1.5"
