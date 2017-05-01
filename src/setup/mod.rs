@@ -27,45 +27,50 @@ fn determine_projects(path: PathBuf, logger: &Logger) -> Result<BTreeMap<String,
   let project_entries: Vec<fs::DirEntry> = fs::read_dir(path)
     .and_then(|base| base.collect())
     .map_err(AppError::IO)?;
-  let projects: Vec<Result<Project, AppError>> =
-    project_entries.into_iter()
-                   .map(|entry: fs::DirEntry| match entry.file_name().into_string() {
-                        Ok(name) => {
-      let project_logger = logger.new(o!("project" => name.clone()));
-      let mut path_to_repo = workspace_path.clone();
-      path_to_repo.push(name.clone());
-      let repo = Repository::open(path_to_repo)?;
-      let all = repo.remotes()?;
-      debug!(project_logger, "remotes"; "found" => format!("{:?}", all.len()));
-      let remote = repo.find_remote("origin")?;
-      let url = remote.url()
-                      .ok_or_else(|| AppError::UserError(format!("invalid remote origin at {:?}", repo.path())))?;
-      info!(project_logger, "git config validated");
-      Ok(Project {
-           name: name,
-           git: url.to_owned(),
-           after_clone: None,
-           after_workon: None,
-           override_path: None,
-           tags: None,
-         })
+  let mut projects: BTreeMap<String, Project> = BTreeMap::new();
+  for entry in project_entries {
+    let path = entry.path();
+    if path.is_dir() {
+      match entry.file_name().into_string() {
+      Ok(name) => {
+        match load_project(workspace_path.clone(), &name, logger) {
+        Ok(project) => {
+          projects.insert(project.name.clone(), project);
+        }
+        Err(e) => warn!(logger, "Error while importing folder. Skipping it."; "entry" => name, "error" => format!("{}", e)),
+        }
+      }
+      Err(_) => {
+        warn!(logger,
+              "Failed to parse directory name as unicode. Skipping it.")
+      }
+      }
     }
-                        Err(invalid_unicode) => Err(AppError::Utf8Error(invalid_unicode)),
-                        })
-                   .collect();
+  }
 
-  let acc: BTreeMap<String, Project> = BTreeMap::new();
-  projects.into_iter()
-          .fold(Ok(acc),
-                |maybe_accu: Result<BTreeMap<String, Project>, AppError>, project: Result<Project, AppError>| match project {
-                Ok(p) => {
-                  maybe_accu.and_then(|mut accu| {
-                                        accu.insert(p.clone().name, p);
-                                        Ok(accu)
-                                      })
-                }
-                Err(e) => Err(e),
-                })
+  Ok(projects)
+}
+
+
+fn load_project(workspace_path: PathBuf, name: &str, logger: &Logger) -> Result<Project, AppError> {
+  let project_logger = logger.new(o!("project" => name.to_string()));
+  let mut path_to_repo = workspace_path.clone();
+  path_to_repo.push(name.clone());
+  let repo = Repository::open(path_to_repo)?;
+  let all = repo.remotes()?;
+  debug!(project_logger, "remotes"; "found" => format!("{:?}", all.len()));
+  let remote = repo.find_remote("origin")?;
+  let url = remote.url()
+                  .ok_or_else(|| AppError::UserError(format!("invalid remote origin at {:?}", repo.path())))?;
+  info!(project_logger, "git config validated");
+  Ok(Project {
+       name: name.to_owned(),
+       git: url.to_owned(),
+       after_clone: None,
+       after_workon: None,
+       override_path: None,
+       tags: None,
+     })
 }
 
 fn write_config(projects: BTreeMap<String, Project>, logger: &Logger, workspace_dir: &str) -> Result<(), AppError> {
