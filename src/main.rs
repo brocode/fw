@@ -38,10 +38,11 @@ use std::str::FromStr;
 
 fn logger_from_verbosity(verbosity: u64, quiet: &bool) -> Logger {
   let log_level: Level = match verbosity {
-  _ if *quiet => Level::Warning,
-  0 => Level::Info,
-  1 => Level::Debug,
-  2 | _ => Level::Trace,
+  _ if *quiet => Level::Error,
+  0 => Level::Warning,
+  1 => Level::Info,
+  2 => Level::Debug,
+  3 | _ => Level::Trace,
   };
 
   let drain = slog_term::StreamerBuilder::new()
