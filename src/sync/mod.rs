@@ -55,7 +55,7 @@ fn spawn_maybe(cmd: &str, workdir: &PathBuf, project_name: &str, colour: &Colour
       if read == 0 {
         break;
       }
-      let prefix = format!("{:>20} |", project_name);
+      let prefix = format!("{:>25.25} |", project_name);
       if is_stdout_a_tty() {
         print!("{} {}", colour.paint(prefix), line);
       } else {
