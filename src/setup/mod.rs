@@ -54,8 +54,8 @@ fn determine_projects(path: PathBuf, logger: &Logger) -> Result<BTreeMap<String,
 
 fn load_project(workspace_path: PathBuf, name: &str, logger: &Logger) -> Result<Project, AppError> {
   let project_logger = logger.new(o!("project" => name.to_string()));
-  let mut path_to_repo = workspace_path.clone();
-  path_to_repo.push(name.clone());
+  let mut path_to_repo = workspace_path;
+  path_to_repo.push(name);
   let repo = Repository::open(path_to_repo)?;
   let all = repo.remotes()?;
   debug!(project_logger, "remotes"; "found" => format!("{:?}", all.len()));
