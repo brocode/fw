@@ -48,8 +48,7 @@ fn spawn_maybe(cmd: &str, workdir: &PathBuf, project_name: &str, colour: &Colour
     .spawn()?;
 
   if let Some(ref mut stdout) = result.stdout {
-    let handle = stdout.take(100);
-    let mut buf = BufReader::new(handle);
+    let mut buf = BufReader::new(stdout);
     loop {
       let mut line = String::new();
       let read: usize = buf.read_line(&mut line)?;
