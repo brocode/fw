@@ -1,4 +1,4 @@
-use config::{Project, Config};
+use config::{Config, Project};
 use errors::AppError;
 use std::error::Error;
 
@@ -12,9 +12,12 @@ pub fn export_project(maybe_config: Result<Config, AppError>, name: &str) -> Res
 }
 
 fn project_to_shell_commands(config: &Config, project: &Project) -> Result<String, AppError> {
-  fn push_update(commands: &mut Vec<String>, parameter_name :&str, maybe_value: &Option<String>, project_name: &str) {
+  fn push_update(commands: &mut Vec<String>, parameter_name: &str, maybe_value: &Option<String>, project_name: &str) {
     if let Some(ref value) = *maybe_value {
-      commands.push(format!("fw update {} --{} \"{}\"", project_name, parameter_name, value))
+      commands.push(format!("fw update {} --{} \"{}\"",
+                            project_name,
+                            parameter_name,
+                            value))
     }
   }
 
@@ -22,15 +25,24 @@ fn project_to_shell_commands(config: &Config, project: &Project) -> Result<Strin
   shell_commands.push("# fw export".to_owned());
 
   shell_commands.push(format!("fw add {} {}", project.git, project.name));
-  push_update(&mut shell_commands, "override-path", &project.override_path, &project.name);
-  push_update(&mut shell_commands, "after-workon", &project.after_workon, &project.name);
-  push_update(&mut shell_commands, "after-clone", &project.after_clone, &project.name);
+  push_update(&mut shell_commands,
+              "override-path",
+              &project.override_path,
+              &project.name);
+  push_update(&mut shell_commands,
+              "after-workon",
+              &project.after_workon,
+              &project.name);
+  push_update(&mut shell_commands,
+              "after-clone",
+              &project.after_clone,
+              &project.name);
 
   if let Some(ref tags) = project.tags {
     for tag in tags {
       match tag_to_shell_commands(tag, config) {
-        Ok(commands) => shell_commands.push(commands),
-        Err(e) => shell_commands.push(format!("# Error exporting tag: {}", e.description()))
+      Ok(commands) => shell_commands.push(commands),
+      Err(e) => shell_commands.push(format!("# Error exporting tag: {}", e.description())),
       }
       shell_commands.push(format!("fw tag tag-project {} {}", project.name, tag));
     }
@@ -42,10 +54,22 @@ fn project_to_shell_commands(config: &Config, project: &Project) -> Result<Strin
 fn tag_to_shell_commands(tag_name: &str, config: &Config) -> Result<String, AppError> {
   if let Some(ref tags) = config.settings.tags {
     if let Some(tag) = tags.get(tag_name) {
-      let after_workon = tag.after_workon.clone().map(|a| format!(" --after-workon=\"{}\"", a)).unwrap_or_else(|| "".to_string());
-      let after_clone = tag.after_clone.clone().map(|a| format!(" --after-clone=\"{}\"", a)).unwrap_or_else(|| "".to_string());
-      let priority = tag.priority.map(|p| format!(" --priority=\"{}\"", p)).unwrap_or_else(|| "".to_string());
-      Ok(format!("fw tag add {}{}{}{}", tag_name, after_workon, after_clone, priority))
+      let after_workon = tag.after_workon
+                            .clone()
+                            .map(|a| format!(" --after-workon=\"{}\"", a))
+                            .unwrap_or_else(|| "".to_string());
+      let after_clone = tag.after_clone
+                           .clone()
+                           .map(|a| format!(" --after-clone=\"{}\"", a))
+                           .unwrap_or_else(|| "".to_string());
+      let priority = tag.priority
+                        .map(|p| format!(" --priority=\"{}\"", p))
+                        .unwrap_or_else(|| "".to_string());
+      Ok(format!("fw tag add {}{}{}{}",
+                 tag_name,
+                 after_workon,
+                 after_clone,
+                 priority))
     } else {
       Result::Err(AppError::UserError(format!("Unknown tag {}", tag_name)))
     }
@@ -59,7 +83,7 @@ mod tests {
   use super::*;
   use config::*;
   use spectral::prelude::*;
-  use std::collections::{BTreeMap};
+  use std::collections::BTreeMap;
 
   #[test]
   fn test_workon_override_from_project() {
@@ -76,14 +100,17 @@ fw tag add tag2 --after-workon=\"workon2\" --after-clone=\"clone2\" --priority=\
 fw tag tag-project why-i-suck tag2
 # Error exporting tag: Unknown tag unknown_tag
 fw tag tag-project why-i-suck unknown_tag
-".to_owned());
+"
+                                                 .to_owned());
   }
 
   fn a_config() -> Config {
     let project = Project {
       name: "why-i-suck".to_owned(),
       git: "git@github.com:codingberlin/why-i-suck.git".to_owned(),
-      tags: Some(btreeset!["tag1".to_owned(), "tag2".to_owned(), "unknown_tag".to_owned()]),
+      tags: Some(btreeset!["tag1".to_owned(),
+                           "tag2".to_owned(),
+                           "unknown_tag".to_owned()]),
       after_clone: Some("echo 1".to_owned()),
       after_workon: Some("echo 2".to_owned()),
 
