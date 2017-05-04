@@ -31,6 +31,7 @@ pub fn create_tag(maybe_config: Result<Config, AppError>,
     after_clone: after_clone,
     after_workon: after_workon,
     priority: priority,
+    workspace: None,
   };
   tags.insert(tag_name, new_tag);
   config.settings.tags = Some(tags);

@@ -120,11 +120,13 @@ fw tag tag-project why-i-suck unknown_tag
       after_clone: Some("clone1".to_owned()),
       after_workon: Some("workon1".to_owned()),
       priority: Some(10),
+      workspace: None,
     };
     let tag2 = Tag {
       after_clone: Some("clone2".to_owned()),
       after_workon: Some("workon2".to_owned()),
       priority: Some(10),
+      workspace: None,
     };
     let mut projects: BTreeMap<String, Project> = BTreeMap::new();
     projects.insert("test1".to_owned(), project);
