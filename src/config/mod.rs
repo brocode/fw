@@ -74,10 +74,10 @@ impl Config {
   }
 
   fn resolve_workon_from_tags(&self, maybe_tags: Option<BTreeSet<String>>, logger: &Logger) -> Option<String> {
-    self.resolve_from_tags(|t| t.clone().after_workon, maybe_tags, logger)
+    self.resolve_from_tags(|t| t.clone().after_workon, |v| v.join(" && "), maybe_tags, logger)
   }
   fn resolve_after_clone_from_tags(&self, maybe_tags: Option<BTreeSet<String>>, logger: &Logger) -> Option<String> {
-    self.resolve_from_tags(|t| t.clone().after_clone, maybe_tags, logger)
+    self.resolve_from_tags(|t| t.clone().after_clone, |v| v.join(" && "), maybe_tags, logger)
   }
 
   fn tag_priority_or_fallback(&self, name: &str, tag: &Tag, logger: &Logger) -> u8 {
@@ -94,8 +94,9 @@ conscious choice and set the value."#;
     }
   }
 
-  fn resolve_from_tags<F>(&self, resolver: F, maybe_tags: Option<BTreeSet<String>>, logger: &Logger) -> Option<String>
-    where F: Fn(&Tag) -> Option<String>
+  fn resolve_from_tags<F,J>(&self, resolver: F, joiner: J, maybe_tags: Option<BTreeSet<String>>, logger: &Logger) -> Option<String>
+    where F: Fn(&Tag) -> Option<String>,
+          J: Fn(Vec<String>) -> String
   {
     let tag_logger = logger.new(o!("tags" => format!("{:?}", maybe_tags)));
     debug!(tag_logger, "Resolving");
@@ -127,7 +128,7 @@ conscious choice and set the value."#;
       if resolved.is_empty() {
         None
       } else {
-        let resolved_cmd = resolved.join(" && ");
+        let resolved_cmd = joiner(resolved);
         debug!(tag_logger, format!("resolved {:?}", resolved_cmd));
         Some(resolved_cmd)
       }
