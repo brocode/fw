@@ -1,6 +1,6 @@
 [package]
 name = "fw"
-version = "1.2.8"
+version = "1.2.9-pre"
 authors = ["brocode <bros@brocode.sh>"]
 description = "faster workspace management"
 license = "WTFPL"
