@@ -65,11 +65,16 @@ fn tag_to_shell_commands(tag_name: &str, config: &Config) -> Result<String, AppE
       let priority = tag.priority
                         .map(|p| format!(" --priority=\"{}\"", p))
                         .unwrap_or_else(|| "".to_string());
-      Ok(format!("fw tag add {}{}{}{}",
+      let workspace = tag.workspace
+                        .clone()
+                        .map(|p| format!(" --workspace=\"{}\"", p))
+                        .unwrap_or_else(|| "".to_string());
+      Ok(format!("fw tag add {}{}{}{}{}",
                  tag_name,
                  after_workon,
                  after_clone,
-                 priority))
+                 priority,
+                 workspace))
     } else {
       Result::Err(AppError::UserError(format!("Unknown tag {}", tag_name)))
     }

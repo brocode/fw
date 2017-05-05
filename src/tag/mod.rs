@@ -22,6 +22,7 @@ pub fn create_tag(maybe_config: Result<Config, AppError>,
                   after_workon: Option<String>,
                   after_clone: Option<String>,
                   priority: Option<u8>,
+                  tag_workspace: Option<String>,
                   logger: &Logger)
                   -> Result<(), AppError> {
   let mut config: Config = maybe_config?;
@@ -31,7 +32,7 @@ pub fn create_tag(maybe_config: Result<Config, AppError>,
     after_clone: after_clone,
     after_workon: after_workon,
     priority: priority,
-    workspace: None,
+    workspace: tag_workspace,
   };
   tags.insert(tag_name, new_tag);
   config.settings.tags = Some(tags);

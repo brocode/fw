@@ -184,6 +184,11 @@ fn main() {
                                        .long("priority")
                                        .takes_value(true)
                                        .required(false))
+                                .arg(Arg::with_name("workspace")
+                                       .value_name("workspace")
+                                       .long("workspace")
+                                       .takes_value(true)
+                                       .required(false))
                                 .arg(Arg::with_name("after-clone")
                                        .value_name("after-clone")
                                        .long("after-clone")
@@ -327,6 +332,7 @@ fn execute_tag_subcommand(maybe_config: Result<config::Config, AppError>,
                                       .expect("argument enforced by clap.rs");
     let after_workon: Option<String> = tag_matches.value_of("after-workon").map(str::to_string);
     let after_clone: Option<String> = tag_matches.value_of("after-clone").map(str::to_string);
+    let tag_workspace: Option<String> = tag_matches.value_of("workspace").map(str::to_string);
     let priority: Option<u8> = tag_matches.value_of("priority")
                                           .map(u8::from_str)
                                           .map(|p| p.expect("invalid tag priority value, must be an u8"));
@@ -335,6 +341,7 @@ fn execute_tag_subcommand(maybe_config: Result<config::Config, AppError>,
                     after_workon,
                     after_clone,
                     priority,
+                    tag_workspace,
                     logger)
   }
   _ => Result::Err(AppError::InternalError("Command not implemented")),
