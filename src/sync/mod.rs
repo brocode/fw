@@ -74,10 +74,11 @@ fn spawn_maybe(cmd: &str, workdir: &PathBuf, project_name: &str, colour: &Colour
       logger,
       "cmd failed";
       "stderr" => stderr_output.replace("\n", "\\n"));
+    Err(AppError::UserError("External command failed.".to_owned()))
   } else {
     info!(logger, "cmd finished");
+    Ok(())
   }
-  Ok(())
 }
 
 fn random_colour() -> Colour {
