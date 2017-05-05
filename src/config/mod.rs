@@ -64,7 +64,7 @@ impl Config {
     expand_path(path)
   }
 
-  pub fn resolve_workspace(&self, logger: &Logger, project: &Project) -> String {
+  fn resolve_workspace(&self, logger: &Logger, project: &Project) -> String {
     let x = self.resolve_from_tags(
       |tag| tag.workspace.clone(),
       // TODO @mriehl last without mutation?
