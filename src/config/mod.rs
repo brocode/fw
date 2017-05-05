@@ -128,7 +128,7 @@ conscious choice and set the value."#;
           J: Fn(Vec<String>) -> String
   {
     let tag_logger = logger.new(o!("tags" => format!("{:?}", maybe_tags)));
-    debug!(tag_logger, "Resolving");
+    trace!(tag_logger, "Resolving");
     if maybe_tags.is_none() || self.settings.tags.is_none() {
       None
     } else {
@@ -148,9 +148,9 @@ conscious choice and set the value."#;
                       }
                       })
             .collect();
-      debug!(logger, "before sort"; "tags" => format!("{:?}", resolved_with_priority));
+      trace!(logger, "before sort"; "tags" => format!("{:?}", resolved_with_priority));
       resolved_with_priority.sort_by_key(|resolved_and_priority| resolved_and_priority.1);
-      debug!(logger, "after sort"; "tags" => format!("{:?}", resolved_with_priority));
+      trace!(logger, "after sort"; "tags" => format!("{:?}", resolved_with_priority));
       let resolved: Vec<String> = resolved_with_priority.into_iter()
                                                         .map(|r| r.0)
                                                         .collect();
