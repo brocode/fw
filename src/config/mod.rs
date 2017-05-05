@@ -41,8 +41,9 @@ pub struct Config {
 }
 
 impl Project {
-  fn check_sanity(&self, workspace: &str) -> Result<(), AppError> {
-    let path = actual_path_to_project(workspace, self);
+  fn check_sanity(&self, config: &Config, logger: &Logger) -> Result<(), AppError> {
+    let sanity_logger = logger.new(o!("task" => "check_sanity"));
+    let path = config.actual_path_to_project(self, &sanity_logger);
     if path.is_absolute() {
       Ok(())
     } else {
@@ -54,6 +55,27 @@ impl Project {
 }
 
 impl Config {
+
+  pub fn actual_path_to_project(&self, project: &Project, logger: &Logger) -> PathBuf {
+    let path = project.override_path
+                      .clone()
+                      .map(PathBuf::from)
+                      .unwrap_or_else(|| Path::new(self.resolve_workspace(logger, project).as_str()).join(project.name.as_str()));
+    expand_path(path)
+  }
+
+  pub fn resolve_workspace(&self, logger: &Logger, project: &Project) -> String {
+    let x = self.resolve_from_tags(
+      |tag| tag.workspace.clone(),
+      // TODO @mriehl last without mutation?
+      |mut workspaces_from_tags| workspaces_from_tags.pop().expect("joiner only used if resolved vec is not empty"),
+      project.tags.clone(),
+      logger
+    );
+    let workspace = x.unwrap_or_else(|| self.settings.workspace.clone());
+    trace!(logger, "resolved"; "workspace" => workspace);
+    workspace
+  }
   pub fn resolve_after_clone(&self, logger: &Logger, project: &Project) -> Option<String> {
     project.after_clone
            .clone()
@@ -67,9 +89,9 @@ impl Config {
            .unwrap_or_else(|| "".to_owned())
   }
 
-  fn check_sanity(self) -> Result<Config, AppError> {
+  fn check_sanity(self, logger: &Logger) -> Result<Config, AppError> {
     for project in self.projects.values() {
-      project.check_sanity(&self.settings.workspace)?
+      project.check_sanity(&self, logger)?
     }
     Ok(self)
   }
@@ -147,11 +169,11 @@ fn prepare_workon(workon: &str) -> String {
   format!(" && {}", workon)
 }
 
-fn read_config<R>(reader: Result<R, AppError>) -> Result<Config, AppError>
+fn read_config<R>(reader: Result<R, AppError>, logger: &Logger) -> Result<Config, AppError>
   where R: Read
 {
   reader.and_then(|r| serde_json::de::from_reader(r).map_err(AppError::BadJson))
-        .and_then(|c: Config| c.check_sanity())
+        .and_then(|c: Config| c.check_sanity(logger))
 }
 
 pub fn config_path() -> Result<PathBuf, AppError> {
@@ -168,10 +190,10 @@ fn determine_config() -> Result<File, AppError> {
   path.and_then(|path| File::open(path).map_err(AppError::IO))
 }
 
-pub fn get_config() -> Result<Config, AppError> {
+pub fn get_config(logger: &Logger) -> Result<Config, AppError> {
   let config_file = determine_config();
   let reader = config_file.map(BufReader::new);
-  read_config(reader)
+  read_config(reader, logger)
 }
 
 fn repo_name_from_url(url: &str) -> Result<&str, AppError> {
@@ -253,7 +275,7 @@ pub fn update_entry(maybe_config: Result<Config, AppError>,
 pub fn write_config(config: Config, logger: &Logger) -> Result<(), AppError> {
   let config_path = config_path()?;
   info!(logger, "Writing config"; "path" => format!("{:?}", config_path));
-  config.check_sanity()
+  config.check_sanity(logger)
         .and_then(|c| {
                     let mut buffer = File::create(config_path)?;
                     serde_json::ser::to_writer_pretty(&mut buffer, &c).map_err(AppError::BadJson)
@@ -275,14 +297,6 @@ pub fn expand_path(path: PathBuf) -> PathBuf {
   } else {
     path
   }
-}
-
-pub fn actual_path_to_project(workspace: &str, project: &Project) -> PathBuf {
-  let path = project.override_path
-                    .clone()
-                    .map(PathBuf::from)
-                    .unwrap_or_else(|| Path::new(workspace).join(project.name.as_str()));
-  expand_path(path)
 }
 
 #[cfg(test)]

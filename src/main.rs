@@ -192,7 +192,7 @@ fn main() {
     .get_matches();
 
   let logger = logger_from_verbosity(matches.occurrences_of("v"), &matches.is_present("q"));
-  let config = config::get_config();
+  let config = config::get_config(&logger);
 
   let subcommand_name = matches.subcommand_name()
                                .expect("subcommand required by clap.rs")
@@ -244,7 +244,7 @@ fn main() {
                                          "print-path" => {
                                            workon::print_path(config,
                                                               subcommand_matches.value_of("PROJECT_NAME")
-                                                                                .expect("argument required by clap.rs"))
+                                                                                .expect("argument required by clap.rs"), &subcommand_logger)
                                          }
                                          "export" => {
                                            export::export_project(config,

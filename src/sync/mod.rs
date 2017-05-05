@@ -1,7 +1,6 @@
+use config::Config;
 use ansi_term::Colour;
 use atty;
-use config;
-use config::Config;
 use errors::AppError;
 use git2;
 use git2::FetchOptions;
@@ -89,12 +88,11 @@ fn is_stdout_a_tty() -> bool {
 
 pub fn foreach(maybe_config: Result<Config, AppError>, cmd: &str, logger: &Logger) -> Result<(), AppError> {
   let config = maybe_config?;
-  let workspace = config.settings.workspace;
   let script_results = config.projects
                              .par_iter()
                              .map(|(_, p)| {
-                                    let path = config::actual_path_to_project(&workspace, p);
                                     let project_logger = logger.new(o!("project" => p.name.clone()));
+                                    let path = config.actual_path_to_project(&p, &project_logger);
                                     info!(project_logger, "Entering");
                                     spawn_maybe(cmd, &path, &p.name, &random_colour(), &project_logger)
                                   })
@@ -108,12 +106,11 @@ pub fn foreach(maybe_config: Result<Config, AppError>, cmd: &str, logger: &Logge
 pub fn synchronize(maybe_config: Result<Config, AppError>, logger: &Logger) -> Result<(), AppError> {
   info!(logger, "Synchronizing everything");
   let config = maybe_config?;
-  let workspace = config.settings.workspace.clone();
   let results: Vec<Result<(), AppError>> = config.projects
                                                  .par_iter()
                                                  .map(|(_, project)| {
     let mut repo_builder = builder();
-    let path = config::actual_path_to_project(&workspace, project);
+    let path = config.actual_path_to_project(project, logger);
     let exists = path.exists();
     let project_logger = logger.new(o!(
         "git" => project.git.clone(),

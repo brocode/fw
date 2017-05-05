@@ -1,4 +1,3 @@
-use config;
 use config::Config;
 use errors::AppError;
 use regex::Regex;
@@ -12,11 +11,12 @@ use std::path::PathBuf;
 
 pub fn projectile(maybe_config: Result<Config, AppError>, logger: &Logger) -> Result<(), AppError> {
   let config: Config = maybe_config?;
-  let workspace = config.settings.workspace.clone();
-  let projects_paths: Vec<PathBuf> = config.projects
-                                           .into_iter()
-                                           .map(|(_, p)| config::actual_path_to_project(&workspace, &p))
-                                           .collect();
+  let projects_paths: Vec<PathBuf> = config
+    .clone()
+    .projects
+    .into_iter()
+    .map(|(_, p)| config.actual_path_to_project(&p, logger))
+    .collect();
   let home_dir: PathBuf = env::home_dir()
     .ok_or_else(|| AppError::UserError("$HOME not set".to_owned()))?;
   let mut projectile_bookmarks: PathBuf = home_dir.clone();
