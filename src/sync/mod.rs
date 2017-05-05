@@ -68,11 +68,15 @@ fn spawn_maybe(cmd: &str, workdir: &PathBuf, project_name: &str, colour: &Colour
     stderr.read_to_string(&mut stderr_output)?;
   }
 
-  result.wait()?;
-  info!(
-    logger,
-    "cmd finished";
-    "stderr" => stderr_output.replace("\n", "\\n"));
+  let status = result.wait()?;
+  if status.code().unwrap_or(0) > 0 {
+    error!(
+      logger,
+      "cmd failed";
+      "stderr" => stderr_output.replace("\n", "\\n"));
+  } else {
+    info!(logger, "cmd finished");
+  }
   Ok(())
 }
 
