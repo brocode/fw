@@ -92,7 +92,7 @@ pub fn foreach(maybe_config: Result<Config, AppError>, cmd: &str, logger: &Logge
                              .par_iter()
                              .map(|(_, p)| {
                                     let project_logger = logger.new(o!("project" => p.name.clone()));
-                                    let path = config.actual_path_to_project(&p, &project_logger);
+                                    let path = config.actual_path_to_project(p, &project_logger);
                                     info!(project_logger, "Entering");
                                     spawn_maybe(cmd, &path, &p.name, &random_colour(), &project_logger)
                                   })
