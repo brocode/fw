@@ -147,8 +147,10 @@ pub fn synchronize(maybe_config: Result<Config, AppError>, logger: &Logger) -> R
         info!(project_logger, "Cloning project");
         repo_builder.clone(project.git.as_str(), &path)
                     .map_err(|error| {
-                               warn!(project_logger, "Error cloning repo"; "error" => format!("{}", error));
-                               AppError::GitError(error)
+                              warn!(project_logger, "Error cloning repo"; "error" => format!("{}", error));
+                              let wrapped = AppError::GitError(error);
+                              pb.finish_print(format!("{}: {} ({:?})", Colour::Red.paint("FAILED"), &project.name, wrapped).as_ref());
+                              wrapped
                              })
                     .and_then(|_| match config.resolve_after_clone(&project_logger, project) {
                               Some(cmd) => {
@@ -156,7 +158,11 @@ pub fn synchronize(maybe_config: Result<Config, AppError>, logger: &Logger) -> R
           info!(project_logger, "Handling post hooks"; "after_clone" => cmd);
           let res = spawn_maybe(&cmd, &path, &project.name, &random_colour(), &logger);
           pb.inc();
-          res
+          res.map_err(|error| {
+                              let wrapped = AppError::UserError(format!("Post-clone hook failed (nonzero exit code). Cause: {:?}", error));
+                              pb.finish_print(format!("{}: {} ({:?})", Colour::Red.paint("FAILED"), &project.name, wrapped).as_ref());
+                              error
+                             })
         }
                               None => Ok(()),
                               })
