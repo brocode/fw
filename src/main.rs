@@ -21,6 +21,8 @@ extern crate ansi_term;
 
 extern crate rand;
 
+extern crate pbr;
+
 #[cfg(test)]
 #[macro_use]
 extern crate maplit;

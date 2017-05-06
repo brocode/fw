@@ -1,19 +1,23 @@
-use config::Config;
+
 use ansi_term::Colour;
 use atty;
+use config::Config;
 use errors::AppError;
 use git2;
 use git2::FetchOptions;
 use git2::RemoteCallbacks;
 use git2::build::RepoBuilder;
+use pbr::{MultiBar, Pipe, ProgressBar};
 use rand;
 use rand::Rng;
 use rayon::prelude::*;
 use slog::Logger;
+use std;
 use std::io::{BufRead, BufReader};
 use std::io::Read;
 use std::path::PathBuf;
 use std::process::{Child, Command, Stdio};
+use std::thread;
 
 static COLOURS: [Colour; 11] = [Colour::Red,
                                 Colour::Green,
@@ -110,38 +114,61 @@ pub fn foreach(maybe_config: Result<Config, AppError>, cmd: &str, logger: &Logge
 
 pub fn synchronize(maybe_config: Result<Config, AppError>, logger: &Logger) -> Result<(), AppError> {
   info!(logger, "Synchronizing everything");
+  let logger = logger.new(o!());
   let config = maybe_config?;
-  let results: Vec<Result<(), AppError>> = config.projects
-                                                 .par_iter()
-                                                 .map(|(_, project)| {
-    let mut repo_builder = builder();
-    let path = config.actual_path_to_project(project, logger);
-    let exists = path.exists();
-    let project_logger = logger.new(o!(
+  let mut mb = MultiBar::on(std::io::stdout());
+  let mut projects: Vec<_> = config.projects
+                                   .values()
+                                   .map(|p| {
+                                          let mut pb: ProgressBar<Pipe> = mb.create_bar(3);
+                                          pb.message(&format!("{:>25.25} ", &p.name));
+                                          pb.show_message = true;
+                                          pb.tick();
+                                          (p.to_owned(), pb)
+                                        })
+                                   .collect();
+  let child = thread::spawn(move || {
+    projects.par_iter_mut()
+            .map(|project_with_bar| {
+      let &mut (ref project, ref mut pb) = project_with_bar;
+      let mut repo_builder = builder();
+      pb.inc();
+      let path = config.actual_path_to_project(project, &logger);
+      let exists = path.exists();
+      let project_logger = logger.new(o!(
         "git" => project.git.clone(),
         "exists" => exists,
         "path" => format!("{:?}", path),
       ));
-    if exists {
-      debug!(project_logger, "NOP");
-      Result::Ok(())
-    } else {
-      info!(project_logger, "Cloning project");
-      repo_builder.clone(project.git.as_str(), &path)
-                  .map_err(|error| {
-                             warn!(project_logger, "Error cloning repo"; "error" => format!("{}", error));
-                             AppError::GitError(error)
-                           })
-                  .and_then(|_| match config.resolve_after_clone(&project_logger, project) {
-                            Some(cmd) => {
-        info!(project_logger, "Handling post hooks"; "after_clone" => cmd);
-        spawn_maybe(&cmd, &path, &project.name, &random_colour(), logger)
-      }
-                            None => Ok(()),
-                            })
-    }
-  })
-                                                 .collect();
+      let res = if exists {
+        debug!(project_logger, "NOP");
+        Result::Ok(())
+      } else {
+        info!(project_logger, "Cloning project");
+        repo_builder.clone(project.git.as_str(), &path)
+                    .map_err(|error| {
+                               warn!(project_logger, "Error cloning repo"; "error" => format!("{}", error));
+                               AppError::GitError(error)
+                             })
+                    .and_then(|_| match config.resolve_after_clone(&project_logger, project) {
+                              Some(cmd) => {
+          pb.inc();
+          info!(project_logger, "Handling post hooks"; "after_clone" => cmd);
+          let res = spawn_maybe(&cmd, &path, &project.name, &random_colour(), &logger);
+          pb.inc();
+          res
+        }
+                              None => Ok(()),
+                              })
+      };
+      pb.finish();
+      res
+    })
+            .collect()
+  });
+  mb.listen();
+  let results: Vec<Result<(), AppError>> = child.join().expect("Could not join thread.");
+
 
   results.into_iter()
          .fold(Result::Ok(()), |accu, maybe_error| accu.and(maybe_error))
