@@ -349,8 +349,10 @@ fn execute_tag_subcommand(maybe_config: Result<config::Config, AppError>,
 }
 
 fn print_zsh_setup() -> Result<(), AppError> {
-  let completion = include_str!("shell/setup.zsh");
-  println!("{}", completion);
+  let fw_completion = include_str!("shell/setup.zsh");
+  let basic_workon = include_str!("shell/workon.zsh");
+  println!("{}", fw_completion);
+  println!("{}", basic_workon);
   Ok(())
 }
 
