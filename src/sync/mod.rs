@@ -1,7 +1,6 @@
-
 use ansi_term::Colour;
 use atty;
-use config::Config;
+use config::{Config, Project};
 use errors::AppError;
 use git2;
 use git2::FetchOptions;
@@ -112,6 +111,55 @@ pub fn foreach(maybe_config: Result<Config, AppError>, cmd: &str, logger: &Logge
 }
 
 
+fn sync_project(config: &Config, project: &Project, logger: &Logger, pb: &mut ProgressBar<Pipe>) -> Result<(), AppError> {
+  let mut repo_builder = builder();
+  pb.inc();
+  let path = config.actual_path_to_project(project, &logger);
+  let exists = path.exists();
+  let project_logger = logger.new(o!(
+        "git" => project.git.clone(),
+        "exists" => exists,
+        "path" => format!("{:?}", path),
+      ));
+  let res = if exists {
+    debug!(project_logger, "NOP");
+    Result::Ok(())
+  } else {
+    info!(project_logger, "Cloning project");
+    repo_builder.clone(project.git.as_str(), &path)
+                .map_err(|error| {
+      warn!(project_logger, "Error cloning repo"; "error" => format!("{}", error));
+      let wrapped = AppError::GitError(error);
+      pb.finish_print(format!("{}: {} ({:?})",
+                              Colour::Red.paint("FAILED"),
+                              &project.name,
+                              wrapped)
+                        .as_ref());
+      wrapped
+    })
+                .and_then(|_| match config.resolve_after_clone(&project_logger, project) {
+                          Some(cmd) => {
+      pb.inc();
+      info!(project_logger, "Handling post hooks"; "after_clone" => cmd);
+      let res = spawn_maybe(&cmd, &path, &project.name, &random_colour(), &logger);
+      pb.inc();
+      res.map_err(|error| {
+        let wrapped = AppError::UserError(format!("Post-clone hook failed (nonzero exit code). Cause: {:?}",
+                                                  error));
+        pb.finish_print(format!("{}: {} ({:?})",
+                                Colour::Red.paint("FAILED"),
+                                &project.name,
+                                wrapped)
+                          .as_ref());
+        error
+      })
+    }
+                          None => Ok(()),
+                          })
+  };
+  pb.finish();
+  res
+}
 pub fn synchronize(maybe_config: Result<Config, AppError>, logger: &Logger) -> Result<(), AppError> {
   info!(logger, "Synchronizing everything");
   let logger = logger.new(o!());
@@ -123,55 +171,19 @@ pub fn synchronize(maybe_config: Result<Config, AppError>, logger: &Logger) -> R
                                           let mut pb: ProgressBar<Pipe> = mb.create_bar(3);
                                           pb.message(&format!("{:>25.25} ", &p.name));
                                           pb.show_message = true;
+                                          pb.show_speed = false;
                                           pb.tick();
                                           (p.to_owned(), pb)
                                         })
                                    .collect();
   let child = thread::spawn(move || {
-    projects.par_iter_mut()
-            .map(|project_with_bar| {
-      let &mut (ref project, ref mut pb) = project_with_bar;
-      let mut repo_builder = builder();
-      pb.inc();
-      let path = config.actual_path_to_project(project, &logger);
-      let exists = path.exists();
-      let project_logger = logger.new(o!(
-        "git" => project.git.clone(),
-        "exists" => exists,
-        "path" => format!("{:?}", path),
-      ));
-      let res = if exists {
-        debug!(project_logger, "NOP");
-        Result::Ok(())
-      } else {
-        info!(project_logger, "Cloning project");
-        repo_builder.clone(project.git.as_str(), &path)
-                    .map_err(|error| {
-                              warn!(project_logger, "Error cloning repo"; "error" => format!("{}", error));
-                              let wrapped = AppError::GitError(error);
-                              pb.finish_print(format!("{}: {} ({:?})", Colour::Red.paint("FAILED"), &project.name, wrapped).as_ref());
-                              wrapped
-                             })
-                    .and_then(|_| match config.resolve_after_clone(&project_logger, project) {
-                              Some(cmd) => {
-          pb.inc();
-          info!(project_logger, "Handling post hooks"; "after_clone" => cmd);
-          let res = spawn_maybe(&cmd, &path, &project.name, &random_colour(), &logger);
-          pb.inc();
-          res.map_err(|error| {
-                              let wrapped = AppError::UserError(format!("Post-clone hook failed (nonzero exit code). Cause: {:?}", error));
-                              pb.finish_print(format!("{}: {} ({:?})", Colour::Red.paint("FAILED"), &project.name, wrapped).as_ref());
-                              error
-                             })
-        }
-                              None => Ok(()),
-                              })
-      };
-      pb.finish();
-      res
-    })
-            .collect()
-  });
+                              projects.par_iter_mut()
+                                      .map(|project_with_bar| {
+                                             let &mut (ref project, ref mut pb) = project_with_bar;
+                                             sync_project(&config, project, &logger, pb)
+                                           })
+                                      .collect()
+                            });
   mb.listen();
   let results: Vec<Result<(), AppError>> = child.join().expect("Could not join thread.");
 
