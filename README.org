@@ -77,20 +77,32 @@
    If you are using `OSX` make sure that you got the rust toolchain from [[https://rustup.rs/][rustup]] and not from homebrew.
    If you're using the homebrew formula you will run into [[https://github.com/mriehl/fw/issues/11][issues]].
 
-
+*** With fzf
    Another thing that will make you much more productive is to use the ~zsh~ completions (if you're not using the ~zsh~ I guess
    you would get a bigger productivity boost by switching to ~zsh~ first).
 
-   In your zshrc you should do this
+   Since we integrate with [[https://github.com/junegunn/fzf][fzf]] it is recommended to use that for the best possible experience (~workon~ and ~nworkon~ will be helm-style fuzzy finders).
+   Make sure ~fzf~ is installed and then add this to your ~zsh~ configuration:
 
    #+BEGIN_SRC shell-script
    if [[ -x "$(command -v fw)" ]];
    then
-     eval $(fw print-zsh-setup 2>/dev/null);
+     eval $(fw print-zsh-setup -f 2>/dev/null);
    fi;
    #+END_SRC
 
-   This also defines the two function ~workon~ and ~nworkon~.
+*** Without fzf
+   If you don't want ~fzf~ integration:
+
+   #+BEGIN_SRC shell-script
+   if [[ -x "$(command -v fw)" ]];
+   then
+     eval $(fw print-zsh-setup -f 2>/dev/null);
+   fi;
+   #+END_SRC
+
+   In this case ~workon~ and ~nworkon~ will require an argument (the project) and will provide simple prefix-based autocompletion.
+   You should really use the ~fzf~ integration instead it's much better!
 
 ** Usage
 *** Migrating to ~fw~ / Configuration
@@ -148,14 +160,18 @@
   Just
 
   #+BEGIN_SRC bash
-  workon MYPROJECT
+  workon
   #+END_SRC
 
-  It will drop you into the project folder and execute all the hooks.
+  It will open a fuzzy finder which you can use to select a project.
+  Press <enter> on a selection and it will drop you into the project folder and execute all the hooks.
 
   If you're in a pinch and just want to check something real quick, then you can use
 
   #+BEGIN_SRC
-  nworkon MYPROJECT
+  nworkon
   #+END_SRC
-  as that will no execute any post-workon hooks and simply drop you into the folder.
+  as that will no execute any post-workon hooks and simply drop you into the project folder.
+
+  In case you're not using ~fzf~ integration (see above) you will need to pass an argument to ~workon~ / ~nworkon~ (the project name).
+  It comes with simple prefix-based autocompletion.

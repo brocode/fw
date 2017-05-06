@@ -67,7 +67,7 @@ fn main() {
            .help("Sets the level of verbosity"))
     .arg(Arg::with_name("q").short("q").help("Make fw quiet"))
     .subcommand(SubCommand::with_name("sync").about("Sync workspace"))
-    .subcommand(SubCommand::with_name("print-zsh-setup").about("Prints zsh completion code."))
+    .subcommand(SubCommand::with_name("print-zsh-setup").about("Prints zsh completion code.").arg(Arg::with_name("--with-fzf").short("-f").help("Integrate with fzf")))
     .subcommand(SubCommand::with_name("setup")
                   .about("Setup config from existing workspace")
                   .arg(Arg::with_name("WORKSPACE_DIR")
@@ -262,7 +262,9 @@ fn main() {
                                                                            .expect("argument required by clap.rs"),
                                                          &subcommand_logger)
                                          }
-                                         "print-zsh-setup" => print_zsh_setup(),
+    "print-zsh-setup" => {
+      print_zsh_setup(subcommand_matches.is_present("--with-fzf"))
+    },
                                          "tag" => {
     let subsubcommand_name: String = subcommand_matches.subcommand_name()
                                                        .expect("subcommand matches enforced by clap.rs")
@@ -348,11 +350,16 @@ fn execute_tag_subcommand(maybe_config: Result<config::Config, AppError>,
   }
 }
 
-fn print_zsh_setup() -> Result<(), AppError> {
+fn print_zsh_setup(use_fzf: bool) -> Result<(), AppError> {
   let fw_completion = include_str!("shell/setup.zsh");
   let basic_workon = include_str!("shell/workon.zsh");
+  let fzf_workon = include_str!("shell/workon-fzf.zsh");
   println!("{}", fw_completion);
-  println!("{}", basic_workon);
+  if use_fzf {
+    println!("{}", fzf_workon);
+  } else {
+    println!("{}", basic_workon);
+  }
   Ok(())
 }
 
