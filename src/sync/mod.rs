@@ -116,7 +116,7 @@ pub fn synchronize(maybe_config: Result<Config, AppError>, logger: &Logger) -> R
   info!(logger, "Synchronizing everything");
   let logger = logger.new(o!());
   let config = maybe_config?;
-  let mut mb = MultiBar::on(std::io::stdout());
+  let mut mb = MultiBar::on(std::io::stderr());
   let mut projects: Vec<_> = config.projects
                                    .values()
                                    .map(|p| {
