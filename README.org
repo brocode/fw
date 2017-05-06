@@ -87,7 +87,12 @@
    #+BEGIN_SRC shell-script
    if [[ -x "$(command -v fw)" ]];
    then
-     eval $(fw print-zsh-setup -f 2>/dev/null);
+     if [[ -x "$(command -v fzf)" ]];
+     then
+       eval $(fw print-zsh-setup -f 2>/dev/null);
+     else
+       eval $(fw print-zsh-setup 2>/dev/null);
+     fi;
    fi;
    #+END_SRC
 
@@ -97,7 +102,7 @@
    #+BEGIN_SRC shell-script
    if [[ -x "$(command -v fw)" ]];
    then
-     eval $(fw print-zsh-setup -f 2>/dev/null);
+     eval $(fw print-zsh-setup 2>/dev/null);
    fi;
    #+END_SRC
 
