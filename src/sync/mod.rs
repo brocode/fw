@@ -13,13 +13,11 @@ use rayon::prelude::*;
 use slog::Logger;
 use std;
 use std::io::{BufRead, BufReader};
-use std::io::Read;
 use std::path::PathBuf;
 use std::process::{Child, Command, Stdio};
 use std::thread;
 
-static COLOURS: [Colour; 11] = [Colour::Red,
-                                Colour::Green,
+static COLOURS: [Colour; 14] = [Colour::Green,
                                 Colour::Cyan,
                                 Colour::Blue,
                                 Colour::Yellow,
@@ -28,6 +26,10 @@ static COLOURS: [Colour; 11] = [Colour::Red,
                                 Colour::RGB(0, 153, 255),
                                 Colour::RGB(102, 0, 102),
                                 Colour::RGB(102, 0, 0),
+                                Colour::RGB(153, 102, 51),
+                                Colour::RGB(102, 153, 0),
+                                Colour::RGB(0, 0, 102),
+                                Colour::RGB(255, 153, 255),
                                 Colour::Purple];
 
 fn builder<'a>() -> RepoBuilder<'a> {
@@ -40,6 +42,36 @@ fn builder<'a>() -> RepoBuilder<'a> {
   repo_builder
 }
 
+fn forward_process_output_to_stdout<T: std::io::Read>(read: T, prefix: &str, colour: &Colour, atty: bool, mark_err: bool) -> Result<(), AppError> {
+  let mut buf = BufReader::new(read);
+  loop {
+    let mut line = String::new();
+    let read: usize = buf.read_line(&mut line)?;
+    if read == 0 {
+      break;
+    }
+    if mark_err {
+      let prefix = format!("{:>21.21} |", prefix);
+      if atty {
+        print!("{} {} {}",
+               Colour::Red.paint("ERR"),
+               colour.paint(prefix),
+               line);
+      } else {
+        print!("ERR {} {}", prefix, line);
+      };
+    } else {
+      let prefix = format!("{:>25.25} |", prefix);
+      if atty {
+        print!("{} {}", colour.paint(prefix), line);
+      } else {
+        print!("{} {}", prefix, line);
+      };
+    }
+  }
+  Ok(())
+}
+
 fn spawn_maybe(cmd: &str, workdir: &PathBuf, project_name: &str, colour: &Colour, logger: &Logger) -> Result<(), AppError> {
   let mut result: Child = Command::new("sh")
     .arg("-c")
@@ -49,34 +81,30 @@ fn spawn_maybe(cmd: &str, workdir: &PathBuf, project_name: &str, colour: &Colour
     .stderr(Stdio::piped())
     .spawn()?;
 
-  if let Some(ref mut stdout) = result.stdout {
-    let mut buf = BufReader::new(stdout);
-    loop {
-      let mut line = String::new();
-      let read: usize = buf.read_line(&mut line)?;
-      if read == 0 {
-        break;
-      }
-      let prefix = format!("{:>25.25} |", project_name);
-      if is_stdout_a_tty() {
-        print!("{} {}", colour.paint(prefix), line);
-      } else {
-        print!("{} {}", prefix, line);
-      };
-    }
+  let stdout_child = if let Some(stdout) = result.stdout.take() {
+    let colour = colour.clone();
+    let project_name = project_name.to_owned();
+    Some(thread::spawn(move || {
+                         let atty: bool = is_stdout_a_tty();
+                         forward_process_output_to_stdout(stdout, &project_name, &colour, atty, false)
+                       }))
+  } else {
+    None
+  };
+
+  // stream stderr in this thread. no need to spawn another one.
+  if let Some(stderr) = result.stderr.take() {
+    let atty: bool = is_stderr_a_tty();
+    forward_process_output_to_stdout(stderr, &project_name, colour, atty, true)?
   }
 
-  let mut stderr_output = String::new();
-  if let Some(ref mut stderr) = result.stderr {
-    stderr.read_to_string(&mut stderr_output)?;
+  if let Some(child) = stdout_child {
+    child.join().expect("Must be able to join child")?;
   }
 
   let status = result.wait()?;
   if status.code().unwrap_or(0) > 0 {
-    error!(
-      logger,
-      "cmd failed";
-      "stderr" => stderr_output.replace("\n", "\\n"));
+    error!(logger, "cmd failed");
     Err(AppError::UserError("External command failed.".to_owned()))
   } else {
     info!(logger, "cmd finished");
@@ -92,6 +120,10 @@ fn random_colour() -> Colour {
 }
 fn is_stdout_a_tty() -> bool {
   atty::is(atty::Stream::Stdout)
+}
+
+fn is_stderr_a_tty() -> bool {
+  atty::is(atty::Stream::Stderr)
 }
 
 pub fn foreach(maybe_config: Result<Config, AppError>, cmd: &str, logger: &Logger) -> Result<(), AppError> {
