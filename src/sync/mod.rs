@@ -42,7 +42,7 @@ fn builder<'a>() -> RepoBuilder<'a> {
   repo_builder
 }
 
-fn forward_process_output_to_stdout<T: std::io::Read>(read: T, prefix: &str, colour: Colour, atty: bool, mark_err: bool) -> Result<(), AppError> {
+fn forward_process_output_to_stdout<T: std::io::Read>(read: T, prefix: &str, colour: &Colour, atty: bool, mark_err: bool) -> Result<(), AppError> {
   let mut buf = BufReader::new(read);
   loop {
     let mut line = String::new();
@@ -86,7 +86,7 @@ fn spawn_maybe(cmd: &str, workdir: &PathBuf, project_name: &str, colour: &Colour
     let project_name = project_name.to_owned();
     Some(thread::spawn(move || {
                          let atty: bool = is_stdout_a_tty();
-                         forward_process_output_to_stdout(stdout, &project_name, colour, atty, false)
+                         forward_process_output_to_stdout(stdout, &project_name, &colour, atty, false)
                        }))
   } else {
     None
@@ -94,8 +94,6 @@ fn spawn_maybe(cmd: &str, workdir: &PathBuf, project_name: &str, colour: &Colour
 
   // stream stderr in this thread. no need to spawn another one.
   if let Some(stderr) = result.stderr.take() {
-    let colour = colour.clone();
-    let project_name = project_name.to_owned();
     let atty: bool = is_stderr_a_tty();
     forward_process_output_to_stdout(stderr, &project_name, colour, atty, true)?
   }
@@ -103,7 +101,6 @@ fn spawn_maybe(cmd: &str, workdir: &PathBuf, project_name: &str, colour: &Colour
   if let Some(child) = stdout_child {
     child.join().expect("Must be able to join child")?;
   }
-
 
   let status = result.wait()?;
   if status.code().unwrap_or(0) > 0 {
