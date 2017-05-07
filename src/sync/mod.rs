@@ -13,6 +13,7 @@ use rayon::prelude::*;
 use slog::Logger;
 use std;
 use std::io::{BufRead, BufReader};
+use std::os::unix::fs::FileTypeExt;
 use std::path::PathBuf;
 use std::process::{Child, Command, Stdio};
 use std::thread;
@@ -194,6 +195,9 @@ fn sync_project(config: &Config, project: &Project, logger: &Logger, pb: &mut Pr
 }
 pub fn synchronize(maybe_config: Result<Config, AppError>, logger: &Logger) -> Result<(), AppError> {
   info!(logger, "Synchronizing everything");
+  if !ssh_agent_running() {
+    warn!(logger, "SSH Agent not running. Process may hang.")
+  }
   let logger = logger.new(o!());
   let config = maybe_config?;
   let mut mb = MultiBar::on(std::io::stderr());
@@ -222,4 +226,15 @@ pub fn synchronize(maybe_config: Result<Config, AppError>, logger: &Logger) -> R
 
   results.into_iter()
          .fold(Result::Ok(()), |accu, maybe_error| accu.and(maybe_error))
+}
+
+fn ssh_agent_running() -> bool {
+  match std::env::var("SSH_AUTH_SOCK") {
+  Ok(auth_socket) => {
+    std::fs::metadata(auth_socket)
+      .map(|m| m.file_type().is_socket())
+      .unwrap_or(false)
+  }
+  Err(_) => false,
+  }
 }
