@@ -17,6 +17,16 @@ pub enum AppError {
   Regex(regex::Error),
 }
 
+impl AppError {
+  pub fn require<T>(option: Option<T>, app_error: AppError) -> Result<T, AppError> {
+    if let Some(value) = option {
+      Result::Ok(value)
+    } else {
+      Result::Err(app_error)
+    }
+  }
+}
+
 impl fmt::Display for AppError {
   fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
     match *self {

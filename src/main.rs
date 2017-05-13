@@ -76,6 +76,12 @@ fn main() {
                          .value_name("WORKSPACE_DIR")
                          .index(1)
                          .required(true)))
+    .subcommand(SubCommand::with_name("import")
+                  .about("Import existing git folder to fw")
+                  .arg(Arg::with_name("PROJECT_DIR")
+                         .value_name("PROJECT_DIR")
+                         .index(1)
+                         .required(true)))
     .subcommand(SubCommand::with_name("add")
                   .about("Add project to config")
                   .arg(Arg::with_name("NAME")
@@ -243,6 +249,11 @@ fn main() {
   }
                                          "setup" => {
                                            setup::setup(subcommand_matches.value_of("WORKSPACE_DIR")
+                                                                          .expect("argument required by clap.rs"),
+                                                        &subcommand_logger)
+                                         }
+                                         "import" => {
+                                           setup::import(config, subcommand_matches.value_of("PROJECT_DIR")
                                                                           .expect("argument required by clap.rs"),
                                                         &subcommand_logger)
                                          }
