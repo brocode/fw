@@ -268,7 +268,7 @@ fn main() {
                                            sync::foreach(config,
                                                          subcommand_matches.value_of("CMD")
                                                                            .expect("argument required by clap.rs"),
-                                                         &subcommand_matches.values_of_lossy("tag").unwrap_or(Vec::new()).into_iter().collect(),
+                                                         &subcommand_matches.values_of_lossy("tag").unwrap_or_default().into_iter().collect(),
                                                          &subcommand_logger)
                                          }
     "print-zsh-setup" => {

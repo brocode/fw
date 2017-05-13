@@ -85,7 +85,7 @@ fn spawn_maybe(cmd: &str, workdir: &PathBuf, project_name: &str, colour: &Colour
     .spawn()?;
 
   let stdout_child = if let Some(stdout) = result.stdout.take() {
-    let colour = colour.clone();
+    let colour = *colour;
     let project_name = project_name.to_owned();
     Some(thread::spawn(move || {
                          let atty: bool = is_stdout_a_tty();
@@ -98,7 +98,7 @@ fn spawn_maybe(cmd: &str, workdir: &PathBuf, project_name: &str, colour: &Colour
   // stream stderr in this thread. no need to spawn another one.
   if let Some(stderr) = result.stderr.take() {
     let atty: bool = is_stderr_a_tty();
-    forward_process_output_to_stdout(stderr, &project_name, colour, atty, true)?
+    forward_process_output_to_stdout(stderr, project_name, colour, atty, true)?
   }
 
   if let Some(child) = stdout_child {
@@ -134,7 +134,7 @@ pub fn foreach(maybe_config: Result<Config, AppError>, cmd: &str, tags: &BTreeSe
   let projects: Vec<&Project> = config.projects.values().collect();
   let script_results = projects
                              .par_iter()
-                             .filter(|p| tags.is_empty() || p.tags.clone().unwrap_or(BTreeSet::new()).intersection(tags).count() > 0)
+                             .filter(|p| tags.is_empty() || p.tags.clone().unwrap_or_default().intersection(tags).count() > 0)
                              .map(|p| {
                                     let project_logger = logger.new(o!("project" => p.name.clone()));
                                     let path = config.actual_path_to_project(p, &project_logger);
@@ -151,7 +151,7 @@ pub fn foreach(maybe_config: Result<Config, AppError>, cmd: &str, tags: &BTreeSe
 fn sync_project(config: &Config, project: &Project, logger: &Logger, pb: &mut ProgressBar<Pipe>) -> Result<(), AppError> {
   let mut repo_builder = builder();
   pb.inc();
-  let path = config.actual_path_to_project(project, &logger);
+  let path = config.actual_path_to_project(project, logger);
   let exists = path.exists();
   let project_logger = logger.new(o!(
         "git" => project.git.clone(),
@@ -178,7 +178,7 @@ fn sync_project(config: &Config, project: &Project, logger: &Logger, pb: &mut Pr
                           Some(cmd) => {
       pb.inc();
       info!(project_logger, "Handling post hooks"; "after_clone" => cmd);
-      let res = spawn_maybe(&cmd, &path, &project.name, &random_colour(), &logger);
+      let res = spawn_maybe(&cmd, &path, &project.name, &random_colour(), logger);
       pb.inc();
       res.map_err(|error| {
         let wrapped = AppError::UserError(format!("Post-clone hook failed (nonzero exit code). Cause: {:?}",
