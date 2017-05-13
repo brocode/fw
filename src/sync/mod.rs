@@ -79,6 +79,7 @@ fn spawn_maybe(cmd: &str, workdir: &PathBuf, project_name: &str, colour: &Colour
     .arg("-c")
     .arg(cmd)
     .current_dir(&workdir)
+    .env("FW_PROJECT", project_name)
     .stdout(Stdio::piped())
     .stderr(Stdio::piped())
     .spawn()?;
