@@ -89,9 +89,15 @@ fn main() {
     .subcommand(SubCommand::with_name("foreach")
                   .about("Run script on each project")
                   .arg(Arg::with_name("CMD")
-                         .value_name("CMD")
-                         .index(1)
-                         .required(true)))
+                          .value_name("CMD")
+                          .required(true))
+                  .arg(Arg::with_name("tag")
+                          .long("tag")
+                          .short("t")
+                          .help("Filter projects by tag. More than 1 is allowed.")
+                          .required(false)
+                          .takes_value(true)
+                          .multiple(true)))
     .subcommand(SubCommand::with_name("export")
                   .about("Exports project as fw shell script")
                   .arg(Arg::with_name("PROJECT_NAME")
@@ -262,6 +268,7 @@ fn main() {
                                            sync::foreach(config,
                                                          subcommand_matches.value_of("CMD")
                                                                            .expect("argument required by clap.rs"),
+                                                         &subcommand_matches.values_of_lossy("tag").unwrap_or_default().into_iter().collect(),
                                                          &subcommand_logger)
                                          }
     "print-zsh-setup" => {
