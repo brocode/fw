@@ -1,6 +1,7 @@
 use ansi_term::Colour;
 use atty;
 use config::{Config, Project};
+use std::collections::{BTreeSet};
 use errors::AppError;
 use git2;
 use git2::FetchOptions;
@@ -127,11 +128,13 @@ fn is_stderr_a_tty() -> bool {
   atty::is(atty::Stream::Stderr)
 }
 
-pub fn foreach(maybe_config: Result<Config, AppError>, cmd: &str, logger: &Logger) -> Result<(), AppError> {
+pub fn foreach(maybe_config: Result<Config, AppError>, cmd: &str, tags: &BTreeSet<String>, logger: &Logger) -> Result<(), AppError> {
   let config = maybe_config?;
-  let script_results = config.projects
+  let projects: Vec<&Project> = config.projects.values().collect();
+  let script_results = projects
                              .par_iter()
-                             .map(|(_, p)| {
+                             .filter(|p| tags.is_empty() || p.tags.clone().unwrap_or(BTreeSet::new()).intersection(tags).count() > 0)
+                             .map(|p| {
                                     let project_logger = logger.new(o!("project" => p.name.clone()));
                                     let path = config.actual_path_to_project(p, &project_logger);
                                     info!(project_logger, "Entering");
