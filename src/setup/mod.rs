@@ -5,7 +5,7 @@ use git2::Repository;
 use slog::Logger;
 use std::collections::BTreeMap;
 use std::fs;
-use std::path::PathBuf;
+use std::path::{PathBuf, Path};
 
 pub fn setup(workspace_dir: &str, logger: &Logger) -> Result<(), AppError> {
   let setup_logger = logger.new(o!("workspace" => workspace_dir.to_owned()));
@@ -33,7 +33,9 @@ fn determine_projects(path: PathBuf, logger: &Logger) -> Result<BTreeMap<String,
     if path.is_dir() {
       match entry.file_name().into_string() {
       Ok(name) => {
-        match load_project(workspace_path.clone(), &name, logger) {
+        let mut path_to_repo = workspace_path.clone();
+        path_to_repo.push(&name);
+        match load_project(path_to_repo, &name, logger) {
         Ok(project) => {
           projects.insert(project.name.clone(), project);
         }
@@ -51,12 +53,22 @@ fn determine_projects(path: PathBuf, logger: &Logger) -> Result<BTreeMap<String,
   Ok(projects)
 }
 
+pub fn import(maybe_config: Result<Config, AppError>, path: &str, logger: &Logger) -> Result<(), AppError> {
+  let mut config: Config = maybe_config?;
+  let path = fs::canonicalize(Path::new(path))?;
+  let file_name = AppError::require(path.file_name(),
+                                  AppError::UserError("Import path needs to be valid".to_string()))?;
+  let project_name: String = file_name.to_string_lossy().into_owned();
+  let new_project = load_project(path.clone(), &project_name, logger)?;
+  config.projects.insert(project_name, new_project);
+  info!(logger, "Updated config"; "config" => format!("{:?}", config));
+  config::write_config(config, logger)
+}
 
-fn load_project(workspace_path: PathBuf, name: &str, logger: &Logger) -> Result<Project, AppError> {
+
+fn load_project(path_to_repo: PathBuf, name: &str, logger: &Logger) -> Result<Project, AppError> {
   let project_logger = logger.new(o!("project" => name.to_string()));
-  let mut path_to_repo = workspace_path;
-  path_to_repo.push(name);
-  let repo = Repository::open(path_to_repo)?;
+  let repo: Repository = Repository::open(path_to_repo)?;
   let all = repo.remotes()?;
   debug!(project_logger, "remotes"; "found" => format!("{:?}", all.len()));
   let remote = repo.find_remote("origin")?;
