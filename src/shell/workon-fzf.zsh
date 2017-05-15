@@ -1,5 +1,5 @@
 workon () {
-  PROJECT="$(fw -q ls | fzf --cycle --color=light)"
+  PROJECT="$(fw -q ls | fzf --cycle --query=$1 --color=light)"
   SCRIPT="$(~/.cargo/bin/fw -q gen-workon $PROJECT)";
   if [ $? -eq 0 ]; then
     eval "$SCRIPT";
