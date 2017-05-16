@@ -19,7 +19,7 @@ use std::path::PathBuf;
 use std::process::{Child, Command, Stdio};
 use std::thread;
 
-static COLOURS: [Colour; 14] = [Colour::Green,
+pub static COLOURS: [Colour; 14] = [Colour::Green,
                                 Colour::Cyan,
                                 Colour::Blue,
                                 Colour::Yellow,

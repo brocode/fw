@@ -128,6 +128,12 @@ fn main() {
                          .required(false)
                          .short("x")
                          .help("Don't generate post_workon shell code, only cd into the folder")))
+    .subcommand(SubCommand::with_name("inspect")
+                  .about("Inspect project")
+                  .arg(Arg::with_name("PROJECT_NAME")
+                         .value_name("PROJECT_NAME")
+                         .index(1)
+                         .required(true)))
     .subcommand(SubCommand::with_name("update")
                   .about("Modifies project settings.")
                   .arg(Arg::with_name("NAME").value_name("NAME").required(true))
@@ -262,6 +268,12 @@ fn main() {
                                                                          .expect("argument required by clap.rs"),
                                                        config,
                                                        subcommand_matches.is_present("quick"),
+                                                       &subcommand_logger)
+                                         }
+                                         "inspect" => {
+                                           workon::inspect(subcommand_matches.value_of("PROJECT_NAME")
+                                                                         .expect("argument required by clap.rs"),
+                                                       config,
                                                        &subcommand_logger)
                                          }
                                          "projectile" => projectile::projectile(config, &subcommand_logger),

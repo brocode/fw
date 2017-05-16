@@ -2,6 +2,7 @@ use config;
 use config::Project;
 use errors::AppError;
 use slog::Logger;
+use ansi_term::Style;
 
 
 pub fn ls(maybe_config: Result<config::Config, AppError>) -> Result<(), AppError> {
@@ -22,6 +23,27 @@ pub fn print_path(maybe_config: Result<config::Config, AppError>, name: &str, lo
   let path = canonical_project_path.to_str()
                                    .ok_or(AppError::InternalError("project path is not valid unicode"))?;
   println!("{}", path);
+  Ok(())
+}
+
+pub fn inspect(name: &str, maybe_config: Result<config::Config, AppError>, logger: &Logger) -> Result<(), AppError> {
+  let config = maybe_config?;
+  let project = config.projects
+                      .get(name)
+                      .ok_or_else(|| AppError::UserError(format!("project {} not found", name)))?;
+  println!("{}", Style::new().underline().bold().paint(project.name.clone()));
+  let project = config.projects
+                      .get(name)
+                      .ok_or_else(|| AppError::UserError(format!("project {} not found", name)))?;
+  let canonical_project_path = config.actual_path_to_project(project, logger);
+  let path = canonical_project_path.to_str()
+                                   .ok_or(AppError::InternalError("project path is not valid unicode"))?;
+  println!("{:<20}: {}", "Path", path);
+  let tags = project.tags.clone().map(|t| {
+    let project_tags: Vec<String> = t.into_iter().collect();
+    project_tags.join(", ")
+  }).unwrap_or("None".to_owned());
+  println!("{:<20}: {}", "Tags", tags);
   Ok(())
 }
 
