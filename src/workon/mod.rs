@@ -44,6 +44,8 @@ pub fn inspect(name: &str, maybe_config: Result<config::Config, AppError>, logge
     project_tags.join(", ")
   }).unwrap_or("None".to_owned());
   println!("{:<20}: {}", "Tags", tags);
+  let git = project.git.clone();
+  println!("{:<20}: {}", "Git", git);
   Ok(())
 }
 
