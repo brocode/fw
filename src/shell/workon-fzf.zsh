@@ -1,6 +1,6 @@
-workon () {
+__workon () {
   PROJECT="$(fw -q ls | fzf --cycle --query=$1 --color=light --preview-window=top:50% --preview='~/.cargo/bin/fw -q inspect {}' --no-mouse)"
-  SCRIPT="$(~/.cargo/bin/fw -q gen-workon $PROJECT)";
+  SCRIPT="$(~/.cargo/bin/fw -q gen-workon $2 $PROJECT)";
   if [ $? -eq 0 ]; then
     eval "$SCRIPT";
   else
@@ -8,12 +8,10 @@ workon () {
   fi
 };
 
+workon () {
+  __workon "$1"
+};
+
 nworkon () {
-  PROJECT="$(fw -q ls | fzf --cycle --color=light)"
-  SCRIPT="$(~/.cargo/bin/fw -q gen-workon -x $PROJECT)";
-  if [ $? -eq 0 ]; then
-    eval "$SCRIPT";
-  else
-    printf "$SCRIPT\n";
-  fi
+  __workon "$1" "-x"
 };
