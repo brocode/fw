@@ -42,7 +42,7 @@ pub fn inspect(name: &str, maybe_config: Result<config::Config, AppError>, logge
   let tags = project.tags.clone().map(|t| {
     let project_tags: Vec<String> = t.into_iter().collect();
     project_tags.join(", ")
-  }).unwrap_or("None".to_owned());
+  }).unwrap_or_else(|| "None".to_owned());
   println!("{:<20}: {}", "Tags", tags);
   let git = project.git.clone();
   println!("{:<20}: {}", "Git", git);
