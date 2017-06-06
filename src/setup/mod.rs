@@ -56,11 +56,13 @@ fn determine_projects(path: PathBuf, logger: &Logger) -> Result<BTreeMap<String,
 pub fn import(maybe_config: Result<Config, AppError>, path: &str, logger: &Logger) -> Result<(), AppError> {
   let mut config: Config = maybe_config?;
   let path = fs::canonicalize(Path::new(path))?;
+  let project_path = path.to_str().ok_or(AppError::InternalError("project path is not valid unicode"))?.to_owned();
   let file_name = AppError::require(path.file_name(),
                                   AppError::UserError("Import path needs to be valid".to_string()))?;
   let project_name: String = file_name.to_string_lossy().into_owned();
   let new_project = load_project(path.clone(), &project_name, logger)?;
-  config.projects.insert(project_name, new_project);
+  let new_project_with_path = Project {override_path: Some(project_path), ..new_project};
+  config.projects.insert(project_name, new_project_with_path);
   info!(logger, "Updated config"; "config" => format!("{:?}", config));
   config::write_config(config, logger)
 }
