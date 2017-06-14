@@ -75,7 +75,7 @@ fn forward_process_output_to_stdout<T: std::io::Read>(read: T, prefix: &str, col
 }
 
 fn spawn_maybe(shell: &[String], cmd: &str, workdir: &PathBuf, project_name: &str, colour: &Colour, logger: &Logger) -> Result<(), AppError> {
-  let program: &str = shell.first().ok_or(AppError::UserError("shell entry in project settings must have at least one element".to_owned()))?;
+  let program: &str = shell.first().ok_or_else(|| AppError::UserError("shell entry in project settings must have at least one element".to_owned()))?;
   let rest: &[String] = shell.split_at(1).1;
   let mut result: Child = Command::new(program)
     .args(rest)
