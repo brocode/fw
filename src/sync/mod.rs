@@ -1,6 +1,6 @@
 use ansi_term::Colour;
 use atty;
-use config::{Config, Project};
+use config::{Config, Project, Settings};
 use std::collections::{BTreeSet};
 use errors::AppError;
 use git2;
@@ -74,14 +74,17 @@ fn forward_process_output_to_stdout<T: std::io::Read>(read: T, prefix: &str, col
   Ok(())
 }
 
-fn spawn_maybe(cmd: &str, workdir: &PathBuf, project_name: &str, colour: &Colour, logger: &Logger) -> Result<(), AppError> {
-  let mut result: Child = Command::new("sh")
-    .arg("-c")
+fn spawn_maybe(shell: Vec<String>, cmd: &str, workdir: &PathBuf, project_name: &str, colour: &Colour, logger: &Logger) -> Result<(), AppError> {
+  let program: &str = shell.first().ok_or(AppError::UserError("shell entry in project settings must have at least one element".to_owned()))?;
+  let rest: &[String] = shell.split_at(1).1;
+  let mut result: Child = Command::new(program)
+    .args(rest)
     .arg(cmd)
     .current_dir(&workdir)
     .env("FW_PROJECT", project_name)
     .stdout(Stdio::piped())
     .stderr(Stdio::piped())
+    .stdin(Stdio::null())
     .spawn()?;
 
   let stdout_child = if let Some(stdout) = result.stdout.take() {
@@ -129,6 +132,10 @@ fn is_stderr_a_tty() -> bool {
   atty::is(atty::Stream::Stderr)
 }
 
+fn project_shell(project_settings: &Settings) -> Vec<String> {
+  project_settings.shell.clone().unwrap_or_else(|| vec!["sh".to_owned(), "-c".to_owned()])
+}
+
 pub fn foreach(maybe_config: Result<Config, AppError>, cmd: &str, tags: &BTreeSet<String>, logger: &Logger) -> Result<(), AppError> {
   let config = maybe_config?;
   let projects: Vec<&Project> = config.projects.values().collect();
@@ -136,10 +143,11 @@ pub fn foreach(maybe_config: Result<Config, AppError>, cmd: &str, tags: &BTreeSe
                              .par_iter()
                              .filter(|p| tags.is_empty() || p.tags.clone().unwrap_or_default().intersection(tags).count() > 0)
                              .map(|p| {
+                                    let shell = project_shell(&config.settings);
                                     let project_logger = logger.new(o!("project" => p.name.clone()));
                                     let path = config.actual_path_to_project(p, &project_logger);
                                     info!(project_logger, "Entering");
-                                    spawn_maybe(cmd, &path, &p.name, &random_colour(), &project_logger)
+                                    spawn_maybe(shell, cmd, &path, &p.name, &random_colour(), &project_logger)
                                   })
                              .collect::<Vec<Result<(), AppError>>>();
 
@@ -151,6 +159,7 @@ pub fn foreach(maybe_config: Result<Config, AppError>, cmd: &str, tags: &BTreeSe
 fn sync_project(config: &Config, project: &Project, logger: &Logger, pb: &mut ProgressBar<Pipe>) -> Result<(), AppError> {
   let mut repo_builder = builder();
   pb.inc();
+  let shell = project_shell(&config.settings);
   let path = config.actual_path_to_project(project, logger);
   let exists = path.exists();
   let project_logger = logger.new(o!(
@@ -178,7 +187,7 @@ fn sync_project(config: &Config, project: &Project, logger: &Logger, pb: &mut Pr
                           Some(cmd) => {
       pb.inc();
       info!(project_logger, "Handling post hooks"; "after_clone" => cmd);
-      let res = spawn_maybe(&cmd, &path, &project.name, &random_colour(), logger);
+      let res = spawn_maybe(shell, &cmd, &path, &project.name, &random_colour(), logger);
       pb.inc();
       res.map_err(|error| {
         let wrapped = AppError::UserError(format!("Post-clone hook failed (nonzero exit code). Cause: {:?}",

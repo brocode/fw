@@ -11,6 +11,7 @@ use std::path::{Path, PathBuf};
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Settings {
   pub workspace: String,
+  pub shell: Option<Vec<String>>,
   pub default_after_workon: Option<String>,
   pub default_after_clone: Option<String>,
   pub tags: Option<BTreeMap<String, Tag>>,
@@ -484,6 +485,7 @@ mod tests {
       workspace: "/test".to_owned(),
       default_after_workon: None,
       default_after_clone: None,
+      shell: None,
       tags: Some(tags),
     };
     Config {

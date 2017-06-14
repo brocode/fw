@@ -32,6 +32,7 @@
     }
   },
   "settings": {
+    "shell": ["/usr/bin/zsh", "-c"],
     "workspace": "~/workspace",
     "tags": {
       "git": {
