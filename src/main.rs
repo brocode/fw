@@ -62,6 +62,7 @@ fn main() {
     .version(crate_version!())
     .author("Brocode inc <bros@brocode.sh>")
     .about("fast workspace manager")
+    .global_setting(AppSettings::ColoredHelp)
     .setting(AppSettings::SubcommandRequired)
     .arg(Arg::with_name("v")
            .short("v")
