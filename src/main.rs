@@ -70,7 +70,7 @@ fn main() {
            .help("Sets the level of verbosity"))
     .arg(Arg::with_name("q").short("q").help("Make fw quiet"))
     .subcommand(SubCommand::with_name("sync").about("Sync workspace"))
-    .subcommand(SubCommand::with_name("print-zsh-setup").about("Prints zsh completion code.").arg(Arg::with_name("--with-fzf").short("-f").help("Integrate with fzf")))
+    .subcommand(SubCommand::with_name("print-zsh-setup").about("Prints zsh completion code.").arg(Arg::with_name("with-fzf").long("with-fzf").short("-f").help("Integrate with fzf")))
     .subcommand(SubCommand::with_name("setup")
                   .about("Setup config from existing workspace")
                   .arg(Arg::with_name("WORKSPACE_DIR")
@@ -296,7 +296,7 @@ fn main() {
                                                          &subcommand_logger)
                                          }
     "print-zsh-setup" => {
-      print_zsh_setup(subcommand_matches.is_present("--with-fzf"))
+      print_zsh_setup(subcommand_matches.is_present("with-fzf"))
     },
                                          "tag" => {
     let subsubcommand_name: String = subcommand_matches.subcommand_name()
