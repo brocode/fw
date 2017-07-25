@@ -28,6 +28,7 @@ _fw() {
             'foreach:Run script on each project'
             'projectile:Create projectile bookmarks'
             'ls:List projects'
+            'inspect:Inspect projects'
             'update:Update project settings'
             'tag:Manipulate tags'
             'export:Exports a project as shell commands'
@@ -36,6 +37,9 @@ _fw() {
         ;;
         second)
           case $words[2] in
+            inspect)
+              __fw_projects;
+            ;;
             update)
               __fw_projects;
             ;;
@@ -88,6 +92,9 @@ _fw() {
             tag)
               case $words[3] in
               tag-project)
+                __fw_tags;
+              ;;
+              untag-project)
                 __fw_tags;
               ;;
               *)
