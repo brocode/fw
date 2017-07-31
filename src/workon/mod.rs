@@ -7,10 +7,9 @@ use slog::Logger;
 
 pub fn ls(maybe_config: Result<config::Config, AppError>) -> Result<(), AppError> {
   let config = maybe_config?;
-  let output = config.projects.into_iter().map(
-    |(name, _)| println!("{}", name),
-  );
-  for _ in output {}
+  for (name, _) in config.projects {
+    println!("{}", name)
+  };
   Ok(())
 }
 
