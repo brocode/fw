@@ -156,7 +156,7 @@ pub fn foreach(
 ) -> Result<(), AppError> {
   let config = maybe_config?;
 
-  if let &Some(ref raw_num) = parallel_raw {
+  if let Some(ref raw_num) = *parallel_raw {
     let num_threads = raw_num.parse::<usize>()?;
     let rayon_config = rayon::Configuration::new().num_threads(num_threads);
     rayon::initialize(rayon_config).expect(
