@@ -1,4 +1,3 @@
-
 use ansi_term::Style;
 use config;
 use config::Project;

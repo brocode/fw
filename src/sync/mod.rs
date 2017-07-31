@@ -147,13 +147,21 @@ fn project_shell(project_settings: &Settings) -> Vec<String> {
   })
 }
 
-pub fn foreach(maybe_config: Result<Config, AppError>, cmd: &str, tags: &BTreeSet<String>, logger: &Logger, parallel_raw: &Option<String>) -> Result<(), AppError> {
+pub fn foreach(
+  maybe_config: Result<Config, AppError>,
+  cmd: &str,
+  tags: &BTreeSet<String>,
+  logger: &Logger,
+  parallel_raw: &Option<String>,
+) -> Result<(), AppError> {
   let config = maybe_config?;
 
   if let &Some(ref raw_num) = parallel_raw {
     let num_threads = raw_num.parse::<usize>()?;
     let rayon_config = rayon::Configuration::new().num_threads(num_threads);
-    rayon::initialize(rayon_config).expect("Tried to initialize rayon more than once (this is a software bug on fw side, please file an issue at https://github.com/brocode/fw/issues/new )");
+    rayon::initialize(rayon_config).expect(
+      "Tried to initialize rayon more than once (this is a software bug on fw side, please file an issue at https://github.com/brocode/fw/issues/new )",
+    );
     debug!(logger, "Rayon rolling with thread pool of size {}", raw_num)
   }
 

@@ -1,3 +1,5 @@
+
+use core;
 use git2;
 use regex;
 use serde_json;
@@ -5,7 +7,6 @@ use std::error::Error;
 use std::fmt;
 use std::io;
 use std::time::SystemTimeError;
-use core;
 
 #[derive(Debug)]
 pub enum AppError {

@@ -408,7 +408,9 @@ fn main() {
                        .into_iter()
                        .collect(),
     &subcommand_logger,
-                                             &subcommand_matches.value_of("parallel").map(|p| p.to_owned()),
+    &subcommand_matches.value_of("parallel").map(
+      |p| p.to_owned(),
+    ),
   )
                                          }
                                          "print-zsh-setup" => print_zsh_setup(subcommand_matches.is_present("with-fzf")),
