@@ -1,10 +1,11 @@
 use git2;
 use regex;
 use serde_json;
-use std::error;
+use std::error::Error;
 use std::fmt;
 use std::io;
 use std::time::SystemTimeError;
+use core;
 
 #[derive(Debug)]
 pub enum AppError {
@@ -41,7 +42,7 @@ impl fmt::Display for AppError {
   }
 }
 
-impl error::Error for AppError {
+impl Error for AppError {
   fn description(&self) -> &str {
     match *self {
     AppError::IO(ref err) => err.description(),
@@ -54,7 +55,7 @@ impl error::Error for AppError {
     }
   }
 
-  fn cause(&self) -> Option<&error::Error> {
+  fn cause(&self) -> Option<&Error> {
     match *self {
     AppError::IO(ref err) => Some(err),
     AppError::UserError(_) |
@@ -67,6 +68,11 @@ impl error::Error for AppError {
   }
 }
 
+impl From<core::num::ParseIntError> for AppError {
+  fn from(err: core::num::ParseIntError) -> AppError {
+    AppError::UserError(format!("Type error: {}", err.description()))
+  }
+}
 
 impl From<git2::Error> for AppError {
   fn from(err: git2::Error) -> AppError {

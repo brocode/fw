@@ -48,20 +48,23 @@ impl Project {
     if path.is_absolute() {
       Ok(())
     } else {
-      Err(AppError::UserError(format!("Misconfigured project {}: resolved path {:?} is relative which is not allowed",
-                                      &self.name,
-                                      &path)))
+      Err(AppError::UserError(format!(
+        "Misconfigured project {}: resolved path {:?} is relative which is not allowed",
+        &self.name,
+        &path
+      )))
     }
   }
 }
 
 impl Config {
-
   pub fn actual_path_to_project(&self, project: &Project, logger: &Logger) -> PathBuf {
     let path = project.override_path
                       .clone()
                       .map(PathBuf::from)
-                      .unwrap_or_else(|| Path::new(self.resolve_workspace(logger, project).as_str()).join(project.name.as_str()));
+                      .unwrap_or_else(|| {
+      Path::new(self.resolve_workspace(logger, project).as_str()).join(project.name.as_str())
+    });
     expand_path(path)
   }
 
@@ -69,23 +72,29 @@ impl Config {
     let x = self.resolve_from_tags(
       |tag| tag.workspace.clone(),
       // TODO @mriehl last without mutation?
-      |mut workspaces_from_tags| workspaces_from_tags.pop().expect("joiner only used if resolved vec is not empty"),
+      |mut workspaces_from_tags| {
+        workspaces_from_tags.pop().expect(
+          "joiner only used if resolved vec is not empty",
+        )
+      },
       project.tags.clone(),
-      logger
+      logger,
     );
     let workspace = x.unwrap_or_else(|| self.settings.workspace.clone());
     trace!(logger, "resolved"; "workspace" => workspace);
     workspace
   }
   pub fn resolve_after_clone(&self, logger: &Logger, project: &Project) -> Option<String> {
-    project.after_clone
-           .clone()
-           .or_else(|| self.resolve_after_clone_from_tags(project.tags.clone(), logger))
+    project.after_clone.clone().or_else(|| {
+      self.resolve_after_clone_from_tags(project.tags.clone(), logger)
+    })
   }
   pub fn resolve_after_workon(&self, logger: &Logger, project: &Project) -> String {
     project.after_workon
            .clone()
-           .or_else(|| self.resolve_workon_from_tags(project.tags.clone(), logger))
+           .or_else(|| {
+      self.resolve_workon_from_tags(project.tags.clone(), logger)
+    })
            .map(|c| prepare_workon(&c))
            .unwrap_or_else(|| "".to_owned())
   }
@@ -98,16 +107,20 @@ impl Config {
   }
 
   fn resolve_workon_from_tags(&self, maybe_tags: Option<BTreeSet<String>>, logger: &Logger) -> Option<String> {
-    self.resolve_from_tags(|t| t.clone().after_workon,
-                           |v| v.join(" && "),
-                           maybe_tags,
-                           logger)
+    self.resolve_from_tags(
+      |t| t.clone().after_workon,
+      |v| v.join(" && "),
+      maybe_tags,
+      logger,
+    )
   }
   fn resolve_after_clone_from_tags(&self, maybe_tags: Option<BTreeSet<String>>, logger: &Logger) -> Option<String> {
-    self.resolve_from_tags(|t| t.clone().after_clone,
-                           |v| v.join(" && "),
-                           maybe_tags,
-                           logger)
+    self.resolve_from_tags(
+      |t| t.clone().after_clone,
+      |v| v.join(" && "),
+      maybe_tags,
+      logger,
+    )
   }
 
   fn tag_priority_or_fallback(&self, name: &str, tag: &Tag, logger: &Logger) -> u8 {
@@ -125,8 +138,9 @@ conscious choice and set the value."#;
   }
 
   fn resolve_from_tags<F, J>(&self, resolver: F, joiner: J, maybe_tags: Option<BTreeSet<String>>, logger: &Logger) -> Option<String>
-    where F: Fn(&Tag) -> Option<String>,
-          J: Fn(Vec<String>) -> String
+  where
+    F: Fn(&Tag) -> Option<String>,
+    J: Fn(Vec<String>) -> String,
   {
     let tag_logger = logger.new(o!("tags" => format!("{:?}", maybe_tags)));
     trace!(tag_logger, "Resolving");
@@ -135,26 +149,23 @@ conscious choice and set the value."#;
     } else {
       let tags: BTreeSet<String> = maybe_tags.unwrap();
       let settings_tags = self.clone().settings.tags.unwrap();
-      let mut resolved_with_priority: Vec<(String, u8)> =
-        tags.iter()
-            .flat_map(|t| match settings_tags.get(t) {
-                      None => {
-          warn!(tag_logger, "Ignoring tag since it was not found in the config"; "missing_tag" => t.clone());
-          None
-        }
-                      Some(actual_tag) => {
-                        resolver(actual_tag)
-                          .clone()
-                          .map(|val| (val, self.tag_priority_or_fallback(t, actual_tag, logger)))
-                      }
-                      })
-            .collect();
+      let mut resolved_with_priority: Vec<(String, u8)> = tags.iter()
+                                                              .flat_map(|t| match settings_tags.get(t) {
+      None => {
+        warn!(tag_logger, "Ignoring tag since it was not found in the config"; "missing_tag" => t.clone());
+        None
+      }
+      Some(actual_tag) => {
+        resolver(actual_tag).clone().map(|val| {
+          (val, self.tag_priority_or_fallback(t, actual_tag, logger))
+        })
+      }
+      })
+                                                              .collect();
       trace!(logger, "before sort"; "tags" => format!("{:?}", resolved_with_priority));
       resolved_with_priority.sort_by_key(|resolved_and_priority| resolved_and_priority.1);
       trace!(logger, "after sort"; "tags" => format!("{:?}", resolved_with_priority));
-      let resolved: Vec<String> = resolved_with_priority.into_iter()
-                                                        .map(|r| r.0)
-                                                        .collect();
+      let resolved: Vec<String> = resolved_with_priority.into_iter().map(|r| r.0).collect();
       if resolved.is_empty() {
         None
       } else {
@@ -171,23 +182,28 @@ fn prepare_workon(workon: &str) -> String {
 }
 
 fn read_config<R>(reader: Result<R, AppError>, logger: &Logger) -> Result<Config, AppError>
-  where R: Read
+where
+  R: Read,
 {
-  reader.and_then(|r| serde_json::de::from_reader(r).map_err(AppError::BadJson))
+  reader.and_then(|r| {
+    serde_json::de::from_reader(r).map_err(AppError::BadJson)
+  })
         .and_then(|c: Config| c.check_sanity(logger))
 }
 
 pub fn config_path() -> Result<PathBuf, AppError> {
-  let mut home: PathBuf = env::home_dir()
-    .ok_or_else(|| AppError::UserError("$HOME not set".to_owned()))?;
+  let mut home: PathBuf = env::home_dir().ok_or_else(|| {
+    AppError::UserError("$HOME not set".to_owned())
+  })?;
   home.push(".fw.json");
   Ok(home)
 }
 
 fn determine_config() -> Result<File, AppError> {
   let config_file_path = config_path()?;
-  let path = config_file_path.to_str()
-                             .ok_or_else(|| AppError::UserError("$HOME is not valid utf8".to_owned()));
+  let path = config_file_path.to_str().ok_or_else(|| {
+    AppError::UserError("$HOME is not valid utf8".to_owned())
+  });
   path.and_then(|path| File::open(path).map_err(AppError::IO))
 }
 
@@ -198,76 +214,88 @@ pub fn get_config(logger: &Logger) -> Result<Config, AppError> {
 }
 
 fn repo_name_from_url(url: &str) -> Result<&str, AppError> {
-  let last_fragment = url.rsplit('/')
-                         .next()
-                         .ok_or_else(|| {
-                                       AppError::UserError(format!("Given URL {} does not have path fragments so cannot determine project name. Please give \
+  let last_fragment = url.rsplit('/').next().ok_or_else(|| {
+    AppError::UserError(format!(
+      "Given URL {} does not have path fragments so cannot determine project name. Please give \
                                                                     one.",
-                                                                   url))
-                                     })?;
+      url
+    ))
+  })?;
 
   // trim_right_matches is more efficient but would fuck us up with repos like git@github.com:bauer/test.git.git (which is legal)
   Ok(if last_fragment.ends_with(".git") {
-       last_fragment.split_at(last_fragment.len() - 4).0
-     } else {
-       last_fragment
-     })
+    last_fragment.split_at(last_fragment.len() - 4).0
+  } else {
+    last_fragment
+  })
 }
 
 pub fn add_entry(maybe_config: Result<Config, AppError>, maybe_name: Option<&str>, url: &str, logger: &Logger) -> Result<(), AppError> {
-  let name = maybe_name.ok_or_else(|| AppError::UserError(format!("No project name specified for {}", url)))
+  let name = maybe_name.ok_or_else(|| {
+    AppError::UserError(format!("No project name specified for {}", url))
+  })
                        .or_else(|_| repo_name_from_url(url))?;
   let mut config: Config = maybe_config?;
   info!(logger, "Prepare new project entry"; "name" => name, "url" => url);
   if config.projects.contains_key(name) {
-    Err(AppError::UserError(format!("Project key {} already exists, not gonna overwrite it for you",
-                                    name)))
+    Err(AppError::UserError(format!(
+      "Project key {} already exists, not gonna overwrite it for you",
+      name
+    )))
   } else {
-    config.projects
-          .insert(name.to_owned(),
-                  Project {
-                    git: url.to_owned(),
-                    name: name.to_owned(),
-                    after_clone: config.settings.default_after_clone.clone(),
-                    after_workon: config.settings.default_after_workon.clone(),
-                    override_path: None,
-                    tags: None,
-                  });
+    config.projects.insert(
+      name.to_owned(),
+      Project {
+        git: url.to_owned(),
+        name: name.to_owned(),
+        after_clone: config.settings.default_after_clone.clone(),
+        after_workon: config.settings.default_after_workon.clone(),
+        override_path: None,
+        tags: None,
+      },
+    );
     info!(logger, "Updated config"; "config" => format!("{:?}", config));
     write_config(config, logger)
   }
 }
 
-pub fn update_entry(maybe_config: Result<Config, AppError>,
-                    name: &str,
-                    git: Option<String>,
-                    after_workon: Option<String>,
-                    after_clone: Option<String>,
-                    override_path: Option<String>,
-                    logger: &Logger)
-                    -> Result<(), AppError> {
+pub fn update_entry(
+  maybe_config: Result<Config, AppError>,
+  name: &str,
+  git: Option<String>,
+  after_workon: Option<String>,
+  after_clone: Option<String>,
+  override_path: Option<String>,
+  logger: &Logger,
+) -> Result<(), AppError> {
   let mut config: Config = maybe_config?;
   info!(logger, "Update project entry"; "name" => name);
   if name.starts_with("http") || name.starts_with("git@") {
-    Err(AppError::UserError(format!("{} looks like a repo URL and not like a project name, please fix",
-                                    name)))
+    Err(AppError::UserError(format!(
+      "{} looks like a repo URL and not like a project name, please fix",
+      name
+    )))
   } else if !config.projects.contains_key(name) {
-    Err(AppError::UserError(format!("Project key {} does not exists. Can not update.", name)))
+    Err(AppError::UserError(format!(
+      "Project key {} does not exists. Can not update.",
+      name
+    )))
   } else {
     let old_project_config: Project = config.projects
                                             .get(name)
                                             .expect("Already checked in the if above")
                                             .clone();
-    config.projects
-          .insert(name.to_owned(),
-                  Project {
-                    git: git.unwrap_or(old_project_config.git),
-                    name: old_project_config.name,
-                    after_clone: after_clone.or(old_project_config.after_clone),
-                    after_workon: after_workon.or(old_project_config.after_workon),
-                    override_path: override_path.or(old_project_config.override_path),
-                    tags: None,
-                  });
+    config.projects.insert(
+      name.to_owned(),
+      Project {
+        git: git.unwrap_or(old_project_config.git),
+        name: old_project_config.name,
+        after_clone: after_clone.or(old_project_config.after_clone),
+        after_workon: after_workon.or(old_project_config.after_workon),
+        override_path: override_path.or(old_project_config.override_path),
+        tags: None,
+      },
+    );
     debug!(logger, "Updated config"; "config" => format!("{:?}", config));
     write_config(config, logger)
   }
@@ -276,17 +304,17 @@ pub fn update_entry(maybe_config: Result<Config, AppError>,
 pub fn write_config(config: Config, logger: &Logger) -> Result<(), AppError> {
   let config_path = config_path()?;
   info!(logger, "Writing config"; "path" => format!("{:?}", config_path));
-  config.check_sanity(logger)
-        .and_then(|c| {
-                    let mut buffer = File::create(config_path)?;
-                    serde_json::ser::to_writer_pretty(&mut buffer, &c).map_err(AppError::BadJson)
-                  })
+  config.check_sanity(logger).and_then(|c| {
+    let mut buffer = File::create(config_path)?;
+    serde_json::ser::to_writer_pretty(&mut buffer, &c).map_err(AppError::BadJson)
+  })
 }
 
 fn do_expand(path: PathBuf, home_dir: Option<PathBuf>) -> PathBuf {
   if let Some(home) = home_dir {
-    home.join(path.strip_prefix("~")
-                  .expect("only doing this if path starts with ~"))
+    home.join(path.strip_prefix("~").expect(
+      "only doing this if path starts with ~",
+    ))
   } else {
     path
   }
@@ -417,7 +445,10 @@ mod tests {
     let project2 = Project {
       name: "test2".to_owned(),
       git: "irrelevant".to_owned(),
-      tags: Some(btreeset!["tag1".to_owned(), "tag-does-not-exist".to_owned()]),
+      tags: Some(btreeset![
+        "tag1".to_owned(),
+        "tag-does-not-exist".to_owned(),
+      ]),
       after_clone: None,
       after_workon: None,
       override_path: None,
@@ -497,9 +528,13 @@ mod tests {
   fn a_logger() -> Logger {
     use slog_term;
     use slog::{DrainExt, Level, LevelFilter};
-    Logger::root(LevelFilter::new(slog_term::StreamerBuilder::new().stdout().build(),
-                                  Level::Info)
-                   .fuse(),
-                 o!())
+    Logger::root(
+      LevelFilter::new(
+        slog_term::StreamerBuilder::new().stdout().build(),
+        Level::Info,
+      )
+      .fuse(),
+      o!(),
+    )
   }
 }

@@ -64,157 +64,236 @@ fn main() {
     .about("fast workspace manager")
     .global_setting(AppSettings::ColoredHelp)
     .setting(AppSettings::SubcommandRequired)
-    .arg(Arg::with_name("v")
-           .short("v")
-           .multiple(true)
-           .help("Sets the level of verbosity"))
+    .arg(Arg::with_name("v").short("v").multiple(true).help(
+      "Sets the level of verbosity",
+    ))
     .arg(Arg::with_name("q").short("q").help("Make fw quiet"))
     .subcommand(SubCommand::with_name("sync").about("Sync workspace"))
-    .subcommand(SubCommand::with_name("print-zsh-setup").about("Prints zsh completion code.").arg(Arg::with_name("with-fzf").long("with-fzf").short("-f").help("Integrate with fzf")))
-    .subcommand(SubCommand::with_name("setup")
-                  .about("Setup config from existing workspace")
-                  .arg(Arg::with_name("WORKSPACE_DIR")
-                         .value_name("WORKSPACE_DIR")
-                         .index(1)
-                         .required(true)))
-    .subcommand(SubCommand::with_name("import")
-                  .about("Import existing git folder to fw")
-                  .arg(Arg::with_name("PROJECT_DIR")
-                         .value_name("PROJECT_DIR")
-                         .index(1)
-                         .required(true)))
-    .subcommand(SubCommand::with_name("add")
-                  .about("Add project to config")
-                  .arg(Arg::with_name("NAME")
-                         .value_name("NAME")
-                         .index(2)
-                         .required(false))
-                  .arg(Arg::with_name("URL")
-                         .value_name("URL")
-                         .index(1)
-                         .required(true)))
-    .subcommand(SubCommand::with_name("foreach")
-                  .about("Run script on each project")
-                  .arg(Arg::with_name("CMD")
-                          .value_name("CMD")
-                          .required(true))
-                  .arg(Arg::with_name("tag")
-                          .long("tag")
-                          .short("t")
-                          .help("Filter projects by tag. More than 1 is allowed.")
-                          .required(false)
-                          .takes_value(true)
-                          .multiple(true)))
-    .subcommand(SubCommand::with_name("export")
-                  .about("Exports project as fw shell script")
-                  .arg(Arg::with_name("PROJECT_NAME")
-                         .value_name("PROJECT_NAME")
-                         .index(1)
-                         .required(true)))
-    .subcommand(SubCommand::with_name("print-path")
-                  .about("Print project path on stdout")
-                  .arg(Arg::with_name("PROJECT_NAME")
-                         .value_name("PROJECT_NAME")
-                         .index(1)
-                         .required(true)))
-    .subcommand(SubCommand::with_name("projectile").about("Write projectile bookmarks"))
+    .subcommand(
+      SubCommand::with_name("print-zsh-setup")
+        .about("Prints zsh completion code.")
+        .arg(
+          Arg::with_name("with-fzf")
+            .long("with-fzf")
+            .short("-f")
+            .help("Integrate with fzf"),
+        ),
+    )
+    .subcommand(
+      SubCommand::with_name("setup")
+        .about("Setup config from existing workspace")
+        .arg(
+          Arg::with_name("WORKSPACE_DIR")
+            .value_name("WORKSPACE_DIR")
+            .index(1)
+            .required(true),
+        ),
+    )
+    .subcommand(
+      SubCommand::with_name("import")
+        .about("Import existing git folder to fw")
+        .arg(
+          Arg::with_name("PROJECT_DIR")
+            .value_name("PROJECT_DIR")
+            .index(1)
+            .required(true),
+        ),
+    )
+    .subcommand(
+      SubCommand::with_name("add")
+        .about("Add project to config")
+        .arg(
+          Arg::with_name("NAME")
+            .value_name("NAME")
+            .index(2)
+            .required(false),
+        )
+        .arg(Arg::with_name("URL").value_name("URL").index(1).required(
+          true,
+        )),
+    )
+    .subcommand(
+      SubCommand::with_name("foreach")
+        .about("Run script on each project")
+        .arg(Arg::with_name("CMD").value_name("CMD").required(true))
+        .arg(
+          Arg::with_name("parallel")
+            .short("p")
+            .help(
+              "Parallelism to use (default is set by rayon but probably equal to the number of cores)",
+            )
+            .required(false)
+            .takes_value(true),
+        )
+        .arg(
+          Arg::with_name("tag")
+            .long("tag")
+            .short("t")
+            .help("Filter projects by tag. More than 1 is allowed.")
+            .required(false)
+            .takes_value(true)
+            .multiple(true),
+        ),
+    )
+    .subcommand(
+      SubCommand::with_name("export")
+        .about("Exports project as fw shell script")
+        .arg(
+          Arg::with_name("PROJECT_NAME")
+            .value_name("PROJECT_NAME")
+            .index(1)
+            .required(true),
+        ),
+    )
+    .subcommand(
+      SubCommand::with_name("print-path")
+        .about("Print project path on stdout")
+        .arg(
+          Arg::with_name("PROJECT_NAME")
+            .value_name("PROJECT_NAME")
+            .index(1)
+            .required(true),
+        ),
+    )
+    .subcommand(SubCommand::with_name("projectile").about(
+      "Write projectile bookmarks",
+    ))
     .subcommand(SubCommand::with_name("ls").about("List projects"))
-    .subcommand(SubCommand::with_name("gen-workon")
-                  .about("Generate sourceable shell code to work on project")
-                  .arg(Arg::with_name("PROJECT_NAME")
-                         .value_name("PROJECT_NAME")
-                         .index(1)
-                         .required(true))
-                  .arg(Arg::with_name("quick")
-                         .required(false)
-                         .short("x")
-                         .help("Don't generate post_workon shell code, only cd into the folder")))
-    .subcommand(SubCommand::with_name("inspect")
-                  .about("Inspect project")
-                  .arg(Arg::with_name("PROJECT_NAME")
-                         .value_name("PROJECT_NAME")
-                         .index(1)
-                         .required(true)))
-    .subcommand(SubCommand::with_name("update")
-                  .about("Modifies project settings.")
-                  .arg(Arg::with_name("NAME").value_name("NAME").required(true))
-                  .arg(Arg::with_name("git")
-                         .value_name("URL")
-                         .long("git-url")
-                         .takes_value(true)
-                         .required(false))
-                  .arg(Arg::with_name("override-path")
-                         .value_name("override-path")
-                         .long("override-path")
-                         .takes_value(true)
-                         .required(false))
-                  .arg(Arg::with_name("after-workon")
-                         .value_name("after-workon")
-                         .long("after-workon")
-                         .takes_value(true)
-                         .required(false))
-                  .arg(Arg::with_name("after-clone")
-                         .value_name("after-clone")
-                         .long("after-clone")
-                         .takes_value(true)
-                         .required(false)))
-    .subcommand(SubCommand::with_name("tag")
-                  .alias("tags")
-                  .about("Allows working with tags.")
-                  .subcommand(SubCommand::with_name("ls")
-                                .alias("list")
-                                .about("Lists tags")
-                                .arg(Arg::with_name("PROJECT_NAME")
-                                       .value_name("PROJECT_NAME")
-                                       .required(false)))
-                  .subcommand(SubCommand::with_name("tag-project")
-                                .about("Add tag to project")
-                                .arg(Arg::with_name("PROJECT_NAME")
-                                       .value_name("PROJECT_NAME")
-                                       .required(true))
-                                .arg(Arg::with_name("tag-name")
-                                       .value_name("tag")
-                                       .required(true)))
-                  .subcommand(SubCommand::with_name("untag-project")
-                                .about("Removes tag from project")
-                                .arg(Arg::with_name("PROJECT_NAME")
-                                       .value_name("PROJECT_NAME")
-                                       .required(true))
-                                .arg(Arg::with_name("tag-name")
-                                       .value_name("tag")
-                                       .required(true)))
-                  .subcommand(SubCommand::with_name("rm")
-                                .about("Deletes a tag. Will not untag projects.")
-                                .arg(Arg::with_name("tag-name")
-                                       .value_name("tag name")
-                                       .required(true)))
-                  .subcommand(SubCommand::with_name("add")
-                                .alias("update")
-                                .alias("create")
-                                .about("Creates a new tag. Replaces existing.")
-                                .arg(Arg::with_name("tag-name")
-                                       .value_name("tag name")
-                                       .required(true))
-                                .arg(Arg::with_name("after-workon")
-                                       .value_name("after-workon")
-                                       .long("after-workon")
-                                       .takes_value(true)
-                                       .required(false))
-                                .arg(Arg::with_name("priority")
-                                       .value_name("priority")
-                                       .long("priority")
-                                       .takes_value(true)
-                                       .required(false))
-                                .arg(Arg::with_name("workspace")
-                                       .value_name("workspace")
-                                       .long("workspace")
-                                       .takes_value(true)
-                                       .required(false))
-                                .arg(Arg::with_name("after-clone")
-                                       .value_name("after-clone")
-                                       .long("after-clone")
-                                       .takes_value(true)
-                                       .required(false))))
+    .subcommand(
+      SubCommand::with_name("gen-workon")
+        .about("Generate sourceable shell code to work on project")
+        .arg(
+          Arg::with_name("PROJECT_NAME")
+            .value_name("PROJECT_NAME")
+            .index(1)
+            .required(true),
+        )
+        .arg(Arg::with_name("quick").required(false).short("x").help(
+          "Don't generate post_workon shell code, only cd into the folder",
+        )),
+    )
+    .subcommand(
+      SubCommand::with_name("inspect")
+        .about("Inspect project")
+        .arg(
+          Arg::with_name("PROJECT_NAME")
+            .value_name("PROJECT_NAME")
+            .index(1)
+            .required(true),
+        ),
+    )
+    .subcommand(
+      SubCommand::with_name("update")
+        .about("Modifies project settings.")
+        .arg(Arg::with_name("NAME").value_name("NAME").required(true))
+        .arg(
+          Arg::with_name("git")
+            .value_name("URL")
+            .long("git-url")
+            .takes_value(true)
+            .required(false),
+        )
+        .arg(
+          Arg::with_name("override-path")
+            .value_name("override-path")
+            .long("override-path")
+            .takes_value(true)
+            .required(false),
+        )
+        .arg(
+          Arg::with_name("after-workon")
+            .value_name("after-workon")
+            .long("after-workon")
+            .takes_value(true)
+            .required(false),
+        )
+        .arg(
+          Arg::with_name("after-clone")
+            .value_name("after-clone")
+            .long("after-clone")
+            .takes_value(true)
+            .required(false),
+        ),
+    )
+    .subcommand(
+      SubCommand::with_name("tag")
+        .alias("tags")
+        .about("Allows working with tags.")
+        .subcommand(
+          SubCommand::with_name("ls")
+            .alias("list")
+            .about("Lists tags")
+            .arg(
+              Arg::with_name("PROJECT_NAME")
+                .value_name("PROJECT_NAME")
+                .required(false),
+            ),
+        )
+        .subcommand(
+          SubCommand::with_name("tag-project")
+            .about("Add tag to project")
+            .arg(
+              Arg::with_name("PROJECT_NAME")
+                .value_name("PROJECT_NAME")
+                .required(true),
+            )
+            .arg(Arg::with_name("tag-name").value_name("tag").required(true)),
+        )
+        .subcommand(
+          SubCommand::with_name("untag-project")
+            .about("Removes tag from project")
+            .arg(
+              Arg::with_name("PROJECT_NAME")
+                .value_name("PROJECT_NAME")
+                .required(true),
+            )
+            .arg(Arg::with_name("tag-name").value_name("tag").required(true)),
+        )
+        .subcommand(
+          SubCommand::with_name("rm")
+            .about("Deletes a tag. Will not untag projects.")
+            .arg(Arg::with_name("tag-name").value_name("tag name").required(
+              true,
+            )),
+        )
+        .subcommand(
+          SubCommand::with_name("add")
+            .alias("update")
+            .alias("create")
+            .about("Creates a new tag. Replaces existing.")
+            .arg(Arg::with_name("tag-name").value_name("tag name").required(
+              true,
+            ))
+            .arg(
+              Arg::with_name("after-workon")
+                .value_name("after-workon")
+                .long("after-workon")
+                .takes_value(true)
+                .required(false),
+            )
+            .arg(
+              Arg::with_name("priority")
+                .value_name("priority")
+                .long("priority")
+                .takes_value(true)
+                .required(false),
+            )
+            .arg(
+              Arg::with_name("workspace")
+                .value_name("workspace")
+                .long("workspace")
+                .takes_value(true)
+                .required(false),
+            )
+            .arg(
+              Arg::with_name("after-clone")
+                .value_name("after-clone")
+                .long("after-clone")
+                .takes_value(true)
+                .required(false),
+            ),
+        ),
+    )
     .get_matches();
 
   let logger = logger_from_verbosity(matches.occurrences_of("v"), &matches.is_present("q"));
@@ -223,94 +302,131 @@ fn main() {
   let subcommand_name = matches.subcommand_name()
                                .expect("subcommand required by clap.rs")
                                .to_owned();
-  let subcommand_matches = matches.subcommand_matches(&subcommand_name)
-                                  .expect("subcommand matches enforced by clap.rs");
+  let subcommand_matches = matches.subcommand_matches(&subcommand_name).expect(
+    "subcommand matches enforced by clap.rs",
+  );
   let subcommand_logger = logger.new(o!("command" => subcommand_name.clone()));
   let now = SystemTime::now();
   let result: Result<String, AppError> = match subcommand_name.as_ref() {
                                          "sync" => sync::synchronize(config, &subcommand_logger),
                                          "add" => {
-                                           config::add_entry(config,
-                                                             subcommand_matches.value_of("NAME"),
-                                                             subcommand_matches.value_of("URL")
-                                                                               .expect("argument required by clap.rs"),
-                                                             &subcommand_logger)
+                                           config::add_entry(
+    config,
+    subcommand_matches.value_of("NAME"),
+    subcommand_matches.value_of("URL").expect(
+      "argument required by clap.rs",
+    ),
+    &subcommand_logger,
+  )
                                          }
                                          "update" => {
-    let name: &str = subcommand_matches.value_of("NAME")
-                                       .expect("argument required by clap.rs");
-    let git: Option<String> = subcommand_matches.value_of("git").map(str::to_string);
-    let after_workon: Option<String> = subcommand_matches.value_of("after-workon")
-                                                         .map(str::to_string);
-    let after_clone: Option<String> = subcommand_matches.value_of("after-clone")
-                                                        .map(str::to_string);
-    let override_path: Option<String> = subcommand_matches.value_of("override-path")
-                                                          .map(str::to_string);
-    config::update_entry(config,
-                         name,
-                         git,
-                         after_workon,
-                         after_clone,
-                         override_path,
-                         &subcommand_logger)
-  }
+                                           let name: &str = subcommand_matches.value_of("NAME").expect(
+      "argument required by clap.rs",
+    );
+                                           let git: Option<String> = subcommand_matches.value_of("git").map(str::to_string);
+                                           let after_workon: Option<String> = subcommand_matches.value_of("after-workon").map(
+      str::to_string,
+    );
+                                           let after_clone: Option<String> = subcommand_matches.value_of("after-clone").map(
+      str::to_string,
+    );
+                                           let override_path: Option<String> = subcommand_matches.value_of("override-path").map(
+      str::to_string,
+    );
+                                           config::update_entry(
+      config,
+      name,
+      git,
+      after_workon,
+      after_clone,
+      override_path,
+      &subcommand_logger,
+    )
+                                         }
                                          "setup" => {
-                                           setup::setup(subcommand_matches.value_of("WORKSPACE_DIR")
-                                                                          .expect("argument required by clap.rs"),
-                                                        &subcommand_logger)
+                                           setup::setup(
+    subcommand_matches.value_of("WORKSPACE_DIR").expect(
+      "argument required by clap.rs",
+    ),
+    &subcommand_logger,
+  )
                                          }
                                          "import" => {
-                                           setup::import(config, subcommand_matches.value_of("PROJECT_DIR")
-                                                                          .expect("argument required by clap.rs"),
-                                                        &subcommand_logger)
+                                           setup::import(
+    config,
+    subcommand_matches.value_of("PROJECT_DIR").expect(
+      "argument required by clap.rs",
+    ),
+    &subcommand_logger,
+  )
                                          }
                                          "gen-workon" => {
-                                           workon::gen(subcommand_matches.value_of("PROJECT_NAME")
-                                                                         .expect("argument required by clap.rs"),
-                                                       config,
-                                                       subcommand_matches.is_present("quick"),
-                                                       &subcommand_logger)
+                                           workon::gen(
+    subcommand_matches.value_of("PROJECT_NAME").expect(
+      "argument required by clap.rs",
+    ),
+    config,
+    subcommand_matches.is_present("quick"),
+    &subcommand_logger,
+  )
                                          }
                                          "inspect" => {
-                                           workon::inspect(subcommand_matches.value_of("PROJECT_NAME")
-                                                                         .expect("argument required by clap.rs"),
-                                                       config,
-                                                       &subcommand_logger)
+                                           workon::inspect(
+    subcommand_matches.value_of("PROJECT_NAME").expect(
+      "argument required by clap.rs",
+    ),
+    config,
+    &subcommand_logger,
+  )
                                          }
                                          "projectile" => projectile::projectile(config, &subcommand_logger),
                                          "print-path" => {
-                                           workon::print_path(config,
-                                                              subcommand_matches.value_of("PROJECT_NAME")
-                                                                                .expect("argument required by clap.rs"), &subcommand_logger)
+                                           workon::print_path(
+    config,
+    subcommand_matches.value_of("PROJECT_NAME").expect(
+      "argument required by clap.rs",
+    ),
+    &subcommand_logger,
+  )
                                          }
                                          "export" => {
-                                           export::export_project(config,
-                                                                  subcommand_matches.value_of("PROJECT_NAME")
-                                                                                    .expect("argument required by clap.rs"))
+                                           export::export_project(
+    config,
+    subcommand_matches.value_of("PROJECT_NAME").expect(
+      "argument required by clap.rs",
+    ),
+  )
                                          }
                                          "foreach" => {
-                                           sync::foreach(config,
-                                                         subcommand_matches.value_of("CMD")
-                                                                           .expect("argument required by clap.rs"),
-                                                         &subcommand_matches.values_of_lossy("tag").unwrap_or_default().into_iter().collect(),
-                                                         &subcommand_logger)
+                                           sync::foreach(
+    config,
+    subcommand_matches.value_of("CMD").expect(
+      "argument required by clap.rs",
+    ),
+    &subcommand_matches.values_of_lossy("tag")
+                       .unwrap_or_default()
+                       .into_iter()
+                       .collect(),
+    &subcommand_logger,
+                                             &subcommand_matches.value_of("parallel").map(|p| p.to_owned()),
+  )
                                          }
-    "print-zsh-setup" => {
-      print_zsh_setup(subcommand_matches.is_present("with-fzf"))
-    },
+                                         "print-zsh-setup" => print_zsh_setup(subcommand_matches.is_present("with-fzf")),
                                          "tag" => {
-    let subsubcommand_name: String = subcommand_matches.subcommand_name()
-                                                       .expect("subcommand matches enforced by clap.rs")
-                                                       .to_owned();
-    let subsubcommand_matches: clap::ArgMatches =
-      subcommand_matches.subcommand_matches(&subsubcommand_name)
-                        .expect("subcommand matches enforced by clap.rs")
-                        .to_owned();
-    execute_tag_subcommand(config,
-                           &subsubcommand_name,
-                           &subsubcommand_matches,
-                           &subcommand_logger)
-  }
+                                           let subsubcommand_name: String = subcommand_matches.subcommand_name()
+                                                                                              .expect("subcommand matches enforced by clap.rs")
+                                                                                              .to_owned();
+                                           let subsubcommand_matches: clap::ArgMatches =
+                                             subcommand_matches.subcommand_matches(&subsubcommand_name)
+                                                               .expect("subcommand matches enforced by clap.rs")
+                                                               .to_owned();
+                                           execute_tag_subcommand(
+      config,
+      &subsubcommand_name,
+      &subsubcommand_matches,
+      &subcommand_logger,
+    )
+                                         }
                                          "ls" => workon::ls(config),
                                          _ => Result::Err(AppError::InternalError("Command not implemented")),
                                          }
@@ -327,11 +443,12 @@ fn main() {
   }
 }
 
-fn execute_tag_subcommand(maybe_config: Result<config::Config, AppError>,
-                          tag_command_name: &str,
-                          tag_matches: &clap::ArgMatches,
-                          logger: &Logger)
-                          -> Result<(), AppError> {
+fn execute_tag_subcommand(
+  maybe_config: Result<config::Config, AppError>,
+  tag_command_name: &str,
+  tag_matches: &clap::ArgMatches,
+  logger: &Logger,
+) -> Result<(), AppError> {
   match tag_command_name.as_ref() {
   "ls" => {
     let maybe_project_name: Option<String> = tag_matches.value_of("PROJECT_NAME").map(str::to_string);
@@ -368,16 +485,20 @@ fn execute_tag_subcommand(maybe_config: Result<config::Config, AppError>,
     let after_workon: Option<String> = tag_matches.value_of("after-workon").map(str::to_string);
     let after_clone: Option<String> = tag_matches.value_of("after-clone").map(str::to_string);
     let tag_workspace: Option<String> = tag_matches.value_of("workspace").map(str::to_string);
-    let priority: Option<u8> = tag_matches.value_of("priority")
-                                          .map(u8::from_str)
-                                          .map(|p| p.expect("invalid tag priority value, must be an u8"));
-    tag::create_tag(maybe_config,
-                    tag_name,
-                    after_workon,
-                    after_clone,
-                    priority,
-                    tag_workspace,
-                    logger)
+    let priority: Option<u8> = tag_matches.value_of("priority").map(u8::from_str).map(
+      |p| {
+        p.expect("invalid tag priority value, must be an u8")
+      },
+    );
+    tag::create_tag(
+      maybe_config,
+      tag_name,
+      after_workon,
+      after_clone,
+      priority,
+      tag_workspace,
+      logger,
+    )
   }
   _ => Result::Err(AppError::InternalError("Command not implemented")),
   }
