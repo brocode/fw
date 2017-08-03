@@ -79,7 +79,7 @@ fn forward_process_output_to_stdout<T: std::io::Read>(read: T, prefix: &str, col
   Ok(())
 }
 
-fn spawn_maybe(shell: &[String], cmd: &str, workdir: &PathBuf, project_name: &str, colour: &Colour, logger: &Logger) -> Result<(), AppError> {
+pub fn spawn_maybe(shell: &[String], cmd: &str, workdir: &PathBuf, project_name: &str, colour: &Colour, logger: &Logger) -> Result<(), AppError> {
   let program: &str = shell.first().ok_or_else(|| {
     AppError::UserError(
       "shell entry in project settings must have at least one element".to_owned(),
@@ -141,7 +141,7 @@ fn is_stderr_a_tty() -> bool {
   atty::is(atty::Stream::Stderr)
 }
 
-fn project_shell(project_settings: &Settings) -> Vec<String> {
+pub fn project_shell(project_settings: &Settings) -> Vec<String> {
   project_settings.shell.clone().unwrap_or_else(|| {
     vec!["sh".to_owned(), "-c".to_owned()]
   })

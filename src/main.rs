@@ -90,6 +90,11 @@ fn main() {
         ),
     )
     .subcommand(
+      SubCommand::with_name("reworkon")
+        .aliases(&[".", "rw", "re", "fkbr"])
+        .about("Re-run workon hooks for current dir (aliases: .|rw|re|fkbr)")
+    )
+    .subcommand(
       SubCommand::with_name("import")
         .about("Import existing git folder to fw")
         .arg(
@@ -370,6 +375,9 @@ fn main() {
     &subcommand_logger,
   )
                                          }
+    "reworkon" => {
+      workon::reworkon(config, &subcommand_logger)
+    }
                                          "inspect" => {
                                            workon::inspect(
     subcommand_matches.value_of("PROJECT_NAME").expect(
