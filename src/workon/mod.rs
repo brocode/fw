@@ -67,14 +67,12 @@ pub fn reworkon(maybe_config: Result<config::Config, AppError>, logger: &Logger)
   let config = maybe_config?;
   let os_current_dir = env::current_dir()?;
   let current_dir = os_current_dir.to_string_lossy().to_owned();
-  let maybe_match = config.projects.values().find(|&p| config.actual_path_to_project(&p, &logger).to_string_lossy().eq(&current_dir));
+  let maybe_match = config.projects.values().find(|&p| config.actual_path_to_project(p, logger).to_string_lossy().eq(&current_dir));
   let project = maybe_match.ok_or_else(|| AppError::UserError(format!("No project matching expanded path {} found in config", current_dir)))?;
-  let workon_cmd = format!("cd {} {}", current_dir, config.resolve_after_workon(&logger, &project));
-  // TODO clip beginning
+  let workon_cmd = format!("cd {} {}", current_dir, config.resolve_after_workon(logger, project));
   debug!(logger, "Reworkon match: {:?} with command {:?}", project, workon_cmd);
   let shell = sync::project_shell(&config.settings);
-  let res = sync::spawn_maybe(&shell, &workon_cmd, &os_current_dir, &project.name, &Colour::Yellow, &logger);
-  res
+  sync::spawn_maybe(&shell, &workon_cmd, &os_current_dir, &project.name, &Colour::Yellow, logger)
 }
 
 pub fn gen(name: &str, maybe_config: Result<config::Config, AppError>, quick: bool, logger: &Logger) -> Result<(), AppError> {
