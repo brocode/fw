@@ -20,7 +20,9 @@ pub fn setup(workspace_dir: &str, logger: &Logger, maybe_config_override: Option
   };
 
   maybe_path.and_then(|path| determine_projects(path, logger))
-            .and_then(|projects| write_config(projects, logger, workspace_dir, maybe_config_override))
+            .and_then(|projects| {
+    write_config(projects, logger, workspace_dir, maybe_config_override)
+  })
 }
 
 fn determine_projects(path: PathBuf, logger: &Logger) -> Result<BTreeMap<String, Project>, AppError> {

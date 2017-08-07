@@ -235,7 +235,13 @@ fn repo_name_from_url(url: &str) -> Result<&str, AppError> {
   })
 }
 
-pub fn add_entry(maybe_config: Result<Config, AppError>, maybe_name: Option<&str>, url: &str, logger: &Logger, maybe_config_override: Option<&str>) -> Result<(), AppError> {
+pub fn add_entry(
+  maybe_config: Result<Config, AppError>,
+  maybe_name: Option<&str>,
+  url: &str,
+  logger: &Logger,
+  maybe_config_override: Option<&str>,
+) -> Result<(), AppError> {
   let name = maybe_name.ok_or_else(|| {
     AppError::UserError(format!("No project name specified for {}", url))
   })
