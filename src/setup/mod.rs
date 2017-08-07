@@ -7,7 +7,7 @@ use std::collections::BTreeMap;
 use std::fs;
 use std::path::{Path, PathBuf};
 
-pub fn setup(workspace_dir: &str, logger: &Logger) -> Result<(), AppError> {
+pub fn setup(workspace_dir: &str, logger: &Logger, maybe_config_override: Option<&str>) -> Result<(), AppError> {
   let setup_logger = logger.new(o!("workspace" => workspace_dir.to_owned()));
   debug!(setup_logger, "Entering setup");
   let path = PathBuf::from(workspace_dir);
@@ -20,7 +20,7 @@ pub fn setup(workspace_dir: &str, logger: &Logger) -> Result<(), AppError> {
   };
 
   maybe_path.and_then(|path| determine_projects(path, logger))
-            .and_then(|projects| write_config(projects, logger, workspace_dir))
+            .and_then(|projects| write_config(projects, logger, workspace_dir, maybe_config_override))
 }
 
 fn determine_projects(path: PathBuf, logger: &Logger) -> Result<BTreeMap<String, Project>, AppError> {
@@ -57,7 +57,7 @@ fn determine_projects(path: PathBuf, logger: &Logger) -> Result<BTreeMap<String,
   Ok(projects)
 }
 
-pub fn import(maybe_config: Result<Config, AppError>, path: &str, logger: &Logger) -> Result<(), AppError> {
+pub fn import(maybe_config: Result<Config, AppError>, path: &str, logger: &Logger, maybe_config_override: Option<&str>) -> Result<(), AppError> {
   let mut config: Config = maybe_config?;
   let path = fs::canonicalize(Path::new(path))?;
   let project_path = path.to_str()
@@ -75,7 +75,7 @@ pub fn import(maybe_config: Result<Config, AppError>, path: &str, logger: &Logge
   };
   config.projects.insert(project_name, new_project_with_path);
   info!(logger, "Updated config"; "config" => format!("{:?}", config));
-  config::write_config(config, logger)
+  config::write_config(config, logger, maybe_config_override)
 }
 
 
@@ -99,7 +99,7 @@ fn load_project(path_to_repo: PathBuf, name: &str, logger: &Logger) -> Result<Pr
   })
 }
 
-fn write_config(projects: BTreeMap<String, Project>, logger: &Logger, workspace_dir: &str) -> Result<(), AppError> {
+fn write_config(projects: BTreeMap<String, Project>, logger: &Logger, workspace_dir: &str, maybe_config_override: Option<&str>) -> Result<(), AppError> {
   let config = Config {
     projects: projects,
     settings: Settings {
@@ -111,5 +111,5 @@ fn write_config(projects: BTreeMap<String, Project>, logger: &Logger, workspace_
     },
   };
   debug!(logger, "Finished"; "projects" => format!("{:?}", config.projects.len()));
-  config::write_config(config, logger)
+  config::write_config(config, logger, maybe_config_override)
 }
