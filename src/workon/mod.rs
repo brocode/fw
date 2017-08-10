@@ -1,4 +1,3 @@
-
 use ansi_term::Colour;
 use ansi_term::Style;
 use config;

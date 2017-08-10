@@ -182,10 +182,9 @@ fn main() {
           "Don't generate post_workon shell code, only cd into the folder",
         )),
     )
-    .subcommand(
-      SubCommand::with_name("gen-reworkon")
-        .about("Generate sourceable shell code to re-work on project")
-    )
+    .subcommand(SubCommand::with_name("gen-reworkon").about(
+      "Generate sourceable shell code to re-work on project",
+    ))
     .subcommand(
       SubCommand::with_name("inspect")
         .about("Inspect project")
