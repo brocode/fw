@@ -64,8 +64,13 @@ pub fn inspect(name: &str, maybe_config: Result<config::Config, AppError>, logge
   Ok(())
 }
 
-pub fn reworkon(maybe_config: Result<config::Config, AppError>, logger: &Logger) -> Result<(), AppError> {
+pub fn gen_reworkon(maybe_config: Result<config::Config, AppError>, logger: &Logger) -> Result<(), AppError> {
   let config = maybe_config?;
+  let project = current_project(&config, logger)?;
+  gen(&project.name, Ok(config), false, logger)
+}
+
+fn current_project(config: &config::Config, logger: &Logger) -> Result<Project, AppError> {
   let os_current_dir = env::current_dir()?;
   let current_dir = os_current_dir.to_string_lossy().to_owned();
   let maybe_match = config.projects.values().find(|&p| {
@@ -73,16 +78,22 @@ pub fn reworkon(maybe_config: Result<config::Config, AppError>, logger: &Logger)
           .to_string_lossy()
           .eq(&current_dir)
   });
-  let project = maybe_match.ok_or_else(|| {
+  maybe_match.map(|p| p.to_owned()).ok_or_else(|| {
     AppError::UserError(format!(
       "No project matching expanded path {} found in config",
       current_dir
     ))
-  })?;
+  })
+}
+
+pub fn reworkon(maybe_config: Result<config::Config, AppError>, logger: &Logger) -> Result<(), AppError> {
+  let config = maybe_config?;
+  let project = current_project(&config, logger)?;
+  let path = config.actual_path_to_project(&project, logger);
   let workon_cmd = format!(
     "cd {} {}",
-    current_dir,
-    config.resolve_after_workon(logger, project)
+    path.to_string_lossy(),
+    config.resolve_after_workon(logger, &project)
   );
   debug!(
     logger,
@@ -94,7 +105,7 @@ pub fn reworkon(maybe_config: Result<config::Config, AppError>, logger: &Logger)
   sync::spawn_maybe(
     &shell,
     &workon_cmd,
-    &os_current_dir,
+    &path,
     &project.name,
     &Colour::Yellow,
     logger,

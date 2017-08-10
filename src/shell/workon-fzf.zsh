@@ -8,6 +8,15 @@ __workon () {
   fi
 };
 
+reworkon () {
+  SCRIPT="$(~/.cargo/bin/fw -q gen-reworkon $@)";
+  if [ $? -eq 0 ]; then
+    eval "$SCRIPT";
+  else
+    printf "$SCRIPT\n";
+  fi
+};
+
 workon () {
   __workon "$1"
 };

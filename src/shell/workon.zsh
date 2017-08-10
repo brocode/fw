@@ -6,6 +6,14 @@ workon () {
     printf "$SCRIPT\n";
   fi
 };
+reworkon () {
+  SCRIPT="$(~/.cargo/bin/fw -q gen-reworkon $@)";
+  if [ $? -eq 0 ]; then
+    eval "$SCRIPT";
+  else
+    printf "$SCRIPT\n";
+  fi
+};
 
 nworkon () {
   SCRIPT="$(~/.cargo/bin/fw -q gen-workon -x $@)";

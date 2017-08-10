@@ -183,6 +183,10 @@ fn main() {
         )),
     )
     .subcommand(
+      SubCommand::with_name("gen-reworkon")
+        .about("Generate sourceable shell code to re-work on project")
+    )
+    .subcommand(
       SubCommand::with_name("inspect")
         .about("Inspect project")
         .arg(
@@ -385,6 +389,7 @@ fn main() {
     &subcommand_logger,
   )
                                          }
+                                         "gen-reworkon" => workon::gen_reworkon(config, &subcommand_logger),
                                          "reworkon" => workon::reworkon(config, &subcommand_logger),
                                          "inspect" => {
                                            workon::inspect(
