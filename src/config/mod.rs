@@ -201,7 +201,7 @@ fn default_config_path() -> Result<PathBuf, AppError> {
 
 pub fn actual_config_path(maybe_config_override: Option<&str>) -> Result<PathBuf, AppError> {
   let maybe_config: Option<Result<PathBuf, AppError>> = maybe_config_override.map(|path| Ok(PathBuf::from(path)));
-  maybe_config.unwrap_or_else(|| default_config_path())
+  maybe_config.unwrap_or_else(default_config_path)
 }
 
 fn determine_config(maybe_config_override: Option<&str>) -> Result<File, AppError> {
