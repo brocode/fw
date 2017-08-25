@@ -163,6 +163,32 @@
 
   after a ~sync~. This will overwrite your projectile bookmarks so that all your ~fw~ managed projects are known.
 
+*** What's possible?
+    Some examples:
+
+    - Override project clone path by setting a tag (note the priority of 100 (max) so that tag is applied last)
+      #+BEGIN_SRC json
+      "my-go-tag": {
+        "after_clone": null,
+        "after_workon": "make test",
+        "priority": 100,
+        "workspace": "~/go/src/github.com/mriehl/"
+      },
+      #+END_SRC
+    - Override workspace globally
+      #+BEGIN_SRC json
+  "settings": {
+    "workspace": "~/workspace",
+  ...
+  }
+      #+END_SRC
+    - Export env variables in ~after_workon~ or source new ones (it works because it's ~eval~'ed by your shell!)
+      #+BEGIN_SRC json
+      "python": {
+        "after_workon": "source .venv/bin/activate"
+      }
+      #+END_SRC
+
 ** workon usage
   Just
 
