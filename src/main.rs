@@ -60,7 +60,7 @@ fn logger_from_verbosity(verbosity: u64, quiet: &bool) -> Logger {
 fn main() {
   let matches = App::new("fw")
     .version(crate_version!())
-    .author("Brocode inc <bros@brocode.sh>")
+    .author("Brocode <bros@brocode.sh>")
     .about("fast workspace manager")
     .global_setting(AppSettings::ColoredHelp)
     .setting(AppSettings::SubcommandRequired)
