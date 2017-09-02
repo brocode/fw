@@ -73,7 +73,12 @@ fn main() {
       "Sets the level of verbosity",
     ))
     .arg(Arg::with_name("q").short("q").help("Make fw quiet"))
-    .subcommand(SubCommand::with_name("sync").about("Sync workspace"))
+    .subcommand(SubCommand::with_name("sync")
+                .about("Sync workspace")
+                .arg(Arg::with_name("no-progress-bar")
+                     .long("no-progress-bar")
+                     .short("q")
+                     .takes_value(false)))
     .subcommand(
       SubCommand::with_name("print-zsh-setup")
         .about("Prints zsh completion code.")
@@ -324,7 +329,7 @@ fn main() {
   let subcommand_logger = logger.new(o!("command" => subcommand_name.clone()));
   let now = SystemTime::now();
   let result: Result<String, AppError> = match subcommand_name.as_ref() {
-                                         "sync" => sync::synchronize(config, &subcommand_logger),
+                                         "sync" => sync::synchronize(config, subcommand_matches.is_present("no-progress-bar"), &subcommand_logger),
                                          "add" => {
                                            config::add_entry(
     config,

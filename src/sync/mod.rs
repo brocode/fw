@@ -224,7 +224,7 @@ fn sync_project(config: &Config, project: &Project, logger: &Logger) -> Result<(
   };
   res
 }
-pub fn synchronize(maybe_config: Result<Config, AppError>, logger: &Logger) -> Result<(), AppError> {
+pub fn synchronize(maybe_config: Result<Config, AppError>, no_progress_bar: bool, logger: &Logger) -> Result<(), AppError> {
   eprintln!("Synchronizing everything");
   if !ssh_agent_running() {
     warn!(logger, "SSH Agent not running. Process may hang.")
@@ -243,14 +243,23 @@ pub fn synchronize(maybe_config: Result<Config, AppError>, logger: &Logger) -> R
     .template("{prefix:.bold.dim} {spinner} {wide_msg}");
 
   let m = MultiProgress::new();
-  m.set_draw_target(ProgressDrawTarget::stderr());
+  m.set_draw_target(if no_progress_bar {
+                      ProgressDrawTarget::hidden()
+                    } else {
+                      ProgressDrawTarget::stderr()
+                    });
 
   let job_results: Arc<MsQueue<Result<(), AppError>>> = Arc::new(MsQueue::new());
-  for i in 1..5 {
+  let progress_bars = (1..5).map(|i| {
     let pb = m.add(ProgressBar::new(projects_count));
     pb.set_style(spinner_style.clone());
     pb.set_prefix(&format!("[{}/4]", i));
+    pb.set_message("initializing...");
+    pb.tick();
     pb.enable_steady_tick(250);
+    pb
+  });
+  for pb in progress_bars {
     let job_q = q.clone();
     let job_config = config.clone();
     let job_logger = logger.clone();
