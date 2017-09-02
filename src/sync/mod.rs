@@ -22,20 +22,22 @@ use std::process::{Child, Command, Stdio};
 use std::sync::Arc;
 use std::thread;
 
-pub static COLOURS: [Colour; 14] = [Colour::Green,
-                                    Colour::Cyan,
-                                    Colour::Blue,
-                                    Colour::Yellow,
-                                    Colour::RGB(255, 165, 0),
-                                    Colour::RGB(255, 99, 71),
-                                    Colour::RGB(0, 153, 255),
-                                    Colour::RGB(102, 0, 102),
-                                    Colour::RGB(102, 0, 0),
-                                    Colour::RGB(153, 102, 51),
-                                    Colour::RGB(102, 153, 0),
-                                    Colour::RGB(0, 0, 102),
-                                    Colour::RGB(255, 153, 255),
-                                    Colour::Purple];
+pub static COLOURS: [Colour; 14] = [
+  Colour::Green,
+  Colour::Cyan,
+  Colour::Blue,
+  Colour::Yellow,
+  Colour::RGB(255, 165, 0),
+  Colour::RGB(255, 99, 71),
+  Colour::RGB(0, 153, 255),
+  Colour::RGB(102, 0, 102),
+  Colour::RGB(102, 0, 0),
+  Colour::RGB(153, 102, 51),
+  Colour::RGB(102, 153, 0),
+  Colour::RGB(0, 0, 102),
+  Colour::RGB(255, 153, 255),
+  Colour::Purple,
+];
 
 fn builder<'a>() -> RepoBuilder<'a> {
   let mut remote_callbacks = RemoteCallbacks::new();
@@ -58,10 +60,12 @@ fn forward_process_output_to_stdout<T: std::io::Read>(read: T, prefix: &str, col
     if mark_err {
       let prefix = format!("{:>21.21} |", prefix);
       if atty {
-        print!("{} {} {}",
-               Colour::Red.paint("ERR"),
-               colour.paint(prefix),
-               line);
+        print!(
+          "{} {} {}",
+          Colour::Red.paint("ERR"),
+          colour.paint(prefix),
+          line
+        );
       } else {
         print!("ERR {} {}", prefix, line);
       };
@@ -78,9 +82,11 @@ fn forward_process_output_to_stdout<T: std::io::Read>(read: T, prefix: &str, col
 }
 
 pub fn spawn_maybe(shell: &[String], cmd: &str, workdir: &PathBuf, project_name: &str, colour: &Colour, logger: &Logger) -> Result<(), AppError> {
-  let program: &str =
-    shell.first()
-         .ok_or_else(|| AppError::UserError("shell entry in project settings must have at least one element".to_owned()))?;
+  let program: &str = shell.first().ok_or_else(|| {
+    AppError::UserError(
+      "shell entry in project settings must have at least one element".to_owned(),
+    )
+  })?;
   let rest: &[String] = shell.split_at(1).1;
   let mut result: Child = Command::new(program)
     .args(rest)
@@ -96,9 +102,9 @@ pub fn spawn_maybe(shell: &[String], cmd: &str, workdir: &PathBuf, project_name:
     let colour = *colour;
     let project_name = project_name.to_owned();
     Some(thread::spawn(move || {
-                         let atty: bool = is_stdout_a_tty();
-                         forward_process_output_to_stdout(stdout, &project_name, &colour, atty, false)
-                       }))
+      let atty: bool = is_stdout_a_tty();
+      forward_process_output_to_stdout(stdout, &project_name, &colour, atty, false)
+    }))
   } else {
     None
   };
@@ -125,9 +131,9 @@ pub fn spawn_maybe(shell: &[String], cmd: &str, workdir: &PathBuf, project_name:
 
 fn random_colour() -> Colour {
   let mut rng = rand::thread_rng();
-  rng.choose(&COLOURS)
-     .map(|c| c.to_owned())
-     .unwrap_or(Colour::Black)
+  rng.choose(&COLOURS).map(|c| c.to_owned()).unwrap_or(
+    Colour::Black,
+  )
 }
 fn is_stdout_a_tty() -> bool {
   atty::is(atty::Stream::Stdout)
@@ -138,17 +144,18 @@ fn is_stderr_a_tty() -> bool {
 }
 
 pub fn project_shell(project_settings: &Settings) -> Vec<String> {
-  project_settings.shell
-                  .clone()
-                  .unwrap_or_else(|| vec!["sh".to_owned(), "-c".to_owned()])
+  project_settings.shell.clone().unwrap_or_else(|| {
+    vec!["sh".to_owned(), "-c".to_owned()]
+  })
 }
 
-pub fn foreach(maybe_config: Result<Config, AppError>,
-               cmd: &str,
-               tags: &BTreeSet<String>,
-               logger: &Logger,
-               parallel_raw: &Option<String>)
-               -> Result<(), AppError> {
+pub fn foreach(
+  maybe_config: Result<Config, AppError>,
+  cmd: &str,
+  tags: &BTreeSet<String>,
+  logger: &Logger,
+  parallel_raw: &Option<String>,
+) -> Result<(), AppError> {
   let config = maybe_config?;
 
   if let Some(ref raw_num) = *parallel_raw {
@@ -163,29 +170,33 @@ pub fn foreach(maybe_config: Result<Config, AppError>,
   let projects: Vec<&Project> = config.projects.values().collect();
   let script_results = projects.par_iter()
                                .filter(|p| {
-                                         tags.is_empty() ||
-                                         p.tags
-                                          .clone()
-                                          .unwrap_or_default()
-                                          .intersection(tags)
-                                          .count() > 0
-                                       })
+    tags.is_empty() ||
+      p.tags
+       .clone()
+       .unwrap_or_default()
+       .intersection(tags)
+       .count() > 0
+  })
                                .map(|p| {
     let shell = project_shell(&config.settings);
     let project_logger = logger.new(o!("project" => p.name.clone()));
     let path = config.actual_path_to_project(p, &project_logger);
     info!(project_logger, "Entering");
-    spawn_maybe(&shell,
-                cmd,
-                &path,
-                &p.name,
-                &random_colour(),
-                &project_logger)
+    spawn_maybe(
+      &shell,
+      cmd,
+      &path,
+      &p.name,
+      &random_colour(),
+      &project_logger,
+    )
   })
                                .collect::<Vec<Result<(), AppError>>>();
 
-  script_results.into_iter()
-                .fold(Result::Ok(()), |accu, maybe_error| accu.and(maybe_error))
+  script_results.into_iter().fold(Result::Ok(()), |accu,
+   maybe_error| {
+    accu.and(maybe_error)
+  })
 }
 
 
@@ -210,17 +221,22 @@ fn sync_project(config: &Config, project: &Project, logger: &Logger) -> Result<(
       let wrapped = AppError::GitError(error);
       wrapped
     })
-                .and_then(|_| match config.resolve_after_clone(&project_logger, project) {
-                          Some(cmd) => {
+                .and_then(|_| match config.resolve_after_clone(
+      &project_logger,
+      project,
+    ) {
+    Some(cmd) => {
       debug!(project_logger, "Handling post hooks"; "after_clone" => cmd);
       let res = spawn_maybe(&shell, &cmd, &path, &project.name, &random_colour(), logger);
       res.map_err(|error| {
-                    AppError::UserError(format!("Post-clone hook failed (nonzero exit code). Cause: {:?}",
-                                                error))
-                  })
+        AppError::UserError(format!(
+          "Post-clone hook failed (nonzero exit code). Cause: {:?}",
+          error
+        ))
+      })
     }
-                          None => Ok(()),
-                          })
+    None => Ok(()),
+    })
   };
   res
 }
@@ -244,10 +260,10 @@ pub fn synchronize(maybe_config: Result<Config, AppError>, no_progress_bar: bool
 
   let m = MultiProgress::new();
   m.set_draw_target(if no_progress_bar {
-                      ProgressDrawTarget::hidden()
-                    } else {
-                      ProgressDrawTarget::stderr()
-                    });
+    ProgressDrawTarget::hidden()
+  } else {
+    ProgressDrawTarget::stderr()
+  });
 
   let job_results: Arc<MsQueue<Result<(), AppError>>> = Arc::new(MsQueue::new());
   let progress_bars = (1..5).map(|i| {
