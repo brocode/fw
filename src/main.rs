@@ -21,7 +21,9 @@ extern crate ansi_term;
 
 extern crate rand;
 
-extern crate pbr;
+extern crate crossbeam;
+
+extern crate indicatif;
 
 #[cfg(test)]
 #[macro_use]
