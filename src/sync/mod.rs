@@ -210,7 +210,7 @@ fn sync_project(config: &Config, project: &Project, logger: &Logger) -> Result<(
         "exists" => exists,
         "path" => format!("{:?}", path),
       ));
-  let res = if exists {
+  if exists {
     debug!(project_logger, "NOP");
     Result::Ok(())
   } else {
@@ -218,8 +218,7 @@ fn sync_project(config: &Config, project: &Project, logger: &Logger) -> Result<(
     repo_builder.clone(project.git.as_str(), &path)
                 .map_err(|error| {
       warn!(project_logger, "Error cloning repo"; "error" => format!("{}", error));
-      let wrapped = AppError::GitError(error);
-      wrapped
+      AppError::GitError(error)
     })
                 .and_then(|_| match config.resolve_after_clone(
       &project_logger,
@@ -227,8 +226,7 @@ fn sync_project(config: &Config, project: &Project, logger: &Logger) -> Result<(
     ) {
     Some(cmd) => {
       debug!(project_logger, "Handling post hooks"; "after_clone" => cmd);
-      let res = spawn_maybe(&shell, &cmd, &path, &project.name, &random_colour(), logger);
-      res.map_err(|error| {
+      spawn_maybe(&shell, &cmd, &path, &project.name, &random_colour(), logger).map_err(|error| {
         AppError::UserError(format!(
           "Post-clone hook failed (nonzero exit code). Cause: {:?}",
           error
@@ -237,8 +235,7 @@ fn sync_project(config: &Config, project: &Project, logger: &Logger) -> Result<(
     }
     None => Ok(()),
     })
-  };
-  res
+  }
 }
 pub fn synchronize(maybe_config: Result<Config, AppError>, no_progress_bar: bool, logger: &Logger) -> Result<(), AppError> {
   eprintln!("Synchronizing everything");
