@@ -48,6 +48,9 @@
         "after_clone": "cargo build",
         "after_workon": "cargo test && rustup run nightly cargo clippy"
       },
+      "fkbr": {
+        "after_workon": "echo fkbr"
+      },
       "brocode": {
         "priority": 100, // highest priority tag wins workspace resolution
         "workspace": "~/workspace/brocode/"
