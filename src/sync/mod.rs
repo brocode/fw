@@ -213,19 +213,8 @@ pub fn foreach(
   })
 }
 
-
-fn sync_project(config: &Config, project: &Project, logger: &Logger) -> Result<(), AppError> {
-  let mut repo_builder = builder();
-  let shell = project_shell(&config.settings);
-  let path = config.actual_path_to_project(project, logger);
-  let exists = path.exists();
-  let project_logger = logger.new(o!(
-        "git" => project.git.clone(),
-        "exists" => exists,
-        "path" => format!("{:?}", path),
-      ));
-  if exists {
-    debug!(project_logger, "NOP");
+fn update_project_remotes(project: &Project, path: &PathBuf, project_logger: &Logger) -> Result<(), AppError> {
+    debug!(project_logger, "Update project remotes");
     let local = Repository::init(path).map_err(|error| {
       warn!(project_logger, "Error opening local repo"; "error" => format!("{}", error));
       AppError::GitError(error)
@@ -249,7 +238,11 @@ fn sync_project(config: &Config, project: &Project, logger: &Logger) -> Result<(
     remote.disconnect();
     try!(remote.update_tips(None, true, AutotagOption::Unspecified, None));
     Result::Ok(())
-  } else {
+}
+
+fn clone_project(config: &Config, project: &Project,path: &PathBuf,project_logger: &Logger) -> Result<(), AppError> {
+  let shell = project_shell(&config.settings);
+  let mut repo_builder = builder();
     debug!(project_logger, "Cloning project");
     repo_builder.clone(project.git.as_str(), &path)
                 .map_err(|error| {
@@ -262,7 +255,7 @@ fn sync_project(config: &Config, project: &Project, logger: &Logger) -> Result<(
     ) {
     Some(cmd) => {
       debug!(project_logger, "Handling post hooks"; "after_clone" => cmd);
-      spawn_maybe(&shell, &cmd, &path, &project.name, &random_colour(), logger).map_err(|error| {
+      spawn_maybe(&shell, &cmd, &path, &project.name, &random_colour(), project_logger).map_err(|error| {
         AppError::UserError(format!(
           "Post-clone hook failed (nonzero exit code). Cause: {:?}",
           error
@@ -271,6 +264,20 @@ fn sync_project(config: &Config, project: &Project, logger: &Logger) -> Result<(
     }
     None => Ok(()),
     })
+}
+
+fn sync_project(config: &Config, project: &Project, logger: &Logger) -> Result<(), AppError> {
+  let path = config.actual_path_to_project(project, logger);
+  let exists = path.exists();
+  let project_logger = logger.new(o!(
+        "git" => project.git.clone(),
+        "exists" => exists,
+        "path" => format!("{:?}", path),
+      ));
+  if exists {
+    update_project_remotes(project, &path, &project_logger)
+  } else {
+    clone_project(config, project, &path, &project_logger)
   }
 }
 pub fn synchronize(maybe_config: Result<Config, AppError>, no_progress_bar: bool, logger: &Logger) -> Result<(), AppError> {
