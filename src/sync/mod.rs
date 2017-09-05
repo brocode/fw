@@ -266,7 +266,7 @@ fn clone_project(config: &Config, project: &Project,path: &PathBuf,project_logge
     })
 }
 
-fn sync_project(config: &Config, project: &Project, logger: &Logger) -> Result<(), AppError> {
+fn sync_project(config: &Config, project: &Project, logger: &Logger, only_new: bool) -> Result<(), AppError> {
   let path = config.actual_path_to_project(project, logger);
   let exists = path.exists();
   let project_logger = logger.new(o!(
@@ -275,12 +275,16 @@ fn sync_project(config: &Config, project: &Project, logger: &Logger) -> Result<(
         "path" => format!("{:?}", path),
       ));
   if exists {
-    update_project_remotes(project, &path, &project_logger)
+    if only_new {
+      Result::Ok(())
+    } else {
+      update_project_remotes(project, &path, &project_logger)
+    }
   } else {
     clone_project(config, project, &path, &project_logger)
   }
 }
-pub fn synchronize(maybe_config: Result<Config, AppError>, no_progress_bar: bool, logger: &Logger) -> Result<(), AppError> {
+pub fn synchronize(maybe_config: Result<Config, AppError>, no_progress_bar: bool, only_new: bool, logger: &Logger) -> Result<(), AppError> {
   eprintln!("Synchronizing everything");
   if !ssh_agent_running() {
     warn!(logger, "SSH Agent not running. Process may hang.")
@@ -325,7 +329,7 @@ pub fn synchronize(maybe_config: Result<Config, AppError>, no_progress_bar: bool
       loop {
         if let Some(project) = job_q.try_pop() {
           pb.set_message(&project.name);
-          let sync_result = sync_project(&job_config, &project, &job_logger);
+          let sync_result = sync_project(&job_config, &project, &job_logger, only_new);
           job_result = job_result.and(sync_result);
         } else {
           pb.finish_with_message("waiting...");

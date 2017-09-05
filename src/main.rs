@@ -74,10 +74,16 @@ fn main() {
     ))
     .arg(Arg::with_name("q").short("q").help("Make fw quiet"))
     .subcommand(
-      SubCommand::with_name("sync").about("Sync workspace").arg(
+      SubCommand::with_name("sync").about("Sync workspace. Clones projects or updates remotes for existing projects.").arg(
         Arg::with_name("no-progress-bar")
           .long("no-progress-bar")
           .short("q")
+          .takes_value(false),
+      ).arg(
+        Arg::with_name("only-new")
+          .long("only-new")
+          .short("n")
+          .help("Only clones projects. Skips all actions for projects already on your machine.")
           .takes_value(false),
       ),
     )
@@ -335,6 +341,7 @@ fn main() {
                                            sync::synchronize(
     config,
     subcommand_matches.is_present("no-progress-bar"),
+    subcommand_matches.is_present("only-new"),
     &subcommand_logger,
   )
                                          }
