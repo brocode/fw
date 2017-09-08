@@ -244,18 +244,18 @@ fn clone_project(config: &Config, project: &Project,path: &PathBuf,project_logge
   let shell = project_shell(&config.settings);
   let mut repo_builder = builder();
     debug!(project_logger, "Cloning project");
-    repo_builder.clone(project.git.as_str(), &path)
+    repo_builder.clone(project.git.as_str(), path)
                 .map_err(|error| {
       warn!(project_logger, "Error cloning repo"; "error" => format!("{}", error));
       AppError::GitError(error)
     })
                 .and_then(|_| match config.resolve_after_clone(
-      &project_logger,
+      project_logger,
       project,
     ) {
     Some(cmd) => {
       debug!(project_logger, "Handling post hooks"; "after_clone" => cmd);
-      spawn_maybe(&shell, &cmd, &path, &project.name, &random_colour(), project_logger).map_err(|error| {
+      spawn_maybe(&shell, &cmd, path, &project.name, &random_colour(), project_logger).map_err(|error| {
         AppError::UserError(format!(
           "Post-clone hook failed (nonzero exit code). Cause: {:?}",
           error
