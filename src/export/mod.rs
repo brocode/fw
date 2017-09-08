@@ -156,6 +156,7 @@ fw tag tag-project why-i-suck unknown_tag
       workspace: "/test".to_owned(),
       default_after_workon: None,
       default_after_clone: None,
+      default_tags: None,
       shell: None,
       tags: Some(tags),
     };

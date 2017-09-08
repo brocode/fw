@@ -14,6 +14,7 @@ pub struct Settings {
   pub shell: Option<Vec<String>>,
   pub default_after_workon: Option<String>,
   pub default_after_clone: Option<String>,
+  pub default_tags: Option<BTreeSet<String>>,
   pub tags: Option<BTreeMap<String, Tag>>,
 }
 
@@ -262,7 +263,7 @@ pub fn add_entry(
         after_clone: config.settings.default_after_clone.clone(),
         after_workon: config.settings.default_after_workon.clone(),
         override_path: None,
-        tags: None,
+        tags: config.settings.default_tags.clone(),
       },
     );
     info!(logger, "Updated config"; "config" => format!("{:?}", config));
@@ -528,6 +529,7 @@ mod tests {
       workspace: "/test".to_owned(),
       default_after_workon: None,
       default_after_clone: None,
+      default_tags: None,
       shell: None,
       tags: Some(tags),
     };

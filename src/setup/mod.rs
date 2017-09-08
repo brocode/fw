@@ -108,6 +108,7 @@ fn write_config(projects: BTreeMap<String, Project>, logger: &Logger, workspace_
       workspace: workspace_dir.to_owned(),
       default_after_workon: None,
       default_after_clone: None,
+      default_tags: None,
       shell: None,
       tags: Some(BTreeMap::new()),
     },

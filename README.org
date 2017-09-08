@@ -36,6 +36,9 @@
   "settings": {
     "shell": ["/usr/bin/zsh", "-c"],
     "workspace": "~/workspace",
+    "default_tags": [
+      "git"
+    ],
     "tags": {
       "git": {
         "after_workon": "git remote update --prune",
