@@ -118,6 +118,8 @@
    You should really use the ~fzf~ integration instead it's much better!
 
 ** Usage
+*** Overriding the config file location
+    Just set the environment variable ~FW_CONFIG_PATH~. This is also honored by ~fw setup~ so you can create more than one config file this way and switch at will.
 *** Migrating to ~fw~ / Configuration
    Initial setup is done with
 
