@@ -63,12 +63,9 @@ fn main() {
   let matches = App::new("fw")
     .version(crate_version!())
     .author("Brocode <bros@brocode.sh>")
-    .about("fast workspace manager")
+    .about("fast workspace manager. Config set by FW_CONFIG_PATH or default.")
     .global_setting(AppSettings::ColoredHelp)
     .setting(AppSettings::SubcommandRequired)
-    .arg(Arg::with_name("config").short("c").takes_value(true).help(
-      "Override config file location (default: ~/.fw.json)",
-    ))
     .arg(Arg::with_name("v").short("v").multiple(true).help(
       "Sets the level of verbosity",
     ))
@@ -325,8 +322,7 @@ fn main() {
     .get_matches();
 
   let logger = logger_from_verbosity(matches.occurrences_of("v"), &matches.is_present("q"));
-  let maybe_config_override = matches.value_of("config");
-  let config = config::get_config(&logger, maybe_config_override);
+  let config = config::get_config(&logger);
 
   let subcommand_name = matches.subcommand_name()
                                .expect("subcommand required by clap.rs")
@@ -352,8 +348,7 @@ fn main() {
     subcommand_matches.value_of("URL").expect(
       "argument required by clap.rs",
     ),
-    &subcommand_logger,
-    maybe_config_override,
+    &subcommand_logger
   )
                                          }
                                          "update" => {
@@ -377,8 +372,7 @@ fn main() {
       after_workon,
       after_clone,
       override_path,
-      &subcommand_logger,
-      maybe_config_override,
+      &subcommand_logger
     )
                                          }
                                          "setup" => {
@@ -386,8 +380,7 @@ fn main() {
     subcommand_matches.value_of("WORKSPACE_DIR").expect(
       "argument required by clap.rs",
     ),
-    &subcommand_logger,
-    maybe_config_override,
+    &subcommand_logger
   )
                                          }
                                          "import" => {
@@ -396,8 +389,7 @@ fn main() {
     subcommand_matches.value_of("PROJECT_DIR").expect(
       "argument required by clap.rs",
     ),
-    &subcommand_logger,
-    maybe_config_override,
+    &subcommand_logger
   )
                                          }
                                          "gen-workon" => {
@@ -469,7 +461,6 @@ fn main() {
       &subsubcommand_name,
       &subsubcommand_matches,
       &subcommand_logger,
-      maybe_config_override,
     )
                                          }
                                          "ls" => workon::ls(config),
@@ -493,7 +484,6 @@ fn execute_tag_subcommand(
   tag_command_name: &str,
   tag_matches: &clap::ArgMatches,
   logger: &Logger,
-  maybe_config_override: Option<&str>,
 ) -> Result<(), AppError> {
   match tag_command_name.as_ref() {
   "ls" => {
@@ -511,8 +501,7 @@ fn execute_tag_subcommand(
       maybe_config,
       project_name,
       tag_name,
-      logger,
-      maybe_config_override,
+      logger
     )
   }
   "untag-project" => {
@@ -526,15 +515,14 @@ fn execute_tag_subcommand(
       maybe_config,
       project_name,
       &tag_name,
-      logger,
-      maybe_config_override,
+      logger
     )
   }
   "rm" => {
     let tag_name: String = tag_matches.value_of("tag-name")
                                       .map(str::to_string)
                                       .expect("argument enforced by clap.rs");
-    tag::delete_tag(maybe_config, &tag_name, logger, maybe_config_override)
+    tag::delete_tag(maybe_config, &tag_name, logger)
   }
   "add" => {
     let tag_name: String = tag_matches.value_of("tag-name")
@@ -555,8 +543,7 @@ fn execute_tag_subcommand(
       after_clone,
       priority,
       tag_workspace,
-      logger,
-      maybe_config_override,
+      logger
     )
   }
   _ => Result::Err(AppError::InternalError("Command not implemented")),

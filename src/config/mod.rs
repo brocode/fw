@@ -58,6 +58,16 @@ impl Project {
   }
 }
 
+fn fw_path() -> Result<PathBuf, AppError> {
+  let raw_path = match env::var("FW_CONFIG_PATH") {
+  Ok(path) => {
+    Ok(PathBuf::from(path))
+  }
+  Err(_) => Ok(PathBuf::from("~/.fw.json"))
+  };
+  raw_path.map(|path| expand_path(path))
+}
+
 impl Config {
   pub fn actual_path_to_project(&self, project: &Project, logger: &Logger) -> PathBuf {
     let path = project.override_path
@@ -192,29 +202,16 @@ where
         .and_then(|c: Config| c.check_sanity(logger))
 }
 
-fn default_config_path() -> Result<PathBuf, AppError> {
-  let mut home: PathBuf = env::home_dir().ok_or_else(|| {
-    AppError::UserError("$HOME not set".to_owned())
-  })?;
-  home.push(".fw.json");
-  Ok(home)
-}
-
-pub fn actual_config_path(maybe_config_override: Option<&str>) -> Result<PathBuf, AppError> {
-  let maybe_config: Option<Result<PathBuf, AppError>> = maybe_config_override.map(|path| Ok(PathBuf::from(path)));
-  maybe_config.unwrap_or_else(default_config_path)
-}
-
-fn determine_config(maybe_config_override: Option<&str>) -> Result<File, AppError> {
-  let config_file_path = actual_config_path(maybe_config_override)?;
+fn open_config() -> Result<File, AppError> {
+  let config_file_path = fw_path()?;
   let path = config_file_path.to_str().ok_or_else(|| {
     AppError::UserError("$HOME is not valid utf8".to_owned())
   });
   path.and_then(|path| File::open(path).map_err(AppError::IO))
 }
 
-pub fn get_config(logger: &Logger, maybe_config_override: Option<&str>) -> Result<Config, AppError> {
-  let config_file = determine_config(maybe_config_override);
+pub fn get_config(logger: &Logger) -> Result<Config, AppError> {
+  let config_file = open_config();
   let reader = config_file.map(BufReader::new);
   read_config(reader, logger)
 }
@@ -240,8 +237,7 @@ pub fn add_entry(
   maybe_config: Result<Config, AppError>,
   maybe_name: Option<&str>,
   url: &str,
-  logger: &Logger,
-  maybe_config_override: Option<&str>,
+  logger: &Logger
 ) -> Result<(), AppError> {
   let name = maybe_name.ok_or_else(|| {
     AppError::UserError(format!("No project name specified for {}", url))
@@ -267,7 +263,7 @@ pub fn add_entry(
       },
     );
     info!(logger, "Updated config"; "config" => format!("{:?}", config));
-    write_config(config, logger, maybe_config_override)
+    write_config(config, logger)
   }
 }
 
@@ -278,8 +274,7 @@ pub fn update_entry(
   after_workon: Option<String>,
   after_clone: Option<String>,
   override_path: Option<String>,
-  logger: &Logger,
-  maybe_config_override: Option<&str>,
+  logger: &Logger
 ) -> Result<(), AppError> {
   let mut config: Config = maybe_config?;
   info!(logger, "Update project entry"; "name" => name);
@@ -310,12 +305,12 @@ pub fn update_entry(
       },
     );
     debug!(logger, "Updated config"; "config" => format!("{:?}", config));
-    write_config(config, logger, maybe_config_override)
+    write_config(config, logger)
   }
 }
 
-pub fn write_config(config: Config, logger: &Logger, maybe_config_override: Option<&str>) -> Result<(), AppError> {
-  let config_path = actual_config_path(maybe_config_override)?;
+pub fn write_config(config: Config, logger: &Logger) -> Result<(), AppError> {
+  let config_path = fw_path()?;
   info!(logger, "Writing config"; "path" => format!("{:?}", config_path));
   config.check_sanity(logger).and_then(|c| {
     let mut buffer = File::create(config_path)?;

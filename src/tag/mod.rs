@@ -24,8 +24,7 @@ pub fn create_tag(
   after_clone: Option<String>,
   priority: Option<u8>,
   tag_workspace: Option<String>,
-  logger: &Logger,
-  maybe_config_override: Option<&str>,
+  logger: &Logger
 ) -> Result<(), AppError> {
   let mut config: Config = maybe_config?;
   let mut tags: BTreeMap<String, Tag> = config.settings.tags.unwrap_or_else(BTreeMap::new);
@@ -38,16 +37,16 @@ pub fn create_tag(
   };
   tags.insert(tag_name, new_tag);
   config.settings.tags = Some(tags);
-  config::write_config(config, logger, maybe_config_override)
+  config::write_config(config, logger)
 }
 
-pub fn delete_tag(maybe_config: Result<Config, AppError>, tag_name: &str, logger: &Logger, maybe_config_override: Option<&str>) -> Result<(), AppError> {
+pub fn delete_tag(maybe_config: Result<Config, AppError>, tag_name: &str, logger: &Logger) -> Result<(), AppError> {
   let mut config: Config = maybe_config?;
   let mut tags: BTreeMap<String, Tag> = config.settings.tags.unwrap_or_else(BTreeMap::new);
   info!(logger, "Delete tag"; "tag" => tag_name);
   if tags.remove(tag_name).is_some() {
     config.settings.tags = Some(tags);
-    config::write_config(config, logger, maybe_config_override)
+    config::write_config(config, logger)
   } else {
     Result::Ok(())
   }
@@ -66,8 +65,7 @@ pub fn add_tag(
   maybe_config: Result<Config, AppError>,
   project_name: String,
   tag_name: String,
-  logger: &Logger,
-  maybe_config_override: Option<&str>,
+  logger: &Logger
 ) -> Result<(), AppError> {
   let mut config: Config = maybe_config?;
 
@@ -77,7 +75,7 @@ pub fn add_tag(
     new_tags.insert(tag_name);
     project.tags = Some(new_tags);
     config.projects.insert(project_name, project);
-    config::write_config(config, logger, maybe_config_override)
+    config::write_config(config, logger)
   } else {
     Result::Err(AppError::UserError(
       format!("Unknown project {}", project_name),
@@ -89,8 +87,7 @@ pub fn remove_tag(
   maybe_config: Result<Config, AppError>,
   project_name: String,
   tag_name: &str,
-  logger: &Logger,
-  maybe_config_override: Option<&str>,
+  logger: &Logger
 ) -> Result<(), AppError> {
   let mut config: Config = maybe_config?;
 
@@ -100,7 +97,7 @@ pub fn remove_tag(
     if new_tags.remove(tag_name) {
       project.tags = Some(new_tags);
       config.projects.insert(project_name, project);
-      config::write_config(config, logger, maybe_config_override)
+      config::write_config(config, logger)
     } else {
       Result::Ok(())
     }

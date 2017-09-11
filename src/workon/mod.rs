@@ -114,7 +114,7 @@ pub fn reworkon(maybe_config: Result<config::Config, AppError>, logger: &Logger)
 pub fn gen(name: &str, maybe_config: Result<config::Config, AppError>, quick: bool, logger: &Logger) -> Result<(), AppError> {
   let config = maybe_config?;
   let project: &Project = config.projects.get(name).ok_or_else(|| {
-    AppError::UserError(format!("project key {} not found in ~/.fw.json", name))
+    AppError::UserError(format!("project key {} not found in fw.json", name))
   })?;
   let canonical_project_path = config.actual_path_to_project(project, logger);
   let path = canonical_project_path.to_str().ok_or(
