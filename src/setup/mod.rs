@@ -14,13 +14,21 @@ pub fn setup(workspace_dir: &str, logger: &Logger) -> Result<(), AppError> {
   let maybe_path = if path.exists() {
     Result::Ok(path)
   } else {
-    Result::Err(AppError::UserError(
-      format!("Given workspace path {} does not exist", workspace_dir),
-    ))
+    Result::Err(AppError::UserError(format!(
+      "Given workspace path {} does not exist",
+      workspace_dir
+    )))
   };
 
-  maybe_path.and_then(|path| if path.is_absolute() {Ok(path) } else {Err(AppError::UserError(format!("Workspace path {} needs to be absolute", workspace_dir)))})
-    .and_then(|path| determine_projects(path, logger))
+  maybe_path.and_then(|path| if path.is_absolute() {
+    Ok(path)
+  } else {
+    Err(AppError::UserError(format!(
+      "Workspace path {} needs to be absolute",
+      workspace_dir
+    )))
+  })
+            .and_then(|path| determine_projects(path, logger))
             .and_then(|projects| write_config(projects, logger, workspace_dir))
 }
 

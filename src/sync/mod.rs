@@ -221,7 +221,7 @@ fn update_project_remotes(project: &Project, path: &PathBuf, project_logger: &Lo
   })?;
   let remote = "origin";
   let mut remote = local.find_remote(remote).or_else(
-    |_| local.remote_anonymous(remote)
+    |_| local.remote_anonymous(remote),
   )?;
 
   let remote_callbacks = agent_callbacks();
@@ -240,7 +240,7 @@ fn update_project_remotes(project: &Project, path: &PathBuf, project_logger: &Lo
     None,
     true,
     AutotagOption::Unspecified,
-    None
+    None,
   )?;
   Result::Ok(())
 }
