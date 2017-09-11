@@ -20,9 +20,7 @@ pub fn setup(workspace_dir: &str, logger: &Logger) -> Result<(), AppError> {
   };
 
   maybe_path.and_then(|path| determine_projects(path, logger))
-            .and_then(|projects| {
-    write_config(projects, logger, workspace_dir)
-  })
+            .and_then(|projects| write_config(projects, logger, workspace_dir))
 }
 
 fn determine_projects(path: PathBuf, logger: &Logger) -> Result<BTreeMap<String, Project>, AppError> {

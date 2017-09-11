@@ -24,7 +24,7 @@ pub fn create_tag(
   after_clone: Option<String>,
   priority: Option<u8>,
   tag_workspace: Option<String>,
-  logger: &Logger
+  logger: &Logger,
 ) -> Result<(), AppError> {
   let mut config: Config = maybe_config?;
   let mut tags: BTreeMap<String, Tag> = config.settings.tags.unwrap_or_else(BTreeMap::new);
@@ -61,12 +61,7 @@ fn list_all_tags(config: Config) -> Result<(), AppError> {
   Result::Ok(())
 }
 
-pub fn add_tag(
-  maybe_config: Result<Config, AppError>,
-  project_name: String,
-  tag_name: String,
-  logger: &Logger
-) -> Result<(), AppError> {
+pub fn add_tag(maybe_config: Result<Config, AppError>, project_name: String, tag_name: String, logger: &Logger) -> Result<(), AppError> {
   let mut config: Config = maybe_config?;
 
   if let Some(mut project) = config.projects.get(&project_name).cloned() {
@@ -83,12 +78,7 @@ pub fn add_tag(
   }
 }
 
-pub fn remove_tag(
-  maybe_config: Result<Config, AppError>,
-  project_name: String,
-  tag_name: &str,
-  logger: &Logger
-) -> Result<(), AppError> {
+pub fn remove_tag(maybe_config: Result<Config, AppError>, project_name: String, tag_name: &str, logger: &Logger) -> Result<(), AppError> {
   let mut config: Config = maybe_config?;
 
   if let Some(mut project) = config.projects.get(&project_name).cloned() {

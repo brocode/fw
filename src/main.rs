@@ -63,7 +63,9 @@ fn main() {
   let matches = App::new("fw")
     .version(crate_version!())
     .author("Brocode <bros@brocode.sh>")
-    .about("fast workspace manager. Config set by FW_CONFIG_PATH or default.")
+    .about(
+      "fast workspace manager. Config set by FW_CONFIG_PATH or default.",
+    )
     .global_setting(AppSettings::ColoredHelp)
     .setting(AppSettings::SubcommandRequired)
     .arg(Arg::with_name("v").short("v").multiple(true).help(
@@ -71,18 +73,25 @@ fn main() {
     ))
     .arg(Arg::with_name("q").short("q").help("Make fw quiet"))
     .subcommand(
-      SubCommand::with_name("sync").about("Sync workspace. Clones projects or updates remotes for existing projects.").arg(
-        Arg::with_name("no-progress-bar")
-          .long("no-progress-bar")
-          .short("q")
-          .takes_value(false),
-      ).arg(
-        Arg::with_name("only-new")
-          .long("only-new")
-          .short("n")
-          .help("Only clones projects. Skips all actions for projects already on your machine.")
-          .takes_value(false),
-      ),
+      SubCommand::with_name("sync")
+        .about(
+          "Sync workspace. Clones projects or updates remotes for existing projects.",
+        )
+        .arg(
+          Arg::with_name("no-progress-bar")
+            .long("no-progress-bar")
+            .short("q")
+            .takes_value(false),
+        )
+        .arg(
+          Arg::with_name("only-new")
+            .long("only-new")
+            .short("n")
+            .help(
+              "Only clones projects. Skips all actions for projects already on your machine.",
+            )
+            .takes_value(false),
+        ),
     )
     .subcommand(
       SubCommand::with_name("print-zsh-setup")
@@ -348,7 +357,7 @@ fn main() {
     subcommand_matches.value_of("URL").expect(
       "argument required by clap.rs",
     ),
-    &subcommand_logger
+    &subcommand_logger,
   )
                                          }
                                          "update" => {
@@ -372,7 +381,7 @@ fn main() {
       after_workon,
       after_clone,
       override_path,
-      &subcommand_logger
+      &subcommand_logger,
     )
                                          }
                                          "setup" => {
@@ -380,7 +389,7 @@ fn main() {
     subcommand_matches.value_of("WORKSPACE_DIR").expect(
       "argument required by clap.rs",
     ),
-    &subcommand_logger
+    &subcommand_logger,
   )
                                          }
                                          "import" => {
@@ -389,7 +398,7 @@ fn main() {
     subcommand_matches.value_of("PROJECT_DIR").expect(
       "argument required by clap.rs",
     ),
-    &subcommand_logger
+    &subcommand_logger,
   )
                                          }
                                          "gen-workon" => {
@@ -497,12 +506,7 @@ fn execute_tag_subcommand(
     let tag_name: String = tag_matches.value_of("tag-name")
                                       .map(str::to_string)
                                       .expect("argument enforced by clap.rs");
-    tag::add_tag(
-      maybe_config,
-      project_name,
-      tag_name,
-      logger
-    )
+    tag::add_tag(maybe_config, project_name, tag_name, logger)
   }
   "untag-project" => {
     let project_name: String = tag_matches.value_of("PROJECT_NAME")
@@ -511,12 +515,7 @@ fn execute_tag_subcommand(
     let tag_name: String = tag_matches.value_of("tag-name")
                                       .map(str::to_string)
                                       .expect("argument enforced by clap.rs");
-    tag::remove_tag(
-      maybe_config,
-      project_name,
-      &tag_name,
-      logger
-    )
+    tag::remove_tag(maybe_config, project_name, &tag_name, logger)
   }
   "rm" => {
     let tag_name: String = tag_matches.value_of("tag-name")
@@ -543,7 +542,7 @@ fn execute_tag_subcommand(
       after_clone,
       priority,
       tag_workspace,
-      logger
+      logger,
     )
   }
   _ => Result::Err(AppError::InternalError("Command not implemented")),

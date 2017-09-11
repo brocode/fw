@@ -60,10 +60,8 @@ impl Project {
 
 fn fw_path() -> Result<PathBuf, AppError> {
   let raw_path = match env::var("FW_CONFIG_PATH") {
-  Ok(path) => {
-    Ok(PathBuf::from(path))
-  }
-  Err(_) => Ok(PathBuf::from("~/.fw.json"))
+  Ok(path) => Ok(PathBuf::from(path)),
+  Err(_) => Ok(PathBuf::from("~/.fw.json")),
   };
   raw_path.map(|path| expand_path(path))
 }
@@ -233,12 +231,7 @@ fn repo_name_from_url(url: &str) -> Result<&str, AppError> {
   })
 }
 
-pub fn add_entry(
-  maybe_config: Result<Config, AppError>,
-  maybe_name: Option<&str>,
-  url: &str,
-  logger: &Logger
-) -> Result<(), AppError> {
+pub fn add_entry(maybe_config: Result<Config, AppError>, maybe_name: Option<&str>, url: &str, logger: &Logger) -> Result<(), AppError> {
   let name = maybe_name.ok_or_else(|| {
     AppError::UserError(format!("No project name specified for {}", url))
   })
@@ -274,7 +267,7 @@ pub fn update_entry(
   after_workon: Option<String>,
   after_clone: Option<String>,
   override_path: Option<String>,
-  logger: &Logger
+  logger: &Logger,
 ) -> Result<(), AppError> {
   let mut config: Config = maybe_config?;
   info!(logger, "Update project entry"; "name" => name);

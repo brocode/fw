@@ -4,11 +4,11 @@ use config::{Config, Project, Settings};
 use crossbeam::sync::MsQueue;
 use errors::AppError;
 use git2;
+use git2::AutotagOption;
+use git2::Direction;
 use git2::FetchOptions;
 use git2::RemoteCallbacks;
 use git2::Repository;
-use git2::AutotagOption;
-use git2::Direction;
 use git2::build::RepoBuilder;
 use indicatif::{MultiProgress, ProgressBar, ProgressDrawTarget, ProgressStyle};
 use rand;
@@ -214,56 +214,69 @@ pub fn foreach(
 }
 
 fn update_project_remotes(project: &Project, path: &PathBuf, project_logger: &Logger) -> Result<(), AppError> {
-    debug!(project_logger, "Update project remotes");
-    let local = Repository::init(path).map_err(|error| {
-      warn!(project_logger, "Error opening local repo"; "error" => format!("{}", error));
-      AppError::GitError(error)
-    })?;
-    let remote = "origin";
-    let mut remote = try!(local.find_remote(remote)
-        .or_else(|_| { local.remote_anonymous(remote) })
-    );
+  debug!(project_logger, "Update project remotes");
+  let local = Repository::init(path).map_err(|error| {
+    warn!(project_logger, "Error opening local repo"; "error" => format!("{}", error));
+    AppError::GitError(error)
+  })?;
+  let remote = "origin";
+  let mut remote = local.find_remote(remote).or_else(
+    |_| local.remote_anonymous(remote)
+  )?;
 
-    let remote_callbacks = agent_callbacks();
-    remote.connect_auth(Direction::Fetch, Some(remote_callbacks), None)
-                .map_err(|error| {
-      warn!(project_logger, "Error connecting remote"; "error" => format!("{}", error), "project" => project.name);
-      AppError::GitError(error)
-    })?;
-    let mut options = agent_fetch_options();
-    remote.download(&[], Some(&mut options)).map_err(|error| {
-      warn!(project_logger, "Error downloading for remote"; "error" => format!("{}", error), "project" => project.name);
-      AppError::GitError(error)
-    })?;
-    remote.disconnect();
-    try!(remote.update_tips(None, true, AutotagOption::Unspecified, None));
-    Result::Ok(())
+  let remote_callbacks = agent_callbacks();
+  remote.connect_auth(Direction::Fetch, Some(remote_callbacks), None)
+        .map_err(|error| {
+    warn!(project_logger, "Error connecting remote"; "error" => format!("{}", error), "project" => project.name);
+    AppError::GitError(error)
+  })?;
+  let mut options = agent_fetch_options();
+  remote.download(&[], Some(&mut options)).map_err(|error| {
+    warn!(project_logger, "Error downloading for remote"; "error" => format!("{}", error), "project" => project.name);
+    AppError::GitError(error)
+  })?;
+  remote.disconnect();
+  remote.update_tips(
+    None,
+    true,
+    AutotagOption::Unspecified,
+    None
+  )?;
+  Result::Ok(())
 }
 
-fn clone_project(config: &Config, project: &Project,path: &PathBuf,project_logger: &Logger) -> Result<(), AppError> {
+fn clone_project(config: &Config, project: &Project, path: &PathBuf, project_logger: &Logger) -> Result<(), AppError> {
   let shell = project_shell(&config.settings);
   let mut repo_builder = builder();
-    debug!(project_logger, "Cloning project");
-    repo_builder.clone(project.git.as_str(), path)
-                .map_err(|error| {
-      warn!(project_logger, "Error cloning repo"; "error" => format!("{}", error));
-      AppError::GitError(error)
-    })
-                .and_then(|_| match config.resolve_after_clone(
+  debug!(project_logger, "Cloning project");
+  repo_builder.clone(project.git.as_str(), path)
+              .map_err(|error| {
+    warn!(project_logger, "Error cloning repo"; "error" => format!("{}", error));
+    AppError::GitError(error)
+  })
+              .and_then(|_| match config.resolve_after_clone(
+    project_logger,
+    project,
+  ) {
+  Some(cmd) => {
+    debug!(project_logger, "Handling post hooks"; "after_clone" => cmd);
+    spawn_maybe(
+      &shell,
+      &cmd,
+      path,
+      &project.name,
+      &random_colour(),
       project_logger,
-      project,
-    ) {
-    Some(cmd) => {
-      debug!(project_logger, "Handling post hooks"; "after_clone" => cmd);
-      spawn_maybe(&shell, &cmd, path, &project.name, &random_colour(), project_logger).map_err(|error| {
-        AppError::UserError(format!(
-          "Post-clone hook failed (nonzero exit code). Cause: {:?}",
-          error
-        ))
-      })
-    }
-    None => Ok(()),
+    )
+    .map_err(|error| {
+      AppError::UserError(format!(
+        "Post-clone hook failed (nonzero exit code). Cause: {:?}",
+        error
+      ))
     })
+  }
+  None => Ok(()),
+  })
 }
 
 fn sync_project(config: &Config, project: &Project, logger: &Logger, only_new: bool) -> Result<(), AppError> {
