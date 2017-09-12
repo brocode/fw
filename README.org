@@ -79,11 +79,14 @@
     - generate projectile configuration for all your project (no need to ~projectile-add-known-project~ every time you clone some shit, it will just work)
 
 ** Installation
+   The best way to install fw is the rust tool cargo.
    #+BEGIN_SRC bash
    cargo install fw
    #+END_SRC
    
    If you are using `OSX` [[https://rustup.rs/][rustup]] is recommended but you [[https://github.com/Homebrew/homebrew-core/pull/14490][should be able to use brew too]].
+
+   If you need a deb or rpm package have a look at [[https://github.com/brocode/fw/releases][fw releases]]
 
 *** With fzf
    Another thing that will make you much more productive is to use the ~zsh~ completions (if you're not using the ~zsh~ I guess
