@@ -333,10 +333,10 @@ pub fn synchronize(maybe_config: Result<Config, AppError>, no_progress_bar: bool
     pb
   });
   for pb in progress_bars {
-    let job_q = q.clone();
-    let job_config = config.clone();
+    let job_q = Arc::clone(&q);
+    let job_config = Arc::clone(&config);
     let job_logger = logger.clone();
-    let job_result_queue = job_results.clone();
+    let job_result_queue = Arc::clone(&job_results);
     thread::spawn(move || {
       let mut job_result: Result<(), AppError> = Result::Ok(());
       loop {

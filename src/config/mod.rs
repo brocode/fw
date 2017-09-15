@@ -63,7 +63,7 @@ fn fw_path() -> Result<PathBuf, AppError> {
   Ok(path) => Ok(PathBuf::from(path)),
   Err(_) => Ok(PathBuf::from("~/.fw.json")),
   };
-  raw_path.map(|path| expand_path(path))
+  raw_path.map(expand_path)
 }
 
 impl Config {
