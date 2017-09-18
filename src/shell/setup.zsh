@@ -24,19 +24,25 @@ _fw() {
         first)
           actions=(
             'sync:Sync workspace'
+            'setup:Setup config from existing workspace'
+            'import:Import existing git folder to fw'
             'add:Add project to workspace'
             'foreach:Run script on each project'
             'projectile:Create projectile bookmarks'
             'ls:List projects'
-            'inspect:Inspect projects'
+            'inspect:Inspect project'
             'update:Update project settings'
             'tag:Manipulate tags'
             'export:Exports a project as shell commands'
+            'print-path:Print project path to stdout'
           );
           _describe action actions && ret=0;
         ;;
         second)
           case $words[2] in
+            print-path)
+              __fw_projects;
+            ;;
             inspect)
               __fw_projects;
             ;;
