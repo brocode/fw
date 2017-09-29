@@ -9,6 +9,8 @@ extern crate slog_term;
 extern crate serde_derive;
 extern crate serde_json;
 
+extern crate github_gql;
+
 extern crate git2;
 
 extern crate rayon;
@@ -39,6 +41,7 @@ use errors::AppError;
 use slog::{DrainExt, Level, LevelFilter, Logger};
 use std::str::FromStr;
 use std::time::SystemTime;
+use ws::github;
 
 fn logger_from_verbosity(verbosity: u64, quiet: &bool) -> Logger {
   let log_level: Level = match verbosity {
@@ -60,6 +63,7 @@ fn logger_from_verbosity(verbosity: u64, quiet: &bool) -> Logger {
 }
 
 fn main() {
+
   let matches = App::new("fw")
     .version(crate_version!())
     .author("Brocode <bros@brocode.sh>")
@@ -570,3 +574,4 @@ mod workon;
 mod projectile;
 mod tag;
 mod export;
+mod ws;

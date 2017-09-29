@@ -25,7 +25,7 @@ rand = "0.3"
 spectral = "0.6"
 crossbeam = "0.3"
 indicatif = "0.7"
-
+github-gql-rs = "0.0.1"
 
 [dependencies.slog]
 version = "1.5"
