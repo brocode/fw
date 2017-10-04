@@ -1,6 +1,6 @@
 [root]
 name = "fw"
-version = "1.6.6-alpha.0"
+version = "1.6.6"
 dependencies = [
  "ansi_term 0.9.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "atty 0.2.2 (registry+https://github.com/rust-lang/crates.io-index)",
