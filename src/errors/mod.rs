@@ -51,8 +51,7 @@ impl Error for AppError {
   fn description(&self) -> &str {
     match *self {
     AppError::IO(ref err) => err.description(),
-    AppError::UserError(ref str) => str.as_ref(),
-    AppError::RuntimeError(ref str) => str.as_ref(),
+    AppError::UserError(ref str) | AppError::RuntimeError(ref str) => str.as_ref(),
     AppError::BadJson(ref err) => err.description(),
     AppError::InternalError(str) => str.as_ref(),
     AppError::ClockError(ref err) => err.description(),

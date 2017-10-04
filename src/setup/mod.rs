@@ -69,7 +69,7 @@ fn determine_projects(path: PathBuf, logger: &Logger) -> Result<BTreeMap<String,
 
 pub fn org_import(maybe_config: Result<Config, AppError>, org_name: &str, logger: &Logger) -> Result<(), AppError> {
   let mut current_config = maybe_config?;
-  let token = current_config.settings.github_token.clone().ok_or_else(|| AppError::UserError(format!("Can't call GitHub API because no github oauth token (settings.github_token) specified in the configuration.")))?;
+  let token = current_config.settings.github_token.clone().ok_or_else(|| AppError::UserError(format!("Can't call GitHub API for org {} because no github oauth token (settings.github_token) specified in the configuration.", org_name)))?;
   let mut api = github::github_api(token)?;
   let mut current_projects = current_config.projects.clone();
   let org_repository_names: Vec<String> = api.list_repositories(org_name)?;
@@ -92,7 +92,7 @@ pub fn org_import(maybe_config: Result<Config, AppError>, org_name: &str, logger
     }
   }
   current_config.projects = current_projects;
-  config::write_config(current_config, &logger)?;
+  config::write_config(current_config, logger)?;
   Ok(())
 }
 
