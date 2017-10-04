@@ -36,6 +36,7 @@
   "settings": {
     "shell": ["/usr/bin/zsh", "-c"],
     "workspace": "~/workspace",
+    "github_token": "onhrefhprqrfovgrf",
     "default_tags": [
       "git"
     ],
