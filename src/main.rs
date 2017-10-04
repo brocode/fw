@@ -41,7 +41,6 @@ use errors::AppError;
 use slog::{DrainExt, Level, LevelFilter, Logger};
 use std::str::FromStr;
 use std::time::SystemTime;
-use ws::github;
 
 fn logger_from_verbosity(verbosity: u64, quiet: &bool) -> Logger {
   let log_level: Level = match verbosity {
@@ -130,6 +129,16 @@ fn main() {
         .arg(
           Arg::with_name("PROJECT_DIR")
             .value_name("PROJECT_DIR")
+            .index(1)
+            .required(true),
+        ),
+    )
+    .subcommand(
+      SubCommand::with_name("org-import")
+        .about("Import all repositories from github org into fw")
+        .arg(
+          Arg::with_name("ORG_NAME")
+            .value_name("ORG_NAME")
             .index(1)
             .required(true),
         ),
@@ -400,6 +409,15 @@ fn main() {
                                            setup::import(
     config,
     subcommand_matches.value_of("PROJECT_DIR").expect(
+      "argument required by clap.rs",
+    ),
+    &subcommand_logger,
+  )
+  }
+                                         "org-import" => {
+                                           setup::org_import(
+    config,
+    subcommand_matches.value_of("ORG_NAME").expect(
       "argument required by clap.rs",
     ),
     &subcommand_logger,

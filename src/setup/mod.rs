@@ -6,6 +6,7 @@ use slog::Logger;
 use std::collections::BTreeMap;
 use std::fs;
 use std::path::{Path, PathBuf};
+use ws::github;
 
 pub fn setup(workspace_dir: &str, logger: &Logger) -> Result<(), AppError> {
   let setup_logger = logger.new(o!("workspace" => workspace_dir.to_owned()));
@@ -66,6 +67,35 @@ fn determine_projects(path: PathBuf, logger: &Logger) -> Result<BTreeMap<String,
   Ok(projects)
 }
 
+pub fn org_import(maybe_config: Result<Config, AppError>, org_name: &str, logger: &Logger) -> Result<(), AppError> {
+  let mut current_config = maybe_config?;
+  let token = current_config.settings.github_token.clone().ok_or_else(|| AppError::UserError(format!("Can't call GitHub API because no github oauth token (settings.github_token) specified in the configuration.")))?;
+  let mut api = github::github_api(token)?;
+  let mut current_projects = current_config.projects.clone();
+  let org_repository_names: Vec<String> = api.list_repositories(org_name)?;
+  let new_projects = org_repository_names.into_iter().map(|repo_name| {
+    Project {
+      name: repo_name.clone(),
+      git: format!("git@github.com:{}/{}.git", org_name, repo_name),
+      after_clone: None,
+      after_workon: None,
+      override_path: None,
+      tags: None,
+    }
+  });
+  for new_project in new_projects {
+    if current_projects.contains_key(&new_project.name) {
+      warn!(logger, format!("Skipping new project {} from org import because it already exists in the current fw config", &new_project.name));
+    } else {
+      info!(logger, format!("Adding new project {}", &new_project.name));
+      current_projects.insert(new_project.name.clone(), new_project);
+    }
+  }
+  current_config.projects = current_projects;
+  config::write_config(current_config, &logger)?;
+  Ok(())
+}
+
 pub fn import(maybe_config: Result<Config, AppError>, path: &str, logger: &Logger) -> Result<(), AppError> {
   let mut config: Config = maybe_config?;
   let path = fs::canonicalize(Path::new(path))?;
@@ -118,6 +148,7 @@ fn write_config(projects: BTreeMap<String, Project>, logger: &Logger, workspace_
       default_tags: None,
       shell: None,
       tags: Some(BTreeMap::new()),
+      github_token: None,
     },
   };
   debug!(logger, "Finished"; "projects" => format!("{:?}", config.projects.len()));

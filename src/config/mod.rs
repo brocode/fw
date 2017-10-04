@@ -16,6 +16,7 @@ pub struct Settings {
   pub default_after_clone: Option<String>,
   pub default_tags: Option<BTreeSet<String>>,
   pub tags: Option<BTreeMap<String, Tag>>,
+  pub github_token: Option<String>,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -520,6 +521,7 @@ mod tests {
       default_tags: None,
       shell: None,
       tags: Some(tags),
+      github_token: None,
     };
     Config {
       projects: projects,

@@ -159,6 +159,7 @@ fw tag tag-project why-i-suck unknown_tag
       default_tags: None,
       shell: None,
       tags: Some(tags),
+      github_token: None,
     };
     Config {
       projects: projects,
