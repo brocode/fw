@@ -83,7 +83,7 @@
    #+BEGIN_SRC bash
    cargo install fw
    #+END_SRC
-   
+
    If you are using `OSX` [[https://rustup.rs/][rustup]] is recommended but you [[https://github.com/Homebrew/homebrew-core/pull/14490][should be able to use brew too]].
 
    If you need a deb or rpm package have a look at [[https://github.com/brocode/fw/releases][fw releases]]
@@ -121,8 +121,8 @@
    You should really use the ~fzf~ integration instead it's much better!
 
 ** Usage
-*** Overriding the config file location
-    Just set the environment variable ~FW_CONFIG_PATH~. This is also honored by ~fw setup~ so you can create more than one config file this way and switch at will.
+*** Overriding the config file location / multiple config files (profiles)
+    Just set the environment variable ~FW_CONFIG_PATH~. This is also honored by ~fw setup~ and ~fw org-import~ so you can create more than one config file this way and switch at will.
 *** Migrating to ~fw~ / Configuration
    Initial setup is done with
 
@@ -135,6 +135,8 @@
   The ~fw.json~ file is portable as long as you change the ~workspace~ attribute, so you can share the file with your colleagues (projects with ~override_path~ set won't be portable obviously.
   You can also add shell code to the ~after_clone~ and ~after_workon~ fields on a per-project basis.
   ~after_clone~ will be executed after cloning the project (interpreter is ~sh~) and ~after_workon~ will be executed each time you ~workon~ into the project.
+
+  If you want to pull in all projects from a GitHub organization there's ~fw org-import <NAME>~ for that (note that you need a minimal config first).
 
 *** Turn ~fw~ configuration into reality
   From now on you can
