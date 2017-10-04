@@ -1,12 +1,12 @@
 use core;
 use git2;
+use github_gql;
 use regex;
 use serde_json;
 use std::error::Error;
 use std::fmt;
 use std::io;
 use std::time::SystemTimeError;
-use github_gql;
 
 #[derive(Debug)]
 pub enum AppError {
@@ -51,7 +51,8 @@ impl Error for AppError {
   fn description(&self) -> &str {
     match *self {
     AppError::IO(ref err) => err.description(),
-    AppError::UserError(ref str) | AppError::RuntimeError(ref str) => str.as_ref(),
+    AppError::UserError(ref str) |
+    AppError::RuntimeError(ref str) => str.as_ref(),
     AppError::BadJson(ref err) => err.description(),
     AppError::InternalError(str) => str.as_ref(),
     AppError::ClockError(ref err) => err.description(),
