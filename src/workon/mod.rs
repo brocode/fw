@@ -89,21 +89,20 @@ pub fn reworkon(maybe_config: Result<config::Config, AppError>, logger: &Logger)
   let config = maybe_config?;
   let project = current_project(&config, logger)?;
   let path = config.actual_path_to_project(&project, logger);
-  let workon_cmd = format!(
-    "cd {} {}",
-    path.to_string_lossy(),
-    config.resolve_after_workon(logger, &project)
-  );
+  let mut commands: Vec<String> = vec!();
+  commands.push(format!("cd {}", path.to_string_lossy()));
+  commands.extend_from_slice(&config.resolve_after_workon(logger, &project));
+
   debug!(
     logger,
     "Reworkon match: {:?} with command {:?}",
     project,
-    workon_cmd
+    commands
   );
   let shell = sync::project_shell(&config.settings);
   sync::spawn_maybe(
     &shell,
-    &workon_cmd,
+    &commands.join(" && "),
     &path,
     &project.name,
     &Colour::Yellow,
@@ -129,12 +128,12 @@ pub fn gen(name: &str, maybe_config: Result<config::Config, AppError>, quick: bo
       path
     )))
   } else {
-    let after_workon = if !quick {
-      config.resolve_after_workon(logger, project)
-    } else {
-      String::new()
-    };
-    println!("cd {}{}", path, after_workon);
+    let mut commands: Vec<String> = vec!();
+    commands.push(format!("cd {}", path));
+    if !quick {
+      commands.extend_from_slice(&config.resolve_after_workon(logger, project))
+    }
+    println!("{}", commands.join(" && "));
     Ok(())
   }
 }

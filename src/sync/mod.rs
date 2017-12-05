@@ -254,29 +254,30 @@ fn clone_project(config: &Config, project: &Project, path: &PathBuf, project_log
     warn!(project_logger, "Error cloning repo"; "error" => format!("{}", error));
     AppError::GitError(error)
   })
-              .and_then(|_| match config.resolve_after_clone(
-    project_logger,
-    project,
-  ) {
-  Some(cmd) => {
-    debug!(project_logger, "Handling post hooks"; "after_clone" => cmd);
-    spawn_maybe(
-      &shell,
-      &cmd,
-      path,
-      &project.name,
-      &random_colour(),
-      project_logger,
-    )
-    .map_err(|error| {
-      AppError::UserError(format!(
-        "Post-clone hook failed (nonzero exit code). Cause: {:?}",
-        error
-      ))
-    })
-  }
-  None => Ok(()),
-  })
+    .and_then(|_| {
+      let after_clone = config.resolve_after_clone(
+        project_logger, project);
+        if after_clone.len() > 0 {
+          debug!(project_logger, "Handling post hooks"; "after_clone" => format!("{:?}", after_clone));
+          spawn_maybe(
+            &shell,
+            &after_clone.join(" && "),
+            path,
+            &project.name,
+            &random_colour(),
+            project_logger,
+          )
+            .map_err(|error| {
+              AppError::UserError(format!(
+                "Post-clone hook failed (nonzero exit code). Cause: {:?}",
+                error
+              ))
+            })
+        }
+      else {
+        Ok(())
+      }
+      })
 }
 
 fn sync_project(config: &Config, project: &Project, logger: &Logger, only_new: bool) -> Result<(), AppError> {
