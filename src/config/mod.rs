@@ -79,34 +79,28 @@ impl Config {
   }
 
   fn resolve_workspace(&self, logger: &Logger, project: &Project) -> String {
-    let x = self.resolve_from_tags(
+    let mut x = self.resolve_from_tags(
       |tag| tag.workspace.clone(),
-      // TODO @mriehl last without mutation?
-      |mut workspaces_from_tags| {
-        workspaces_from_tags.pop().expect(
-          "joiner only used if resolved vec is not empty",
-        )
-      },
       project.tags.clone(),
       logger,
     );
-    let workspace = x.unwrap_or_else(|| self.settings.workspace.clone());
+    let workspace = x.pop().unwrap_or_else(|| self.settings.workspace.clone());
     trace!(logger, "resolved"; "workspace" => workspace);
     workspace
   }
-  pub fn resolve_after_clone(&self, logger: &Logger, project: &Project) -> Option<String> {
-    project.after_clone.clone().or_else(|| {
-      self.resolve_after_clone_from_tags(project.tags.clone(), logger)
-    })
+  pub fn resolve_after_clone(&self, logger: &Logger, project: &Project) -> Vec<String> {
+    let mut commands: Vec<String> = vec!();
+    commands.extend_from_slice(&self.resolve_after_clone_from_tags(project.tags.clone(), logger));
+    let commands_from_project: Vec<String> = project.after_clone.clone().into_iter().collect();
+    commands.extend_from_slice(&commands_from_project);
+    commands
   }
-  pub fn resolve_after_workon(&self, logger: &Logger, project: &Project) -> String {
-    project.after_workon
-           .clone()
-           .or_else(|| {
-      self.resolve_workon_from_tags(project.tags.clone(), logger)
-    })
-           .map(|c| prepare_workon(&c))
-           .unwrap_or_else(|| "".to_owned())
+  pub fn resolve_after_workon(&self, logger: &Logger, project: &Project) -> Vec<String> {
+    let mut commands: Vec<String> = vec!();
+    commands.extend_from_slice(&self.resolve_workon_from_tags(project.tags.clone(), logger));
+    let commands_from_project: Vec<String> = project.after_workon.clone().into_iter().collect();
+    commands.extend_from_slice(&commands_from_project);
+    commands
   }
 
   fn check_sanity(self, logger: &Logger) -> Result<Config, AppError> {
@@ -116,18 +110,16 @@ impl Config {
     Ok(self)
   }
 
-  fn resolve_workon_from_tags(&self, maybe_tags: Option<BTreeSet<String>>, logger: &Logger) -> Option<String> {
+  fn resolve_workon_from_tags(&self, maybe_tags: Option<BTreeSet<String>>, logger: &Logger) -> Vec<String> {
     self.resolve_from_tags(
       |t| t.clone().after_workon,
-      |v| v.join(" && "),
       maybe_tags,
       logger,
     )
   }
-  fn resolve_after_clone_from_tags(&self, maybe_tags: Option<BTreeSet<String>>, logger: &Logger) -> Option<String> {
+  fn resolve_after_clone_from_tags(&self, maybe_tags: Option<BTreeSet<String>>, logger: &Logger) -> Vec<String> {
     self.resolve_from_tags(
       |t| t.clone().after_clone,
-      |v| v.join(" && "),
       maybe_tags,
       logger,
     )
@@ -147,15 +139,14 @@ conscious choice and set the value."#;
     }
   }
 
-  fn resolve_from_tags<F, J>(&self, resolver: F, joiner: J, maybe_tags: Option<BTreeSet<String>>, logger: &Logger) -> Option<String>
+  fn resolve_from_tags<F>(&self, resolver: F, maybe_tags: Option<BTreeSet<String>>, logger: &Logger) -> Vec<String>
   where
-    F: Fn(&Tag) -> Option<String>,
-    J: Fn(Vec<String>) -> String,
+    F: Fn(&Tag) -> Option<String>
   {
     let tag_logger = logger.new(o!("tags" => format!("{:?}", maybe_tags)));
     trace!(tag_logger, "Resolving");
     if maybe_tags.is_none() || self.settings.tags.is_none() {
-      None
+      vec!()
     } else {
       let tags: BTreeSet<String> = maybe_tags.unwrap();
       let settings_tags = self.clone().settings.tags.unwrap();
@@ -175,21 +166,11 @@ conscious choice and set the value."#;
       trace!(logger, "before sort"; "tags" => format!("{:?}", resolved_with_priority));
       resolved_with_priority.sort_by_key(|resolved_and_priority| resolved_and_priority.1);
       trace!(logger, "after sort"; "tags" => format!("{:?}", resolved_with_priority));
-      let resolved: Vec<String> = resolved_with_priority.into_iter().map(|r| r.0).collect();
-      if resolved.is_empty() {
-        None
-      } else {
-        let resolved_cmd = joiner(resolved);
-        debug!(tag_logger, format!("resolved {:?}", resolved_cmd));
-        Some(resolved_cmd)
-      }
+      resolved_with_priority.into_iter().map(|r| r.0).collect()
     }
   }
 }
 
-fn prepare_workon(workon: &str) -> String {
-  format!(" && {}", workon)
-}
 
 fn read_config<R>(reader: Result<R, AppError>, logger: &Logger) -> Result<Config, AppError>
 where
@@ -369,70 +350,70 @@ mod tests {
     let config = a_config();
     let logger = a_logger();
     let resolved = config.resolve_after_workon(&logger, config.projects.get("test1").unwrap());
-    assert_that(&resolved).is_equal_to(" && workon1 && workon2".to_owned());
+    assert_that(&resolved).is_equal_to(vec!("workon1".to_string(), "workon2".to_string()));
   }
   #[test]
   fn test_workon_from_tags_prioritized() {
     let config = a_config();
     let logger = a_logger();
     let resolved = config.resolve_after_workon(&logger, config.projects.get("test5").unwrap());
-    assert_that(&resolved).is_equal_to(" && workon4 && workon3".to_owned());
+    assert_that(&resolved).is_equal_to(vec!("workon4".to_string(), "workon3".to_string()));
   }
   #[test]
   fn test_after_clone_from_tags() {
     let config = a_config();
     let logger = a_logger();
     let resolved = config.resolve_after_clone(&logger, config.projects.get("test1").unwrap());
-    assert_that(&resolved).is_equal_to(Some("clone1 && clone2".to_owned()));
+    assert_that(&resolved).is_equal_to(vec!("clone1".to_string(), "clone2".to_string()));
   }
   #[test]
   fn test_after_clone_from_tags_prioritized() {
     let config = a_config();
     let logger = a_logger();
     let resolved = config.resolve_after_clone(&logger, config.projects.get("test5").unwrap());
-    assert_that(&resolved).is_equal_to(Some("clone4 && clone3".to_owned()));
+    assert_that(&resolved).is_equal_to(vec!("clone4".to_string(), "clone3".to_string()));
   }
   #[test]
   fn test_workon_from_tags_missing_one_tag_graceful() {
     let config = a_config();
     let logger = a_logger();
     let resolved = config.resolve_after_workon(&logger, config.projects.get("test2").unwrap());
-    assert_that(&resolved).is_equal_to(" && workon1".to_owned());
+    assert_that(&resolved).is_equal_to(vec!("workon1".to_owned()));
   }
   #[test]
   fn test_workon_from_tags_missing_all_tags_graceful() {
     let config = a_config();
     let logger = a_logger();
     let resolved = config.resolve_after_workon(&logger, config.projects.get("test4").unwrap());
-    assert_that(&resolved).is_equal_to("".to_owned());
+    assert_that(&resolved).is_equal_to(vec!());
   }
   #[test]
   fn test_after_clone_from_tags_missing_all_tags_graceful() {
     let config = a_config();
     let logger = a_logger();
     let resolved = config.resolve_after_clone(&logger, config.projects.get("test4").unwrap());
-    assert_that(&resolved).is_equal_to(None);
+    assert_that(&resolved).is_equal_to(vec!());
   }
   #[test]
   fn test_after_clone_from_tags_missing_one_tag_graceful() {
     let config = a_config();
     let logger = a_logger();
     let resolved = config.resolve_after_clone(&logger, config.projects.get("test2").unwrap());
-    assert_that(&resolved).is_equal_to(Some("clone1".to_owned()));
+    assert_that(&resolved).is_equal_to(vec!("clone1".to_owned()));
   }
   #[test]
   fn test_workon_override_from_project() {
     let config = a_config();
     let logger = a_logger();
     let resolved = config.resolve_after_workon(&logger, config.projects.get("test3").unwrap());
-    assert_that(&resolved).is_equal_to(" && workon override in project".to_owned());
+    assert_that(&resolved).is_equal_to(vec!("workon1".to_string(), "workon override in project".to_owned()));
   }
   #[test]
   fn test_after_clone_override_from_project() {
     let config = a_config();
     let logger = a_logger();
     let resolved = config.resolve_after_clone(&logger, config.projects.get("test3").unwrap());
-    assert_that(&resolved).is_equal_to(Some("clone override in project".to_owned()));
+    assert_that(&resolved).is_equal_to(vec!("clone1".to_string(), "clone override in project".to_owned()));
   }
 
   fn a_config() -> Config {
