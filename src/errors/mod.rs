@@ -34,15 +34,15 @@ impl AppError {
 impl fmt::Display for AppError {
   fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
     match *self {
-    AppError::IO(ref err) => write!(f, "IO error: {}", err),
-    AppError::UserError(ref str) => write!(f, "User error: {}", str),
-    AppError::RuntimeError(ref str) => write!(f, "Runtime error: {}", str),
-    AppError::BadJson(ref err) => write!(f, "JSON error: {}", err),
-    AppError::InternalError(str) => write!(f, "Internal error: {}", str),
-    AppError::ClockError(ref err) => write!(f, "System clock error: {}", err),
-    AppError::GitError(ref err) => write!(f, "Git error: {}", err),
-    AppError::Regex(ref err) => write!(f, "Regex error: {}", err),
-    AppError::GithubApiError(ref err) => write!(f, "GitHub API error: {}", err),
+      AppError::IO(ref err) => write!(f, "IO error: {}", err),
+      AppError::UserError(ref str) => write!(f, "User error: {}", str),
+      AppError::RuntimeError(ref str) => write!(f, "Runtime error: {}", str),
+      AppError::BadJson(ref err) => write!(f, "JSON error: {}", err),
+      AppError::InternalError(str) => write!(f, "Internal error: {}", str),
+      AppError::ClockError(ref err) => write!(f, "System clock error: {}", err),
+      AppError::GitError(ref err) => write!(f, "Git error: {}", err),
+      AppError::Regex(ref err) => write!(f, "Regex error: {}", err),
+      AppError::GithubApiError(ref err) => write!(f, "GitHub API error: {}", err),
     }
   }
 }
@@ -50,29 +50,26 @@ impl fmt::Display for AppError {
 impl Error for AppError {
   fn description(&self) -> &str {
     match *self {
-    AppError::IO(ref err) => err.description(),
-    AppError::UserError(ref str) |
-    AppError::RuntimeError(ref str) => str.as_ref(),
-    AppError::BadJson(ref err) => err.description(),
-    AppError::InternalError(str) => str.as_ref(),
-    AppError::ClockError(ref err) => err.description(),
-    AppError::GitError(ref err) => err.description(),
-    AppError::Regex(ref err) => err.description(),
-    AppError::GithubApiError(ref err) => err.description(),
+      AppError::IO(ref err) => err.description(),
+      AppError::UserError(ref str) | AppError::RuntimeError(ref str) => str.as_ref(),
+      AppError::BadJson(ref err) => err.description(),
+      AppError::InternalError(str) => str.as_ref(),
+      AppError::ClockError(ref err) => err.description(),
+      AppError::GitError(ref err) => err.description(),
+      AppError::Regex(ref err) => err.description(),
+      AppError::GithubApiError(ref err) => err.description(),
     }
   }
 
   fn cause(&self) -> Option<&Error> {
     match *self {
-    AppError::IO(ref err) => Some(err),
-    AppError::UserError(_) |
-    AppError::RuntimeError(_) |
-    AppError::InternalError(_) => None,
-    AppError::BadJson(ref err) => Some(err),
-    AppError::ClockError(ref err) => Some(err),
-    AppError::GitError(ref err) => Some(err),
-    AppError::Regex(ref err) => Some(err),
-    AppError::GithubApiError(ref err) => Some(err),
+      AppError::IO(ref err) => Some(err),
+      AppError::UserError(_) | AppError::RuntimeError(_) | AppError::InternalError(_) => None,
+      AppError::BadJson(ref err) => Some(err),
+      AppError::ClockError(ref err) => Some(err),
+      AppError::GitError(ref err) => Some(err),
+      AppError::Regex(ref err) => Some(err),
+      AppError::GithubApiError(ref err) => Some(err),
     }
   }
 }

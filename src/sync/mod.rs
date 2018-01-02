@@ -96,11 +96,9 @@ fn forward_process_output_to_stdout<T: std::io::Read>(read: T, prefix: &str, col
 }
 
 pub fn spawn_maybe(shell: &[String], cmd: &str, workdir: &PathBuf, project_name: &str, colour: &Colour, logger: &Logger) -> Result<(), AppError> {
-  let program: &str = shell.first().ok_or_else(|| {
-    AppError::UserError(
-      "shell entry in project settings must have at least one element".to_owned(),
-    )
-  })?;
+  let program: &str = shell
+    .first()
+    .ok_or_else(|| AppError::UserError("shell entry in project settings must have at least one element".to_owned()))?;
   let rest: &[String] = shell.split_at(1).1;
   let mut result: Child = Command::new(program)
     .args(rest)
@@ -145,9 +143,10 @@ pub fn spawn_maybe(shell: &[String], cmd: &str, workdir: &PathBuf, project_name:
 
 fn random_colour() -> Colour {
   let mut rng = rand::thread_rng();
-  rng.choose(&COLOURS).map(|c| c.to_owned()).unwrap_or(
-    Colour::Black,
-  )
+  rng
+    .choose(&COLOURS)
+    .map(|c| c.to_owned())
+    .unwrap_or(Colour::Black)
 }
 fn is_stdout_a_tty() -> bool {
   atty::is(atty::Stream::Stdout)
@@ -158,9 +157,10 @@ fn is_stderr_a_tty() -> bool {
 }
 
 pub fn project_shell(project_settings: &Settings) -> Vec<String> {
-  project_settings.shell.clone().unwrap_or_else(|| {
-    vec!["sh".to_owned(), "-c".to_owned()]
-  })
+  project_settings
+    .shell
+    .clone()
+    .unwrap_or_else(|| vec!["sh".to_owned(), "-c".to_owned()])
 }
 
 pub fn foreach(
@@ -182,35 +182,35 @@ pub fn foreach(
   }
 
   let projects: Vec<&Project> = config.projects.values().collect();
-  let script_results = projects.par_iter()
-                               .filter(|p| {
-    tags.is_empty() ||
-      p.tags
-       .clone()
-       .unwrap_or_default()
-       .intersection(tags)
-       .count() > 0
-  })
-                               .map(|p| {
-    let shell = project_shell(&config.settings);
-    let project_logger = logger.new(o!("project" => p.name.clone()));
-    let path = config.actual_path_to_project(p, &project_logger);
-    info!(project_logger, "Entering");
-    spawn_maybe(
-      &shell,
-      cmd,
-      &path,
-      &p.name,
-      &random_colour(),
-      &project_logger,
-    )
-  })
-                               .collect::<Vec<Result<(), AppError>>>();
+  let script_results = projects
+    .par_iter()
+    .filter(|p| {
+      tags.is_empty()
+        || p.tags
+          .clone()
+          .unwrap_or_default()
+          .intersection(tags)
+          .count() > 0
+    })
+    .map(|p| {
+      let shell = project_shell(&config.settings);
+      let project_logger = logger.new(o!("project" => p.name.clone()));
+      let path = config.actual_path_to_project(p, &project_logger);
+      info!(project_logger, "Entering");
+      spawn_maybe(
+        &shell,
+        cmd,
+        &path,
+        &p.name,
+        &random_colour(),
+        &project_logger,
+      )
+    })
+    .collect::<Vec<Result<(), AppError>>>();
 
-  script_results.into_iter().fold(Result::Ok(()), |accu,
-   maybe_error| {
-    accu.and(maybe_error)
-  })
+  script_results
+    .into_iter()
+    .fold(Result::Ok(()), |accu, maybe_error| accu.and(maybe_error))
 }
 
 fn update_project_remotes(project: &Project, path: &PathBuf, project_logger: &Logger) -> Result<(), AppError> {
@@ -220,28 +220,24 @@ fn update_project_remotes(project: &Project, path: &PathBuf, project_logger: &Lo
     AppError::GitError(error)
   })?;
   let remote = "origin";
-  let mut remote = local.find_remote(remote).or_else(
-    |_| local.remote_anonymous(remote),
-  )?;
+  let mut remote = local
+    .find_remote(remote)
+    .or_else(|_| local.remote_anonymous(remote))?;
 
   let remote_callbacks = agent_callbacks();
-  remote.connect_auth(Direction::Fetch, Some(remote_callbacks), None)
-        .map_err(|error| {
-    warn!(project_logger, "Error connecting remote"; "error" => format!("{}", error), "project" => project.name);
-    AppError::GitError(error)
-  })?;
+  remote
+    .connect_auth(Direction::Fetch, Some(remote_callbacks), None)
+    .map_err(|error| {
+      warn!(project_logger, "Error connecting remote"; "error" => format!("{}", error), "project" => project.name);
+      AppError::GitError(error)
+    })?;
   let mut options = agent_fetch_options();
   remote.download(&[], Some(&mut options)).map_err(|error| {
     warn!(project_logger, "Error downloading for remote"; "error" => format!("{}", error), "project" => project.name);
     AppError::GitError(error)
   })?;
   remote.disconnect();
-  remote.update_tips(
-    None,
-    true,
-    AutotagOption::Unspecified,
-    None,
-  )?;
+  remote.update_tips(None, true, AutotagOption::Unspecified, None)?;
   Result::Ok(())
 }
 
@@ -249,35 +245,33 @@ fn clone_project(config: &Config, project: &Project, path: &PathBuf, project_log
   let shell = project_shell(&config.settings);
   let mut repo_builder = builder();
   debug!(project_logger, "Cloning project");
-  repo_builder.clone(project.git.as_str(), path)
-              .map_err(|error| {
-    warn!(project_logger, "Error cloning repo"; "error" => format!("{}", error));
-    AppError::GitError(error)
-  })
+  repo_builder
+    .clone(project.git.as_str(), path)
+    .map_err(|error| {
+      warn!(project_logger, "Error cloning repo"; "error" => format!("{}", error));
+      AppError::GitError(error)
+    })
     .and_then(|_| {
-      let after_clone = config.resolve_after_clone(
-        project_logger, project);
-        if after_clone.len() > 0 {
-          debug!(project_logger, "Handling post hooks"; "after_clone" => format!("{:?}", after_clone));
-          spawn_maybe(
-            &shell,
-            &after_clone.join(" && "),
-            path,
-            &project.name,
-            &random_colour(),
-            project_logger,
-          )
-            .map_err(|error| {
-              AppError::UserError(format!(
-                "Post-clone hook failed (nonzero exit code). Cause: {:?}",
-                error
-              ))
-            })
-        }
-      else {
+      let after_clone = config.resolve_after_clone(project_logger, project);
+      if after_clone.len() > 0 {
+        debug!(project_logger, "Handling post hooks"; "after_clone" => format!("{:?}", after_clone));
+        spawn_maybe(
+          &shell,
+          &after_clone.join(" && "),
+          path,
+          &project.name,
+          &random_colour(),
+          project_logger,
+        ).map_err(|error| {
+          AppError::UserError(format!(
+            "Post-clone hook failed (nonzero exit code). Cause: {:?}",
+            error
+          ))
+        })
+      } else {
         Ok(())
       }
-      })
+    })
 }
 
 fn sync_project(config: &Config, project: &Project, logger: &Logger, only_new: bool) -> Result<(), AppError> {
@@ -364,11 +358,9 @@ pub fn synchronize(maybe_config: Result<Config, AppError>, no_progress_bar: bool
 
 fn ssh_agent_running() -> bool {
   match std::env::var("SSH_AUTH_SOCK") {
-  Ok(auth_socket) => {
-    std::fs::metadata(auth_socket)
+    Ok(auth_socket) => std::fs::metadata(auth_socket)
       .map(|m| m.file_type().is_socket())
-      .unwrap_or(false)
-  }
-  Err(_) => false,
+      .unwrap_or(false),
+    Err(_) => false,
   }
 }

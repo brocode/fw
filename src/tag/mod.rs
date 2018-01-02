@@ -5,7 +5,6 @@ use errors::AppError;
 use slog::Logger;
 use std::collections::{BTreeMap, BTreeSet};
 
-
 pub fn list_tags(maybe_config: Result<Config, AppError>, maybe_project_name: Option<String>, logger: &Logger) -> Result<(), AppError> {
   let config: Config = maybe_config?;
   if let Some(project_name) = maybe_project_name {
@@ -72,9 +71,10 @@ pub fn add_tag(maybe_config: Result<Config, AppError>, project_name: String, tag
     config.projects.insert(project_name, project);
     config::write_config(config, logger)
   } else {
-    Result::Err(AppError::UserError(
-      format!("Unknown project {}", project_name),
-    ))
+    Result::Err(AppError::UserError(format!(
+      "Unknown project {}",
+      project_name
+    )))
   }
 }
 
@@ -92,12 +92,12 @@ pub fn remove_tag(maybe_config: Result<Config, AppError>, project_name: String, 
       Result::Ok(())
     }
   } else {
-    return Result::Err(AppError::UserError(
-      format!("Unknown project {}", project_name),
-    ));
+    return Result::Err(AppError::UserError(format!(
+      "Unknown project {}",
+      project_name
+    )));
   }
 }
-
 
 fn list_project_tags(config: &Config, project_name: &str) -> Result<(), AppError> {
   if let Some(project) = config.projects.get(project_name) {
@@ -108,8 +108,9 @@ fn list_project_tags(config: &Config, project_name: &str) -> Result<(), AppError
     }
     Result::Ok(())
   } else {
-    Result::Err(AppError::UserError(
-      format!("Unknown project {}", project_name),
-    ))
+    Result::Err(AppError::UserError(format!(
+      "Unknown project {}",
+      project_name
+    )))
   }
 }

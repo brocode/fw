@@ -4,9 +4,10 @@ use std::error::Error;
 
 pub fn export_project(maybe_config: Result<Config, AppError>, name: &str) -> Result<(), AppError> {
   let config = maybe_config?;
-  let project: &Project = config.projects.get(name).ok_or_else(|| {
-    AppError::UserError(format!("project {} not found", name))
-  })?;
+  let project: &Project = config
+    .projects
+    .get(name)
+    .ok_or_else(|| AppError::UserError(format!("project {} not found", name)))?;
   println!("{}", project_to_shell_commands(&config, project)?);
   Ok(())
 }
@@ -16,9 +17,7 @@ fn project_to_shell_commands(config: &Config, project: &Project) -> Result<Strin
     if let Some(ref value) = *maybe_value {
       commands.push(format!(
         "fw update {} --{} \"{}\"",
-        project_name,
-        parameter_name,
-        value
+        project_name, parameter_name, value
       ))
     }
   }
@@ -49,8 +48,8 @@ fn project_to_shell_commands(config: &Config, project: &Project) -> Result<Strin
   if let Some(ref tags) = project.tags {
     for tag in tags {
       match tag_to_shell_commands(tag, config) {
-      Ok(commands) => shell_commands.push(commands),
-      Err(e) => shell_commands.push(format!("# Error exporting tag: {}", e.description())),
+        Ok(commands) => shell_commands.push(commands),
+        Err(e) => shell_commands.push(format!("# Error exporting tag: {}", e.description())),
       }
       shell_commands.push(format!("fw tag tag-project {} {}", project.name, tag));
     }
@@ -62,28 +61,28 @@ fn project_to_shell_commands(config: &Config, project: &Project) -> Result<Strin
 fn tag_to_shell_commands(tag_name: &str, config: &Config) -> Result<String, AppError> {
   if let Some(ref tags) = config.settings.tags {
     if let Some(tag) = tags.get(tag_name) {
-      let after_workon = tag.after_workon
-                            .clone()
-                            .map(|a| format!(" --after-workon=\"{}\"", a))
-                            .unwrap_or_else(|| "".to_string());
-      let after_clone = tag.after_clone
-                           .clone()
-                           .map(|a| format!(" --after-clone=\"{}\"", a))
-                           .unwrap_or_else(|| "".to_string());
-      let priority = tag.priority
-                        .map(|p| format!(" --priority=\"{}\"", p))
-                        .unwrap_or_else(|| "".to_string());
-      let workspace = tag.workspace
-                         .clone()
-                         .map(|p| format!(" --workspace=\"{}\"", p))
-                         .unwrap_or_else(|| "".to_string());
+      let after_workon = tag
+        .after_workon
+        .clone()
+        .map(|a| format!(" --after-workon=\"{}\"", a))
+        .unwrap_or_else(|| "".to_string());
+      let after_clone = tag
+        .after_clone
+        .clone()
+        .map(|a| format!(" --after-clone=\"{}\"", a))
+        .unwrap_or_else(|| "".to_string());
+      let priority = tag
+        .priority
+        .map(|p| format!(" --priority=\"{}\"", p))
+        .unwrap_or_else(|| "".to_string());
+      let workspace = tag
+        .workspace
+        .clone()
+        .map(|p| format!(" --workspace=\"{}\"", p))
+        .unwrap_or_else(|| "".to_string());
       Ok(format!(
         "fw tag add {}{}{}{}{}",
-        tag_name,
-        after_workon,
-        after_clone,
-        priority,
-        workspace
+        tag_name, after_workon, after_clone, priority, workspace
       ))
     } else {
       Result::Err(AppError::UserError(format!("Unknown tag {}", tag_name)))
@@ -117,7 +116,7 @@ fw tag tag-project why-i-suck tag2
 # Error exporting tag: Unknown tag unknown_tag
 fw tag tag-project why-i-suck unknown_tag
 "
-      .to_owned(),
+        .to_owned(),
     );
   }
 

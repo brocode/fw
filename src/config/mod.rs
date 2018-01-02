@@ -52,8 +52,7 @@ impl Project {
     } else {
       Err(AppError::UserError(format!(
         "Misconfigured project {}: resolved path {:?} is relative which is not allowed",
-        &self.name,
-        &path
+        &self.name, &path
       )))
     }
   }
@@ -61,42 +60,37 @@ impl Project {
 
 fn fw_path() -> Result<PathBuf, AppError> {
   let raw_path = match env::var("FW_CONFIG_PATH") {
-  Ok(path) => Ok(PathBuf::from(path)),
-  Err(_) => Ok(PathBuf::from("~/.fw.json")),
+    Ok(path) => Ok(PathBuf::from(path)),
+    Err(_) => Ok(PathBuf::from("~/.fw.json")),
   };
   raw_path.map(expand_path)
 }
 
 impl Config {
   pub fn actual_path_to_project(&self, project: &Project, logger: &Logger) -> PathBuf {
-    let path = project.override_path
-                      .clone()
-                      .map(PathBuf::from)
-                      .unwrap_or_else(|| {
-      Path::new(self.resolve_workspace(logger, project).as_str()).join(project.name.as_str())
-    });
+    let path = project
+      .override_path
+      .clone()
+      .map(PathBuf::from)
+      .unwrap_or_else(|| Path::new(self.resolve_workspace(logger, project).as_str()).join(project.name.as_str()));
     expand_path(path)
   }
 
   fn resolve_workspace(&self, logger: &Logger, project: &Project) -> String {
-    let mut x = self.resolve_from_tags(
-      |tag| tag.workspace.clone(),
-      project.tags.clone(),
-      logger,
-    );
+    let mut x = self.resolve_from_tags(|tag| tag.workspace.clone(), project.tags.clone(), logger);
     let workspace = x.pop().unwrap_or_else(|| self.settings.workspace.clone());
     trace!(logger, "resolved"; "workspace" => workspace);
     workspace
   }
   pub fn resolve_after_clone(&self, logger: &Logger, project: &Project) -> Vec<String> {
-    let mut commands: Vec<String> = vec!();
+    let mut commands: Vec<String> = vec![];
     commands.extend_from_slice(&self.resolve_after_clone_from_tags(project.tags.clone(), logger));
     let commands_from_project: Vec<String> = project.after_clone.clone().into_iter().collect();
     commands.extend_from_slice(&commands_from_project);
     commands
   }
   pub fn resolve_after_workon(&self, logger: &Logger, project: &Project) -> Vec<String> {
-    let mut commands: Vec<String> = vec!();
+    let mut commands: Vec<String> = vec![];
     commands.extend_from_slice(&self.resolve_workon_from_tags(project.tags.clone(), logger));
     let commands_from_project: Vec<String> = project.after_workon.clone().into_iter().collect();
     commands.extend_from_slice(&commands_from_project);
@@ -111,58 +105,49 @@ impl Config {
   }
 
   fn resolve_workon_from_tags(&self, maybe_tags: Option<BTreeSet<String>>, logger: &Logger) -> Vec<String> {
-    self.resolve_from_tags(
-      |t| t.clone().after_workon,
-      maybe_tags,
-      logger,
-    )
+    self.resolve_from_tags(|t| t.clone().after_workon, maybe_tags, logger)
   }
   fn resolve_after_clone_from_tags(&self, maybe_tags: Option<BTreeSet<String>>, logger: &Logger) -> Vec<String> {
-    self.resolve_from_tags(
-      |t| t.clone().after_clone,
-      maybe_tags,
-      logger,
-    )
+    self.resolve_from_tags(|t| t.clone().after_clone, maybe_tags, logger)
   }
 
   fn tag_priority_or_fallback(&self, name: &str, tag: &Tag, logger: &Logger) -> u8 {
     match tag.priority {
-    None => {
-      debug!(logger, r#"No tag priority set, will use default (50).
+      None => {
+        debug!(logger, r#"No tag priority set, will use default (50).
 Tags with low priority are applied first and if they all have the same priority
 they will be applied in alphabetical name order so it is recommended you make a
 conscious choice and set the value."#;
             "tag_name" => name, "tag_def" => format!("{:?}", tag));
-      50
-    }
-    Some(p) => p,
+        50
+      }
+      Some(p) => p,
     }
   }
 
   fn resolve_from_tags<F>(&self, resolver: F, maybe_tags: Option<BTreeSet<String>>, logger: &Logger) -> Vec<String>
   where
-    F: Fn(&Tag) -> Option<String>
+    F: Fn(&Tag) -> Option<String>,
   {
     let tag_logger = logger.new(o!("tags" => format!("{:?}", maybe_tags)));
     trace!(tag_logger, "Resolving");
     if maybe_tags.is_none() || self.settings.tags.is_none() {
-      vec!()
+      vec![]
     } else {
       let tags: BTreeSet<String> = maybe_tags.unwrap();
       let settings_tags = self.clone().settings.tags.unwrap();
-      let mut resolved_with_priority: Vec<(String, u8)> = tags.iter()
-                                                              .flat_map(|t| match settings_tags.get(t) {
-      None => {
-        warn!(tag_logger, "Ignoring tag since it was not found in the config"; "missing_tag" => t.clone());
-        None
-      }
-      Some(actual_tag) => {
-        resolver(actual_tag).clone().map(|val| {
-          (val, self.tag_priority_or_fallback(t, actual_tag, logger))
+      let mut resolved_with_priority: Vec<(String, u8)> = tags
+        .iter()
+        .flat_map(|t| match settings_tags.get(t) {
+          None => {
+            warn!(tag_logger, "Ignoring tag since it was not found in the config"; "missing_tag" => t.clone());
+            None
+          }
+          Some(actual_tag) => resolver(actual_tag)
+            .clone()
+            .map(|val| (val, self.tag_priority_or_fallback(t, actual_tag, logger))),
         })
-      }
-      })
-                                                              .collect();
+        .collect();
       trace!(logger, "before sort"; "tags" => format!("{:?}", resolved_with_priority));
       resolved_with_priority.sort_by_key(|resolved_and_priority| resolved_and_priority.1);
       trace!(logger, "after sort"; "tags" => format!("{:?}", resolved_with_priority));
@@ -171,22 +156,20 @@ conscious choice and set the value."#;
   }
 }
 
-
 fn read_config<R>(reader: Result<R, AppError>, logger: &Logger) -> Result<Config, AppError>
 where
   R: Read,
 {
-  reader.and_then(|r| {
-    serde_json::de::from_reader(r).map_err(AppError::BadJson)
-  })
-        .and_then(|c: Config| c.check_sanity(logger))
+  reader
+    .and_then(|r| serde_json::de::from_reader(r).map_err(AppError::BadJson))
+    .and_then(|c: Config| c.check_sanity(logger))
 }
 
 fn open_config() -> Result<File, AppError> {
   let config_file_path = fw_path()?;
-  let path = config_file_path.to_str().ok_or_else(|| {
-    AppError::UserError("$HOME is not valid utf8".to_owned())
-  });
+  let path = config_file_path
+    .to_str()
+    .ok_or_else(|| AppError::UserError("$HOME is not valid utf8".to_owned()));
   path.and_then(|path| File::open(path).map_err(AppError::IO))
 }
 
@@ -200,7 +183,7 @@ fn repo_name_from_url(url: &str) -> Result<&str, AppError> {
   let last_fragment = url.rsplit('/').next().ok_or_else(|| {
     AppError::UserError(format!(
       "Given URL {} does not have path fragments so cannot determine project name. Please give \
-                                                                    one.",
+       one.",
       url
     ))
   })?;
@@ -214,10 +197,9 @@ fn repo_name_from_url(url: &str) -> Result<&str, AppError> {
 }
 
 pub fn add_entry(maybe_config: Result<Config, AppError>, maybe_name: Option<&str>, url: &str, logger: &Logger) -> Result<(), AppError> {
-  let name = maybe_name.ok_or_else(|| {
-    AppError::UserError(format!("No project name specified for {}", url))
-  })
-                       .or_else(|_| repo_name_from_url(url))?;
+  let name = maybe_name
+    .ok_or_else(|| AppError::UserError(format!("No project name specified for {}", url)))
+    .or_else(|_| repo_name_from_url(url))?;
   let mut config: Config = maybe_config?;
   info!(logger, "Prepare new project entry"; "name" => name, "url" => url);
   if config.projects.contains_key(name) {
@@ -264,10 +246,11 @@ pub fn update_entry(
       name
     )))
   } else {
-    let old_project_config: Project = config.projects
-                                            .get(name)
-                                            .expect("Already checked in the if above")
-                                            .clone();
+    let old_project_config: Project = config
+      .projects
+      .get(name)
+      .expect("Already checked in the if above")
+      .clone();
     config.projects.insert(
       name.to_owned(),
       Project {
@@ -295,9 +278,11 @@ pub fn write_config(config: Config, logger: &Logger) -> Result<(), AppError> {
 
 fn do_expand(path: PathBuf, home_dir: Option<PathBuf>) -> PathBuf {
   if let Some(home) = home_dir {
-    home.join(path.strip_prefix("~").expect(
-      "only doing this if path starts with ~",
-    ))
+    home.join(
+      path
+        .strip_prefix("~")
+        .expect("only doing this if path starts with ~"),
+    )
   } else {
     path
   }
@@ -350,70 +335,76 @@ mod tests {
     let config = a_config();
     let logger = a_logger();
     let resolved = config.resolve_after_workon(&logger, config.projects.get("test1").unwrap());
-    assert_that(&resolved).is_equal_to(vec!("workon1".to_string(), "workon2".to_string()));
+    assert_that(&resolved).is_equal_to(vec!["workon1".to_string(), "workon2".to_string()]);
   }
   #[test]
   fn test_workon_from_tags_prioritized() {
     let config = a_config();
     let logger = a_logger();
     let resolved = config.resolve_after_workon(&logger, config.projects.get("test5").unwrap());
-    assert_that(&resolved).is_equal_to(vec!("workon4".to_string(), "workon3".to_string()));
+    assert_that(&resolved).is_equal_to(vec!["workon4".to_string(), "workon3".to_string()]);
   }
   #[test]
   fn test_after_clone_from_tags() {
     let config = a_config();
     let logger = a_logger();
     let resolved = config.resolve_after_clone(&logger, config.projects.get("test1").unwrap());
-    assert_that(&resolved).is_equal_to(vec!("clone1".to_string(), "clone2".to_string()));
+    assert_that(&resolved).is_equal_to(vec!["clone1".to_string(), "clone2".to_string()]);
   }
   #[test]
   fn test_after_clone_from_tags_prioritized() {
     let config = a_config();
     let logger = a_logger();
     let resolved = config.resolve_after_clone(&logger, config.projects.get("test5").unwrap());
-    assert_that(&resolved).is_equal_to(vec!("clone4".to_string(), "clone3".to_string()));
+    assert_that(&resolved).is_equal_to(vec!["clone4".to_string(), "clone3".to_string()]);
   }
   #[test]
   fn test_workon_from_tags_missing_one_tag_graceful() {
     let config = a_config();
     let logger = a_logger();
     let resolved = config.resolve_after_workon(&logger, config.projects.get("test2").unwrap());
-    assert_that(&resolved).is_equal_to(vec!("workon1".to_owned()));
+    assert_that(&resolved).is_equal_to(vec!["workon1".to_owned()]);
   }
   #[test]
   fn test_workon_from_tags_missing_all_tags_graceful() {
     let config = a_config();
     let logger = a_logger();
     let resolved = config.resolve_after_workon(&logger, config.projects.get("test4").unwrap());
-    assert_that(&resolved).is_equal_to(vec!());
+    assert_that(&resolved).is_equal_to(vec![]);
   }
   #[test]
   fn test_after_clone_from_tags_missing_all_tags_graceful() {
     let config = a_config();
     let logger = a_logger();
     let resolved = config.resolve_after_clone(&logger, config.projects.get("test4").unwrap());
-    assert_that(&resolved).is_equal_to(vec!());
+    assert_that(&resolved).is_equal_to(vec![]);
   }
   #[test]
   fn test_after_clone_from_tags_missing_one_tag_graceful() {
     let config = a_config();
     let logger = a_logger();
     let resolved = config.resolve_after_clone(&logger, config.projects.get("test2").unwrap());
-    assert_that(&resolved).is_equal_to(vec!("clone1".to_owned()));
+    assert_that(&resolved).is_equal_to(vec!["clone1".to_owned()]);
   }
   #[test]
   fn test_workon_override_from_project() {
     let config = a_config();
     let logger = a_logger();
     let resolved = config.resolve_after_workon(&logger, config.projects.get("test3").unwrap());
-    assert_that(&resolved).is_equal_to(vec!("workon1".to_string(), "workon override in project".to_owned()));
+    assert_that(&resolved).is_equal_to(vec![
+      "workon1".to_string(),
+      "workon override in project".to_owned(),
+    ]);
   }
   #[test]
   fn test_after_clone_override_from_project() {
     let config = a_config();
     let logger = a_logger();
     let resolved = config.resolve_after_clone(&logger, config.projects.get("test3").unwrap());
-    assert_that(&resolved).is_equal_to(vec!("clone1".to_string(), "clone override in project".to_owned()));
+    assert_that(&resolved).is_equal_to(vec![
+      "clone1".to_string(),
+      "clone override in project".to_owned(),
+    ]);
   }
 
   fn a_config() -> Config {
@@ -511,14 +502,13 @@ mod tests {
   }
 
   fn a_logger() -> Logger {
-    use slog_term;
     use slog::{DrainExt, Level, LevelFilter};
+    use slog_term;
     Logger::root(
       LevelFilter::new(
         slog_term::StreamerBuilder::new().stdout().build(),
         Level::Info,
-      )
-      .fuse(),
+      ).fuse(),
       o!(),
     )
   }
