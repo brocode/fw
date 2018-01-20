@@ -90,6 +90,8 @@
    If you are using `OSX` [[https://rustup.rs/][rustup]] is recommended but you [[https://github.com/Homebrew/homebrew-core/pull/14490][should be able to use brew too]].
 
    If you need a deb or rpm package have a look at [[https://github.com/brocode/fw/releases][fw releases]]
+   
+   If you're lucky enought to be an arch linux user: [[https://aur.archlinux.org/packages/fw/][AUR]]
 
 *** With fzf
    Another thing that will make you much more productive is to use the ~zsh~ completions (if you're not using the ~zsh~ I guess
