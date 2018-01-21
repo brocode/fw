@@ -1,0 +1,49 @@
+{
+  "projects": {
+    "pybuilder": {
+      "name": "pybuilder",
+      "git": "git@github.com:pybuilder/pybuilder.git",
+      "after_clone": "virtualenv venv && source venv/bin/activate && ./build.py install_dependencies",
+      "after_workon": "source venv/bin/activate"
+    },
+    "fw": {
+      "name": "fw",
+      "git": "git@github.com:brocode/fw.git",
+      "after_clone": "cargo build",
+      "tags": ["git", "rust", "brocode"]
+    },
+    "docker": {
+      "name": "docker",
+      "git": "git@github.com:docker/docker.git",
+      "override_path": "/home/brocode/go/src/github.com/docker/docker"
+    }
+  },
+  "settings": {
+    "shell": ["/usr/bin/zsh", "-c"],
+    "workspace": "~/workspace",
+    "github_token": "onhrefhprqrfovgrf",
+    "default_tags": [
+      "git"
+    ],
+    "tags": {
+      "git": {
+        "after_workon": "git remote update --prune",
+        "priority": 0 // lowest priority tags run first
+      },
+      "js": {
+        "after_workon": "source ~/.nvm/nvm.sh"
+      },
+      "rust": {
+        "after_clone": "cargo build",
+        "after_workon": "cargo test && rustup run nightly cargo clippy"
+      },
+      "fkbr": {
+        "after_workon": "echo fkbr"
+      },
+      "brocode": {
+        "priority": 100, // highest priority tag wins workspace resolution
+        "workspace": "~/workspace/brocode/"
+      },
+    }
+  }
+}
