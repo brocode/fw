@@ -65,7 +65,7 @@ fn main() {
   let matches = App::new("fw")
     .version(crate_version!())
     .author("Brocode <bros@brocode.sh>")
-    .about("fast workspace manager. Config set by FW_CONFIG_PATH or default.")
+    .about("fast workspace manager. Config set by FW_CONFIG_PATH or default.\nFor further information please have a look at our README https://github.com/brocode/fw/blob/master/README.org")
     .global_setting(AppSettings::ColoredHelp)
     .setting(AppSettings::SubcommandRequired)
     .arg(
