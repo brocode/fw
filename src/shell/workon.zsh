@@ -1,5 +1,5 @@
 workon () {
-  SCRIPT="$(~/.cargo/bin/fw -q gen-workon $@)";
+  SCRIPT="$(fw -q gen-workon $@)";
   if [ $? -eq 0 ]; then
     eval "$SCRIPT";
   else
@@ -7,7 +7,7 @@ workon () {
   fi
 };
 reworkon () {
-  SCRIPT="$(~/.cargo/bin/fw -q gen-reworkon $@)";
+  SCRIPT="$(fw -q gen-reworkon $@)";
   if [ $? -eq 0 ]; then
     eval "$SCRIPT";
   else
@@ -16,7 +16,7 @@ reworkon () {
 };
 
 nworkon () {
-  SCRIPT="$(~/.cargo/bin/fw -q gen-workon -x $@)";
+  SCRIPT="$(fw -q gen-workon -x $@)";
   if [ $? -eq 0 ]; then
     eval "$SCRIPT";
   else
