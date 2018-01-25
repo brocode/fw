@@ -46,7 +46,7 @@ pub static COLOURS: [Colour; 14] = [
 
 
 fn username_from_git_url(url: &str) -> String {
-  let url_regex = Regex::new(r"([^:]+://)?((?P<user>[a-zA-Z]+)@)?").unwrap();
+  let url_regex = Regex::new(r"([^:]+://)?((?P<user>[a-z_][a-z0-9_]{0,30})@)?").unwrap();
   if let Some(caps) = url_regex.captures(url) {
     if let Some(user) = caps.name("user") {
       return user.as_str().to_string();
@@ -394,7 +394,11 @@ mod tests {
     assert_that(&username_from_git_url(&"git+ssh://git@fkbr.org:sxoe.git")).is_equal_to("git".to_string());
     assert_that(&username_from_git_url(&"ssh://aur@aur.archlinux.org/fw.git")).is_equal_to("aur".to_string());
     assert_that(&username_from_git_url(&"aur@github.com:21re/fkbr.git")).is_equal_to("aur".to_string());
+    assert_that(&username_from_git_url(&"aur_fkbr_1@github.com:21re/fkbr.git")).is_equal_to("aur_fkbr_1".to_string());
     assert_that(&username_from_git_url(&"github.com:21re/fkbr.git")).is_equal_to(user.to_string());
     assert_that(&username_from_git_url(&"git://fkbr.org/sxoe.git")).is_equal_to(user.to_string());
+
+    assert_that(&username_from_git_url(&"https://github.com/brocode/fw.git")).is_equal_to(user.to_string());
+    assert_that(&username_from_git_url(&"https://kuci@github.com/brocode/fw.git")).is_equal_to("kuci".to_string());
   }
 }
