@@ -495,7 +495,7 @@ fn execute_tag_subcommand(
   tag_matches: &clap::ArgMatches,
   logger: &Logger,
 ) -> Result<(), AppError> {
-  match tag_command_name.as_ref() {
+  match tag_command_name {
     "ls" => {
       let maybe_project_name: Option<String> = tag_matches.value_of("PROJECT_NAME").map(str::to_string);
       tag::list_tags(maybe_config, maybe_project_name, logger)

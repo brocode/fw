@@ -53,7 +53,7 @@ impl Error for AppError {
       AppError::IO(ref err) => err.description(),
       AppError::UserError(ref str) | AppError::RuntimeError(ref str) => str.as_ref(),
       AppError::BadJson(ref err) => err.description(),
-      AppError::InternalError(str) => str.as_ref(),
+      AppError::InternalError(str) => str,
       AppError::ClockError(ref err) => err.description(),
       AppError::GitError(ref err) => err.description(),
       AppError::Regex(ref err) => err.description(),

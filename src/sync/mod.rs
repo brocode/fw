@@ -60,13 +60,13 @@ fn username_from_git_url(url: &str) -> String {
   "git".to_string()
 }
 
-fn agent_callbacks<'a>(git_user: &'a str) -> git2::RemoteCallbacks<'a> {
+fn agent_callbacks(git_user: &str) -> git2::RemoteCallbacks {
   let mut remote_callbacks = RemoteCallbacks::new();
   remote_callbacks.credentials(move |_, _, _| git2::Cred::ssh_key_from_agent(git_user));
   remote_callbacks
 }
 
-fn agent_fetch_options<'a>(git_user: &'a str) -> git2::FetchOptions<'a> {
+fn agent_fetch_options(git_user: &str) -> git2::FetchOptions {
   let remote_callbacks = agent_callbacks(git_user);
   let mut fetch_options = FetchOptions::new();
   fetch_options.remote_callbacks(remote_callbacks);
@@ -74,7 +74,7 @@ fn agent_fetch_options<'a>(git_user: &'a str) -> git2::FetchOptions<'a> {
   fetch_options
 }
 
-fn builder<'a>(git_user: &'a str) -> RepoBuilder<'a> {
+fn builder(git_user: &str) -> RepoBuilder {
   let options = agent_fetch_options(git_user);
   let mut repo_builder = RepoBuilder::new();
   repo_builder.fetch_options(options);
@@ -271,7 +271,7 @@ fn clone_project(config: &Config, project: &Project, path: &PathBuf, project_log
     })
     .and_then(|_| {
       let after_clone = config.resolve_after_clone(project_logger, project);
-      if after_clone.len() > 0 {
+      if !after_clone.is_empty() {
         debug!(project_logger, "Handling post hooks"; "after_clone" => format!("{:?}", after_clone));
         spawn_maybe(
           &shell,
