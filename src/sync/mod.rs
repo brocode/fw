@@ -60,22 +60,22 @@ fn username_from_git_url(url: &str) -> String {
   "git".to_string()
 }
 
-fn agent_callbacks() -> git2::RemoteCallbacks<'static> {
+fn agent_callbacks(git_user: &str) -> git2::RemoteCallbacks<'static> {
   let mut remote_callbacks = RemoteCallbacks::new();
-  remote_callbacks.credentials(|_, _, _| git2::Cred::ssh_key_from_agent("git"));
+  remote_callbacks.credentials(|_, _, _| git2::Cred::ssh_key_from_agent(git_user));
   remote_callbacks
 }
 
-fn agent_fetch_options() -> git2::FetchOptions<'static> {
-  let remote_callbacks = agent_callbacks();
+fn agent_fetch_options(git_user: &str) -> git2::FetchOptions<'static> {
+  let remote_callbacks = agent_callbacks(git_user);
   let mut fetch_options = FetchOptions::new();
   fetch_options.remote_callbacks(remote_callbacks);
 
   fetch_options
 }
 
-fn builder<'a>() -> RepoBuilder<'a> {
-  let options = agent_fetch_options();
+fn builder<'a>(git_user: &str) -> RepoBuilder<'a> {
+  let options = agent_fetch_options(git_user);
   let mut repo_builder = RepoBuilder::new();
   repo_builder.fetch_options(options);
   repo_builder
@@ -241,15 +241,15 @@ fn update_project_remotes(project: &Project, path: &PathBuf, project_logger: &Lo
   let mut remote = local
     .find_remote(remote)
     .or_else(|_| local.remote_anonymous(remote))?;
-
-  let remote_callbacks = agent_callbacks();
+  let git_user = username_from_git_url(&project.git);
+  let remote_callbacks = agent_callbacks(&git_user);
   remote
     .connect_auth(Direction::Fetch, Some(remote_callbacks), None)
     .map_err(|error| {
       warn!(project_logger, "Error connecting remote"; "error" => format!("{}", error), "project" => project.name);
       AppError::GitError(error)
     })?;
-  let mut options = agent_fetch_options();
+  let mut options = agent_fetch_options(&git_user);
   remote.download(&[], Some(&mut options)).map_err(|error| {
     warn!(project_logger, "Error downloading for remote"; "error" => format!("{}", error), "project" => project.name);
     AppError::GitError(error)
@@ -261,7 +261,7 @@ fn update_project_remotes(project: &Project, path: &PathBuf, project_logger: &Lo
 
 fn clone_project(config: &Config, project: &Project, path: &PathBuf, project_logger: &Logger) -> Result<(), AppError> {
   let shell = project_shell(&config.settings);
-  let mut repo_builder = builder();
+  let mut repo_builder = builder(&project.git);
   debug!(project_logger, "Cloning project");
   repo_builder
     .clone(project.git.as_str(), path)
