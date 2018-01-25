@@ -60,13 +60,13 @@ fn username_from_git_url(url: &str) -> String {
   "git".to_string()
 }
 
-fn agent_callbacks(git_user: &str) -> git2::RemoteCallbacks<'static> {
+fn agent_callbacks<'a>(git_user: &'a str) -> git2::RemoteCallbacks<'a> {
   let mut remote_callbacks = RemoteCallbacks::new();
-  remote_callbacks.credentials(|_, _, _| git2::Cred::ssh_key_from_agent(git_user));
+  remote_callbacks.credentials(move |_, _, _| git2::Cred::ssh_key_from_agent(git_user));
   remote_callbacks
 }
 
-fn agent_fetch_options(git_user: &str) -> git2::FetchOptions<'static> {
+fn agent_fetch_options<'a>(git_user: &'a str) -> git2::FetchOptions<'a> {
   let remote_callbacks = agent_callbacks(git_user);
   let mut fetch_options = FetchOptions::new();
   fetch_options.remote_callbacks(remote_callbacks);
@@ -74,7 +74,7 @@ fn agent_fetch_options(git_user: &str) -> git2::FetchOptions<'static> {
   fetch_options
 }
 
-fn builder<'a>(git_user: &str) -> RepoBuilder<'a> {
+fn builder<'a>(git_user: &'a str) -> RepoBuilder<'a> {
   let options = agent_fetch_options(git_user);
   let mut repo_builder = RepoBuilder::new();
   repo_builder.fetch_options(options);
