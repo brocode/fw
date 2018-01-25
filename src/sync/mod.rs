@@ -24,6 +24,8 @@ use std::path::PathBuf;
 use std::process::{Child, Command, Stdio};
 use std::sync::Arc;
 use std::thread;
+use std::env;
+use regex::Regex;
 
 pub static COLOURS: [Colour; 14] = [
   Colour::Green,
@@ -41,6 +43,22 @@ pub static COLOURS: [Colour; 14] = [
   Colour::RGB(255, 153, 255),
   Colour::Purple,
 ];
+
+
+fn username_from_git_url(url: &str) -> String {
+  let url_regex = Regex::new(r"([^:]+://)?((?P<user>[a-zA-Z]+)@)?").unwrap();
+  if let Some(caps) = url_regex.captures(url) {
+    if let Some(user) = caps.name("user") {
+      return user.as_str().to_string();
+    }
+  }
+  if let Ok(user) = env::var("USER") {
+    if user != "" {
+      return user.to_string()
+    }
+  }
+  "git".to_string()
+}
 
 fn agent_callbacks() -> git2::RemoteCallbacks<'static> {
   let mut remote_callbacks = RemoteCallbacks::new();
@@ -362,5 +380,21 @@ fn ssh_agent_running() -> bool {
       .map(|m| m.file_type().is_socket())
       .unwrap_or(false),
     Err(_) => false,
+  }
+}
+
+#[cfg(test)]
+mod tests {
+  use super::*;
+  use spectral::prelude::*;
+
+  #[test]
+  fn test_username_from_git_url() {
+    let user = env::var("USER").unwrap();
+    assert_that(&username_from_git_url(&"git+ssh://git@fkbr.org:sxoe.git")).is_equal_to("git".to_string());
+    assert_that(&username_from_git_url(&"ssh://aur@aur.archlinux.org/fw.git")).is_equal_to("aur".to_string());
+    assert_that(&username_from_git_url(&"aur@github.com:21re/fkbr.git")).is_equal_to("aur".to_string());
+    assert_that(&username_from_git_url(&"github.com:21re/fkbr.git")).is_equal_to(user.to_string());
+    assert_that(&username_from_git_url(&"git://fkbr.org/sxoe.git")).is_equal_to(user.to_string());
   }
 }
