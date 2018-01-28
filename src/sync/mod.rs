@@ -261,7 +261,8 @@ fn update_project_remotes(project: &Project, path: &PathBuf, project_logger: &Lo
 
 fn clone_project(config: &Config, project: &Project, path: &PathBuf, project_logger: &Logger) -> Result<(), AppError> {
   let shell = project_shell(&config.settings);
-  let mut repo_builder = builder(&project.git);
+  let git_user = username_from_git_url(&project.git);
+  let mut repo_builder = builder(&git_user);
   debug!(project_logger, "Cloning project");
   repo_builder
     .clone(project.git.as_str(), path)
