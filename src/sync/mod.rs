@@ -24,6 +24,8 @@ use std::path::PathBuf;
 use std::process::{Child, Command, Stdio};
 use std::sync::Arc;
 use std::thread;
+use std::env;
+use regex::Regex;
 
 pub static COLOURS: [Colour; 14] = [
   Colour::Green,
@@ -42,22 +44,38 @@ pub static COLOURS: [Colour; 14] = [
   Colour::Purple,
 ];
 
-fn agent_callbacks() -> git2::RemoteCallbacks<'static> {
+
+fn username_from_git_url(url: &str) -> String {
+  let url_regex = Regex::new(r"([^:]+://)?((?P<user>[a-z_][a-z0-9_]{0,30})@)?").unwrap();
+  if let Some(caps) = url_regex.captures(url) {
+    if let Some(user) = caps.name("user") {
+      return user.as_str().to_string();
+    }
+  }
+  if let Ok(user) = env::var("USER") {
+    if user != "" {
+      return user.to_string()
+    }
+  }
+  "git".to_string()
+}
+
+fn agent_callbacks(git_user: &str) -> git2::RemoteCallbacks {
   let mut remote_callbacks = RemoteCallbacks::new();
-  remote_callbacks.credentials(|_, _, _| git2::Cred::ssh_key_from_agent("git"));
+  remote_callbacks.credentials(move |_, _, _| git2::Cred::ssh_key_from_agent(git_user));
   remote_callbacks
 }
 
-fn agent_fetch_options() -> git2::FetchOptions<'static> {
-  let remote_callbacks = agent_callbacks();
+fn agent_fetch_options(git_user: &str) -> git2::FetchOptions {
+  let remote_callbacks = agent_callbacks(git_user);
   let mut fetch_options = FetchOptions::new();
   fetch_options.remote_callbacks(remote_callbacks);
 
   fetch_options
 }
 
-fn builder<'a>() -> RepoBuilder<'a> {
-  let options = agent_fetch_options();
+fn builder(git_user: &str) -> RepoBuilder {
+  let options = agent_fetch_options(git_user);
   let mut repo_builder = RepoBuilder::new();
   repo_builder.fetch_options(options);
   repo_builder
@@ -223,15 +241,15 @@ fn update_project_remotes(project: &Project, path: &PathBuf, project_logger: &Lo
   let mut remote = local
     .find_remote(remote)
     .or_else(|_| local.remote_anonymous(remote))?;
-
-  let remote_callbacks = agent_callbacks();
+  let git_user = username_from_git_url(&project.git);
+  let remote_callbacks = agent_callbacks(&git_user);
   remote
     .connect_auth(Direction::Fetch, Some(remote_callbacks), None)
     .map_err(|error| {
       warn!(project_logger, "Error connecting remote"; "error" => format!("{}", error), "project" => project.name);
       AppError::GitError(error)
     })?;
-  let mut options = agent_fetch_options();
+  let mut options = agent_fetch_options(&git_user);
   remote.download(&[], Some(&mut options)).map_err(|error| {
     warn!(project_logger, "Error downloading for remote"; "error" => format!("{}", error), "project" => project.name);
     AppError::GitError(error)
@@ -243,7 +261,8 @@ fn update_project_remotes(project: &Project, path: &PathBuf, project_logger: &Lo
 
 fn clone_project(config: &Config, project: &Project, path: &PathBuf, project_logger: &Logger) -> Result<(), AppError> {
   let shell = project_shell(&config.settings);
-  let mut repo_builder = builder();
+  let git_user = username_from_git_url(&project.git);
+  let mut repo_builder = builder(&git_user);
   debug!(project_logger, "Cloning project");
   repo_builder
     .clone(project.git.as_str(), path)
@@ -253,7 +272,7 @@ fn clone_project(config: &Config, project: &Project, path: &PathBuf, project_log
     })
     .and_then(|_| {
       let after_clone = config.resolve_after_clone(project_logger, project);
-      if after_clone.len() > 0 {
+      if !after_clone.is_empty() {
         debug!(project_logger, "Handling post hooks"; "after_clone" => format!("{:?}", after_clone));
         spawn_maybe(
           &shell,
@@ -362,5 +381,25 @@ fn ssh_agent_running() -> bool {
       .map(|m| m.file_type().is_socket())
       .unwrap_or(false),
     Err(_) => false,
+  }
+}
+
+#[cfg(test)]
+mod tests {
+  use super::*;
+  use spectral::prelude::*;
+
+  #[test]
+  fn test_username_from_git_url() {
+    let user = env::var("USER").unwrap();
+    assert_that(&username_from_git_url(&"git+ssh://git@fkbr.org:sxoe.git")).is_equal_to("git".to_string());
+    assert_that(&username_from_git_url(&"ssh://aur@aur.archlinux.org/fw.git")).is_equal_to("aur".to_string());
+    assert_that(&username_from_git_url(&"aur@github.com:21re/fkbr.git")).is_equal_to("aur".to_string());
+    assert_that(&username_from_git_url(&"aur_fkbr_1@github.com:21re/fkbr.git")).is_equal_to("aur_fkbr_1".to_string());
+    assert_that(&username_from_git_url(&"github.com:21re/fkbr.git")).is_equal_to(user.to_string());
+    assert_that(&username_from_git_url(&"git://fkbr.org/sxoe.git")).is_equal_to(user.to_string());
+
+    assert_that(&username_from_git_url(&"https://github.com/brocode/fw.git")).is_equal_to(user.to_string());
+    assert_that(&username_from_git_url(&"https://kuci@github.com/brocode/fw.git")).is_equal_to("kuci".to_string());
   }
 }
