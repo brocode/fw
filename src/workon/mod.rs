@@ -57,6 +57,14 @@ pub fn inspect(name: &str, maybe_config: Result<config::Config, AppError>, logge
     })
     .unwrap_or_else(|| "None".to_owned());
   println!("{:<20}: {}", "Tags", tags);
+
+  if config.settings.tag_from_repo.is_some() {
+    match config::get_repo_tag(config.settings.tag_from_repo.unwrap().as_ref()) {
+      Ok(_) => println!("{:<20}: Yes", "Tag from repo"),
+      Err(_) => println!("{:<20}: No", "Tag from repo"),
+    }
+  }
+
   let git = project.git.clone();
   println!("{:<20}: {}", "Git", git);
   Ok(())

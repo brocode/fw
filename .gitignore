@@ -1,2 +1,6 @@
 target
 *.bk
+
+.idea
+*.iml
+.fw.tag.json

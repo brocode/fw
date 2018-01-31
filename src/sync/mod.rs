@@ -15,17 +15,17 @@ use rand;
 use rand::Rng;
 use rayon;
 use rayon::prelude::*;
+use regex::Regex;
 use slog::Logger;
 use std;
 use std::collections::BTreeSet;
+use std::env;
 use std::io::{BufRead, BufReader};
 use std::os::unix::fs::FileTypeExt;
 use std::path::PathBuf;
 use std::process::{Child, Command, Stdio};
 use std::sync::Arc;
 use std::thread;
-use std::env;
-use regex::Regex;
 
 pub static COLOURS: [Colour; 14] = [
   Colour::Green,
@@ -44,7 +44,6 @@ pub static COLOURS: [Colour; 14] = [
   Colour::Purple,
 ];
 
-
 fn username_from_git_url(url: &str) -> String {
   let url_regex = Regex::new(r"([^:]+://)?((?P<user>[a-z_][a-z0-9_]{0,30})@)?").unwrap();
   if let Some(caps) = url_regex.captures(url) {
@@ -54,7 +53,7 @@ fn username_from_git_url(url: &str) -> String {
   }
   if let Ok(user) = env::var("USER") {
     if user != "" {
-      return user.to_string()
+      return user.to_string();
     }
   }
   "git".to_string()
@@ -393,13 +392,19 @@ mod tests {
   fn test_username_from_git_url() {
     let user = env::var("USER").unwrap();
     assert_that(&username_from_git_url(&"git+ssh://git@fkbr.org:sxoe.git")).is_equal_to("git".to_string());
-    assert_that(&username_from_git_url(&"ssh://aur@aur.archlinux.org/fw.git")).is_equal_to("aur".to_string());
+    assert_that(&username_from_git_url(
+      &"ssh://aur@aur.archlinux.org/fw.git",
+    )).is_equal_to("aur".to_string());
     assert_that(&username_from_git_url(&"aur@github.com:21re/fkbr.git")).is_equal_to("aur".to_string());
-    assert_that(&username_from_git_url(&"aur_fkbr_1@github.com:21re/fkbr.git")).is_equal_to("aur_fkbr_1".to_string());
+    assert_that(&username_from_git_url(
+      &"aur_fkbr_1@github.com:21re/fkbr.git",
+    )).is_equal_to("aur_fkbr_1".to_string());
     assert_that(&username_from_git_url(&"github.com:21re/fkbr.git")).is_equal_to(user.to_string());
     assert_that(&username_from_git_url(&"git://fkbr.org/sxoe.git")).is_equal_to(user.to_string());
 
     assert_that(&username_from_git_url(&"https://github.com/brocode/fw.git")).is_equal_to(user.to_string());
-    assert_that(&username_from_git_url(&"https://kuci@github.com/brocode/fw.git")).is_equal_to("kuci".to_string());
+    assert_that(&username_from_git_url(
+      &"https://kuci@github.com/brocode/fw.git",
+    )).is_equal_to("kuci".to_string());
   }
 }

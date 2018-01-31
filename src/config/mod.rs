@@ -17,6 +17,7 @@ pub struct Settings {
   pub default_tags: Option<BTreeSet<String>>,
   pub tags: Option<BTreeMap<String, Tag>>,
   pub github_token: Option<String>,
+  pub tag_from_repo: Option<String>,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -43,6 +44,12 @@ pub struct Config {
   pub settings: Settings,
 }
 
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct RepoTag {
+  pub after_clone: Option<String>,
+  pub after_workon: Option<String>,
+}
+
 impl Project {
   fn check_sanity(&self, config: &Config, logger: &Logger) -> Result<(), AppError> {
     let sanity_logger = logger.new(o!("task" => "check_sanity"));
@@ -66,6 +73,24 @@ fn fw_path() -> Result<PathBuf, AppError> {
   raw_path.map(expand_path)
 }
 
+pub fn get_repo_tag(path: &str) -> Result<RepoTag, AppError> {
+  let repo_tag_file = open_repo_tag_file(path);
+  let reader = repo_tag_file.map(BufReader::new);
+
+  read_repo_tag_file(reader)
+}
+
+fn open_repo_tag_file(path: &str) -> Result<File, AppError> {
+  File::open(path).map_err(AppError::IO)
+}
+
+fn read_repo_tag_file<R>(reader: Result<R, AppError>) -> Result<RepoTag, AppError>
+where
+  R: Read,
+{
+  reader.and_then(|r| serde_json::de::from_reader(r).map_err(AppError::BadJson))
+}
+
 impl Config {
   pub fn actual_path_to_project(&self, project: &Project, logger: &Logger) -> PathBuf {
     let path = project
@@ -82,15 +107,31 @@ impl Config {
     trace!(logger, "resolved"; "workspace" => workspace);
     workspace
   }
+
   pub fn resolve_after_clone(&self, logger: &Logger, project: &Project) -> Vec<String> {
     let mut commands: Vec<String> = vec![];
+
+    let maybe_tag_from_repo = self.settings.tag_from_repo.clone();
+
+    if maybe_tag_from_repo.is_some() {
+      commands.extend_from_slice(&self.resolve_after_clone_from_repo_tag(maybe_tag_from_repo.unwrap().as_ref()))
+    }
+
     commands.extend_from_slice(&self.resolve_after_clone_from_tags(project.tags.clone(), logger));
     let commands_from_project: Vec<String> = project.after_clone.clone().into_iter().collect();
     commands.extend_from_slice(&commands_from_project);
     commands
   }
+
   pub fn resolve_after_workon(&self, logger: &Logger, project: &Project) -> Vec<String> {
     let mut commands: Vec<String> = vec![];
+
+    let maybe_tag_from_repo = self.settings.tag_from_repo.clone();
+
+    if maybe_tag_from_repo.is_some() {
+      commands.extend_from_slice(&self.resolve_after_workon_from_repo_tag(maybe_tag_from_repo.unwrap().as_ref()))
+    }
+
     commands.extend_from_slice(&self.resolve_workon_from_tags(project.tags.clone(), logger));
     let commands_from_project: Vec<String> = project.after_workon.clone().into_iter().collect();
     commands.extend_from_slice(&commands_from_project);
@@ -104,9 +145,30 @@ impl Config {
     Ok(self)
   }
 
+  fn resolve_after_workon_from_repo_tag(&self, path: &str) -> Vec<String> {
+    match get_repo_tag(path) {
+      Ok(repo_tag) => match repo_tag.after_workon {
+        Some(after_workon) => vec![after_workon],
+        None => vec![],
+      },
+      Err(_) => vec![],
+    }
+  }
+
+  fn resolve_after_clone_from_repo_tag(&self, path: &str) -> Vec<String> {
+    match get_repo_tag(path) {
+      Ok(repo_tag) => match repo_tag.after_clone {
+        Some(after_clone) => vec![after_clone],
+        None => vec![],
+      },
+      Err(_) => vec![],
+    }
+  }
+
   fn resolve_workon_from_tags(&self, maybe_tags: Option<BTreeSet<String>>, logger: &Logger) -> Vec<String> {
     self.resolve_from_tags(|t| t.clone().after_workon, maybe_tags, logger)
   }
+
   fn resolve_after_clone_from_tags(&self, maybe_tags: Option<BTreeSet<String>>, logger: &Logger) -> Vec<String> {
     self.resolve_from_tags(|t| t.clone().after_clone, maybe_tags, logger)
   }
@@ -494,6 +556,7 @@ mod tests {
       shell: None,
       tags: Some(tags),
       github_token: None,
+      tag_from_repo: None,
     };
     Config {
       projects: projects,
