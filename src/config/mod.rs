@@ -79,7 +79,7 @@ impl Config {
   fn resolve_workspace(&self, logger: &Logger, project: &Project) -> String {
     let mut x = self.resolve_from_tags(|tag| tag.workspace.clone(), project.tags.clone(), logger);
     let workspace = x.pop().unwrap_or_else(|| self.settings.workspace.clone());
-    trace!(logger, "resolved"; "workspace" => workspace);
+    trace!(logger, "resolved"; "workspace" => &workspace);
     workspace
   }
   pub fn resolve_after_clone(&self, logger: &Logger, project: &Project) -> Vec<String> {
@@ -502,14 +502,14 @@ mod tests {
   }
 
   fn a_logger() -> Logger {
-    use slog::{DrainExt, Level, LevelFilter};
+    use slog::{Drain, self};
     use slog_term;
-    Logger::root(
-      LevelFilter::new(
-        slog_term::StreamerBuilder::new().stdout().build(),
-        Level::Info,
-      ).fuse(),
-      o!(),
-    )
+    use slog_async;
+    use std;
+    let decorator = slog_term::PlainDecorator::new(std::io::stdout());
+    let drain = slog_term::CompactFormat::new(decorator).build().fuse();
+    let drain = slog_async::Async::new(drain).build().fuse();
+
+    slog::Logger::root(drain, o!())
   }
 }

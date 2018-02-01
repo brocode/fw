@@ -4,6 +4,7 @@ extern crate clap;
 #[macro_use]
 extern crate slog;
 extern crate slog_term;
+extern crate slog_async;
 
 #[macro_use]
 extern crate serde_derive;
@@ -38,7 +39,7 @@ extern crate spectral;
 
 use clap::{App, AppSettings, Arg, SubCommand};
 use errors::AppError;
-use slog::{DrainExt, Level, LevelFilter, Logger};
+use slog::{Drain, Level, LevelFilter, Logger};
 use std::str::FromStr;
 use std::time::SystemTime;
 
@@ -51,10 +52,12 @@ fn logger_from_verbosity(verbosity: u64, quiet: &bool) -> Logger {
     3 | _ => Level::Trace,
   };
 
-  let drain = slog_term::StreamerBuilder::new()
-    .auto_color()
-    .stderr()
-    .build();
+  let decorator = slog_term::TermDecorator::new().build();
+  let drain = slog_term::FullFormat::new(decorator)
+    .use_original_order()
+    .build()
+    .fuse();
+  let drain = slog_async::Async::new(drain).chan_size(10000).build().fuse();
   let filter = LevelFilter::new(drain, log_level);
   let logger = Logger::root(filter.fuse(), o!());
   debug!(logger, "Logger ready" ; "level" => format!("{:?}", log_level));
