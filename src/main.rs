@@ -57,7 +57,7 @@ fn logger_from_verbosity(verbosity: u64, quiet: &bool) -> Logger {
     .use_original_order()
     .build()
     .fuse();
-  let drain = slog_async::Async::new(drain).chan_size(10000).build().fuse();
+  let drain = slog_async::Async::new(drain).chan_size(10_000).build().fuse();
   let filter = LevelFilter::new(drain, log_level);
   let logger = Logger::root(filter.fuse(), o!());
   debug!(logger, "Logger ready" ; "level" => format!("{:?}", log_level));
