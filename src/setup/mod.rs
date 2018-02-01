@@ -95,13 +95,9 @@ pub fn org_import(maybe_config: Result<Config, AppError>, org_name: &str, logger
     if current_projects.contains_key(&new_project.name) {
       warn!(
         logger,
-        format!(
-          "Skipping new project {} from org import because it already exists in the current fw config",
-          &new_project.name
-        )
-      );
+          "Skipping new project from org import because it already exists in the current fw config"; "project_name" => &new_project.name);
     } else {
-      info!(logger, format!("Adding new project {}", &new_project.name));
+      info!(logger, "Adding new project"; "project_name" => &new_project.name);
       current_projects.insert(new_project.name.clone(), new_project);
     }
   }

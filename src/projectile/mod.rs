@@ -36,7 +36,7 @@ where
   buffer.write_all(b"(")?;
   for path in paths {
     let path = replace_path_with_tilde(&path, home_dir.clone()).unwrap_or(path);
-    debug!(logger, "Writing projectile entry"; "entry" => path);
+    debug!(logger, "Writing projectile entry"; "entry" => &path);
     buffer.write_all(format!("\"{}/\"", path).as_bytes())?;
     buffer.write_all(b" ")?;
   }
@@ -63,18 +63,10 @@ mod tests {
 
   #[test]
   fn test_persists_projectile_config() {
-    use slog::{DrainExt, Level, LevelFilter};
-    use slog_term;
     use std::io::Cursor;
     use std::str;
     let mut buffer = Cursor::new(vec![0; 61]);
-    let logger = Logger::root(
-      LevelFilter::new(
-        slog_term::StreamerBuilder::new().stdout().build(),
-        Level::Info,
-      ).fuse(),
-      o!(),
-    );
+    let logger = a_logger();
     let paths = vec![
       PathBuf::from("/home/mriehl/test"),
       PathBuf::from("/home/mriehl/go/src/github.com/test2"),
@@ -94,4 +86,15 @@ mod tests {
     assert_that(&replaced_string).is_equal_to("~/moep/home/blubb/test.txt".to_string());
   }
 
+  fn a_logger() -> Logger {
+    use slog::{Drain, self};
+    use slog_term;
+    use slog_async;
+    use std;
+    let decorator = slog_term::PlainDecorator::new(std::io::stdout());
+    let drain = slog_term::CompactFormat::new(decorator).build().fuse();
+    let drain = slog_async::Async::new(drain).build().fuse();
+
+    slog::Logger::root(drain, o!())
+  }
 }
