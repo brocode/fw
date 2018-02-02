@@ -3,8 +3,8 @@ extern crate clap;
 
 #[macro_use]
 extern crate slog;
-extern crate slog_term;
 extern crate slog_async;
+extern crate slog_term;
 
 #[macro_use]
 extern crate serde_derive;
@@ -57,7 +57,10 @@ fn logger_from_verbosity(verbosity: u64, quiet: &bool) -> Logger {
     .use_original_order()
     .build()
     .fuse();
-  let drain = slog_async::Async::new(drain).chan_size(10_000).build().fuse();
+  let drain = slog_async::Async::new(drain)
+    .chan_size(10_000)
+    .build()
+    .fuse();
   let filter = LevelFilter::new(drain, log_level);
   let logger = Logger::root(filter.fuse(), o!());
   debug!(logger, "Logger ready" ; "level" => format!("{:?}", log_level));
@@ -65,6 +68,11 @@ fn logger_from_verbosity(verbosity: u64, quiet: &bool) -> Logger {
 }
 
 fn main() {
+  let return_code = _main();
+  std::process::exit(return_code)
+}
+
+fn _main() -> i32 {
   let matches = App::new("fw")
     .version(crate_version!())
     .author("Brocode <bros@brocode.sh>")
@@ -484,10 +492,13 @@ fn main() {
     .map(|duration| format!("{}sec", duration.as_secs()));
 
   match result {
-    Ok(time) => debug!(subcommand_logger, "Done"; "time" => time),
+    Ok(time) => {
+      debug!(subcommand_logger, "Done"; "time" => time);
+      0
+    }
     Err(error) => {
       crit!(subcommand_logger, "Error running command"; "error" => format!("{:?}", error));
-      std::process::exit(1)
+      1
     }
   }
 }
