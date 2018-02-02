@@ -502,14 +502,11 @@ mod tests {
   }
 
   fn a_logger() -> Logger {
-    use slog::{self, Drain};
-    use slog_async;
+    use slog::Drain;
     use slog_term;
     use std;
-    let decorator = slog_term::PlainDecorator::new(std::io::stdout());
-    let drain = slog_term::CompactFormat::new(decorator).build().fuse();
-    let drain = slog_async::Async::new(drain).build().fuse();
-
-    slog::Logger::root(drain, o!())
+    let plain = slog_term::PlainSyncDecorator::new(std::io::stdout());
+    let drain = slog_term::FullFormat::new(plain).build().fuse();
+    Logger::root(drain, o!())
   }
 }
