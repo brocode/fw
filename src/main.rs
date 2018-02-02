@@ -52,17 +52,10 @@ fn logger_from_verbosity(verbosity: u64, quiet: &bool) -> Logger {
     3 | _ => Level::Trace,
   };
 
-  let decorator = slog_term::TermDecorator::new().build();
-  let drain = slog_term::FullFormat::new(decorator)
-    .use_original_order()
-    .build()
-    .fuse();
-  let drain = slog_async::Async::new(drain)
-    .chan_size(10_000)
-    .build()
-    .fuse();
-  let filter = LevelFilter::new(drain, log_level);
-  let logger = Logger::root(filter.fuse(), o!());
+  let plain = slog_term::PlainSyncDecorator::new(std::io::stdout());
+  let drain = slog_term::FullFormat::new(plain).build().fuse();
+  let drain = LevelFilter::new(drain, log_level).fuse();
+  let logger = Logger::root(drain, o!());
   debug!(logger, "Logger ready" ; "level" => format!("{:?}", log_level));
   logger
 }
