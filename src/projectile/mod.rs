@@ -87,9 +87,9 @@ mod tests {
   }
 
   fn a_logger() -> Logger {
-    use slog::{Drain, self};
-    use slog_term;
+    use slog::{self, Drain};
     use slog_async;
+    use slog_term;
     use std;
     let decorator = slog_term::PlainDecorator::new(std::io::stdout());
     let drain = slog_term::CompactFormat::new(decorator).build().fuse();
