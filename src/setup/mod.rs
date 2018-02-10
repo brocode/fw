@@ -15,23 +15,15 @@ pub fn setup(workspace_dir: &str, logger: &Logger) -> Result<(), AppError> {
   let maybe_path = if path.exists() {
     Result::Ok(path)
   } else {
-    Result::Err(AppError::UserError(format!(
-      "Given workspace path {} does not exist",
-      workspace_dir
-    )))
+    Result::Err(AppError::UserError(format!("Given workspace path {} does not exist", workspace_dir)))
   };
 
   maybe_path
-    .and_then(|path| {
-      if path.is_absolute() {
-        Ok(path)
-      } else {
-        Err(AppError::UserError(format!(
-          "Workspace path {} needs to be absolute",
-          workspace_dir
-        )))
-      }
-    })
+    .and_then(|path| if path.is_absolute() {
+                Ok(path)
+              } else {
+                Err(AppError::UserError(format!("Workspace path {} needs to be absolute", workspace_dir)))
+              })
     .and_then(|path| determine_projects(path, logger))
     .and_then(|projects| write_config(projects, logger, workspace_dir))
 }
@@ -57,10 +49,10 @@ fn determine_projects(path: PathBuf, logger: &Logger) -> Result<BTreeMap<String,
             Err(e) => warn!(logger, "Error while importing folder. Skipping it."; "entry" => name, "error" => format!("{}", e)),
           }
         }
-        Err(_) => warn!(
-          logger,
-          "Failed to parse directory name as unicode. Skipping it."
-        ),
+        Err(_) => {
+          warn!(logger,
+                "Failed to parse directory name as unicode. Skipping it.")
+        }
       }
     }
   }
@@ -75,22 +67,24 @@ pub fn org_import(maybe_config: Result<Config, AppError>, org_name: &str, logger
     .github_token
     .clone()
     .ok_or_else(|| {
-      AppError::UserError(format!(
-        "Can't call GitHub API for org {} because no github oauth token (settings.github_token) specified in the configuration.",
-        org_name
-      ))
+      AppError::UserError(format!("Can't call GitHub API for org {} because no github oauth token (settings.github_token) specified in the configuration.",
+                                  org_name))
     })?;
   let mut api = github::github_api(token)?;
   let mut current_projects = current_config.projects.clone();
   let org_repository_names: Vec<String> = api.list_repositories(org_name)?;
-  let new_projects = org_repository_names.into_iter().map(|repo_name| Project {
-    name: repo_name.clone(),
-    git: format!("git@github.com:{}/{}.git", org_name, repo_name),
-    after_clone: None,
-    after_workon: None,
-    override_path: None,
-    tags: None,
-  });
+  let new_projects = org_repository_names
+    .into_iter()
+    .map(|repo_name| {
+      Project {
+        name: repo_name.clone(),
+        git: format!("git@github.com:{}/{}.git", org_name, repo_name),
+        after_clone: None,
+        after_workon: None,
+        override_path: None,
+        tags: None,
+      }
+    });
   for new_project in new_projects {
     if current_projects.contains_key(&new_project.name) {
       warn!(
@@ -113,10 +107,8 @@ pub fn import(maybe_config: Result<Config, AppError>, path: &str, logger: &Logge
     .to_str()
     .ok_or(AppError::InternalError("project path is not valid unicode"))?
     .to_owned();
-  let file_name = AppError::require(
-    path.file_name(),
-    AppError::UserError("Import path needs to be valid".to_string()),
-  )?;
+  let file_name = AppError::require(path.file_name(),
+                                    AppError::UserError("Import path needs to be valid".to_string()))?;
   let project_name: String = file_name.to_string_lossy().into_owned();
   let new_project = load_project(path.clone(), &project_name, logger)?;
   let new_project_with_path = Project {
@@ -139,13 +131,13 @@ fn load_project(path_to_repo: PathBuf, name: &str, logger: &Logger) -> Result<Pr
     .ok_or_else(|| AppError::UserError(format!("invalid remote origin at {:?}", repo.path())))?;
   info!(project_logger, "git config validated");
   Ok(Project {
-    name: name.to_owned(),
-    git: url.to_owned(),
-    after_clone: None,
-    after_workon: None,
-    override_path: None,
-    tags: None,
-  })
+       name: name.to_owned(),
+       git: url.to_owned(),
+       after_clone: None,
+       after_workon: None,
+       override_path: None,
+       tags: None,
+     })
 }
 
 fn write_config(projects: BTreeMap<String, Project>, logger: &Logger, workspace_dir: &str) -> Result<(), AppError> {

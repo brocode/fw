@@ -36,28 +36,25 @@ impl GithubApi {
     let after_refinement = after
       .map(|a| format!(", after:\\\"{}\\\"", a))
       .unwrap_or_else(|| "".to_owned());
-    let (_, status, json) = self.client.query::<Value>(&Query::new_raw(
-      "query {organization(login: \\\"".to_owned() + org + "\\\"){repositories(first: 100" + &after_refinement
-        + ") {nodes {name} pageInfo {endCursor hasNextPage}}}}",
-    ))?;
+    let (_, status, json) = self
+      .client
+      .query::<Value>(&Query::new_raw("query {organization(login: \\\"".to_owned() + org + "\\\"){repositories(first: 100" + &after_refinement +
+                                     ") {nodes {name} pageInfo {endCursor hasNextPage}}}}"))?;
     if !status.is_success() {
-      Err(AppError::RuntimeError(format!(
-        "GitHub repository query failed for {}, got status {} with json {:?}",
-        org, status, json
-      )))
+      Err(AppError::RuntimeError(format!("GitHub repository query failed for {}, got status {} with json {:?}",
+                                         org,
+                                         status,
+                                         json)))
     } else {
-      let data_json = json.ok_or(AppError::InternalError(
-        "organization repository list has no json",
-      ))?;
+      let data_json = json
+        .ok_or(AppError::InternalError("organization repository list has no json"))?;
       let nodes_json_value: Value = data_json
         .pointer("/data/organization/repositories/nodes")
         .ok_or(AppError::InternalError("no nodes in repository json"))?
         .to_owned();
       let nodes_json: Vec<Value> = nodes_json_value
         .as_array()
-        .ok_or(AppError::InternalError(
-          "nodes in repository json is not an array",
-        ))?
+        .ok_or(AppError::InternalError("nodes in repository json is not an array"))?
         .to_owned();
       let maybe_names = nodes_json
         .into_iter()
@@ -68,29 +65,21 @@ impl GithubApi {
 
       let has_next: bool = data_json
         .pointer("/data/organization/repositories/pageInfo/hasNextPage")
-        .ok_or(AppError::InternalError(
-          "no page info (hasNextPage) in repository json",
-        ))?
+        .ok_or(AppError::InternalError("no page info (hasNextPage) in repository json"))?
         .as_bool()
-        .ok_or(AppError::InternalError(
-          "page info (hasNextPage) in repository json is not a boolean",
-        ))?;
+        .ok_or(AppError::InternalError("page info (hasNextPage) in repository json is not a boolean"))?;
 
       let end_cursor: String = data_json
         .pointer("/data/organization/repositories/pageInfo/endCursor")
-        .ok_or(AppError::InternalError(
-          "no page info (endCursor) in repository json",
-        ))?
+        .ok_or(AppError::InternalError("no page info (endCursor) in repository json"))?
         .as_str()
-        .ok_or(AppError::InternalError(
-          "page info (endCursor) in repository json is not a string",
-        ))?
+        .ok_or(AppError::InternalError("page info (endCursor) in repository json is not a string"))?
         .to_owned();
 
       Ok(PageResult {
-        repository_names: names,
-        next_cursor: if has_next { Some(end_cursor) } else { None },
-      })
+           repository_names: names,
+           next_cursor: if has_next { Some(end_cursor) } else { None },
+         })
     }
   }
 }

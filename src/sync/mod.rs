@@ -27,22 +27,20 @@ use std::process::{Child, Command, Stdio};
 use std::sync::Arc;
 use std::thread;
 
-pub static COLOURS: [Colour; 14] = [
-  Colour::Green,
-  Colour::Cyan,
-  Colour::Blue,
-  Colour::Yellow,
-  Colour::RGB(255, 165, 0),
-  Colour::RGB(255, 99, 71),
-  Colour::RGB(0, 153, 255),
-  Colour::RGB(102, 0, 102),
-  Colour::RGB(102, 0, 0),
-  Colour::RGB(153, 102, 51),
-  Colour::RGB(102, 153, 0),
-  Colour::RGB(0, 0, 102),
-  Colour::RGB(255, 153, 255),
-  Colour::Purple,
-];
+pub static COLOURS: [Colour; 14] = [Colour::Green,
+                                    Colour::Cyan,
+                                    Colour::Blue,
+                                    Colour::Yellow,
+                                    Colour::RGB(255, 165, 0),
+                                    Colour::RGB(255, 99, 71),
+                                    Colour::RGB(0, 153, 255),
+                                    Colour::RGB(102, 0, 102),
+                                    Colour::RGB(102, 0, 0),
+                                    Colour::RGB(153, 102, 51),
+                                    Colour::RGB(102, 153, 0),
+                                    Colour::RGB(0, 0, 102),
+                                    Colour::RGB(255, 153, 255),
+                                    Colour::Purple];
 
 fn username_from_git_url(url: &str) -> String {
   let url_regex = Regex::new(r"([^:]+://)?((?P<user>[a-z_][a-z0-9_]{0,30})@)?").unwrap();
@@ -91,12 +89,10 @@ fn forward_process_output_to_stdout<T: std::io::Read>(read: T, prefix: &str, col
     if mark_err {
       let prefix = format!("{:>21.21} |", prefix);
       if atty {
-        print!(
-          "{} {} {}",
-          Colour::Red.paint("ERR"),
-          colour.paint(prefix),
-          line
-        );
+        print!("{} {} {}",
+               Colour::Red.paint("ERR"),
+               colour.paint(prefix),
+               line);
       } else {
         print!("ERR {} {}", prefix, line);
       };
@@ -131,9 +127,9 @@ pub fn spawn_maybe(shell: &[String], cmd: &str, workdir: &PathBuf, project_name:
     let colour = *colour;
     let project_name = project_name.to_owned();
     Some(thread::spawn(move || {
-      let atty: bool = is_stdout_a_tty();
-      forward_process_output_to_stdout(stdout, &project_name, &colour, atty, false)
-    }))
+                         let atty: bool = is_stdout_a_tty();
+                         forward_process_output_to_stdout(stdout, &project_name, &colour, atty, false)
+                       }))
   } else {
     None
   };
@@ -180,13 +176,12 @@ pub fn project_shell(project_settings: &Settings) -> Vec<String> {
     .unwrap_or_else(|| vec!["sh".to_owned(), "-c".to_owned()])
 }
 
-pub fn foreach(
-  maybe_config: Result<Config, AppError>,
-  cmd: &str,
-  tags: &BTreeSet<String>,
-  logger: &Logger,
-  parallel_raw: &Option<String>,
-) -> Result<(), AppError> {
+pub fn foreach(maybe_config: Result<Config, AppError>,
+               cmd: &str,
+               tags: &BTreeSet<String>,
+               logger: &Logger,
+               parallel_raw: &Option<String>)
+               -> Result<(), AppError> {
   let config = maybe_config?;
 
   if let Some(ref raw_num) = *parallel_raw {
@@ -202,26 +197,24 @@ pub fn foreach(
   let script_results = projects
     .par_iter()
     .filter(|p| {
-      tags.is_empty()
-        || p.tags
-          .clone()
-          .unwrap_or_default()
-          .intersection(tags)
-          .count() > 0
-    })
+              tags.is_empty() ||
+              p.tags
+                .clone()
+                .unwrap_or_default()
+                .intersection(tags)
+                .count() > 0
+            })
     .map(|p| {
       let shell = project_shell(&config.settings);
       let project_logger = logger.new(o!("project" => p.name.clone()));
       let path = config.actual_path_to_project(p, &project_logger);
       info!(project_logger, "Entering");
-      spawn_maybe(
-        &shell,
-        cmd,
-        &path,
-        &p.name,
-        &random_colour(),
-        &project_logger,
-      )
+      spawn_maybe(&shell,
+                  cmd,
+                  &path,
+                  &p.name,
+                  &random_colour(),
+                  &project_logger)
     })
     .collect::<Vec<Result<(), AppError>>>();
 
@@ -232,10 +225,11 @@ pub fn foreach(
 
 fn update_project_remotes(project: &Project, path: &PathBuf, project_logger: &Logger) -> Result<(), AppError> {
   debug!(project_logger, "Update project remotes");
-  let local = Repository::init(path).map_err(|error| {
-    warn!(project_logger, "Error opening local repo"; "error" => format!("{}", error));
-    AppError::GitError(error)
-  })?;
+  let local = Repository::init(path)
+    .map_err(|error| {
+      warn!(project_logger, "Error opening local repo"; "error" => format!("{}", error));
+      AppError::GitError(error)
+    })?;
   let remote = "origin";
   let mut remote = local
     .find_remote(remote)
@@ -249,12 +243,15 @@ fn update_project_remotes(project: &Project, path: &PathBuf, project_logger: &Lo
       AppError::GitError(error)
     })?;
   let mut options = agent_fetch_options(&git_user);
-  remote.download(&[], Some(&mut options)).map_err(|error| {
-    warn!(project_logger, "Error downloading for remote"; "error" => format!("{}", error), "project" => &project.name);
-    AppError::GitError(error)
-  })?;
+  remote
+    .download(&[], Some(&mut options))
+    .map_err(|error| {
+      warn!(project_logger, "Error downloading for remote"; "error" => format!("{}", error), "project" => &project.name);
+      AppError::GitError(error)
+    })?;
   remote.disconnect();
-  remote.update_tips(None, true, AutotagOption::Unspecified, None)?;
+  remote
+    .update_tips(None, true, AutotagOption::Unspecified, None)?;
   Result::Ok(())
 }
 
@@ -273,19 +270,16 @@ fn clone_project(config: &Config, project: &Project, path: &PathBuf, project_log
       let after_clone = config.resolve_after_clone(project_logger, project);
       if !after_clone.is_empty() {
         debug!(project_logger, "Handling post hooks"; "after_clone" => format!("{:?}", after_clone));
-        spawn_maybe(
-          &shell,
-          &after_clone.join(" && "),
-          path,
-          &project.name,
-          &random_colour(),
-          project_logger,
-        ).map_err(|error| {
-          AppError::UserError(format!(
-            "Post-clone hook failed (nonzero exit code). Cause: {:?}",
-            error
-          ))
-        })
+        spawn_maybe(&shell,
+                    &after_clone.join(" && "),
+                    path,
+                    &project.name,
+                    &random_colour(),
+                    project_logger)
+            .map_err(|error| {
+                       AppError::UserError(format!("Post-clone hook failed (nonzero exit code). Cause: {:?}",
+                                                   error))
+                     })
       } else {
         Ok(())
       }
@@ -330,10 +324,10 @@ pub fn synchronize(maybe_config: Result<Config, AppError>, no_progress_bar: bool
 
   let m = MultiProgress::new();
   m.set_draw_target(if no_progress_bar {
-    ProgressDrawTarget::hidden()
-  } else {
-    ProgressDrawTarget::stderr()
-  });
+                      ProgressDrawTarget::hidden()
+                    } else {
+                      ProgressDrawTarget::stderr()
+                    });
 
   let job_results: Arc<MsQueue<Result<(), AppError>>> = Arc::new(MsQueue::new());
   let progress_bars = (1..5).map(|i| {
@@ -376,9 +370,11 @@ pub fn synchronize(maybe_config: Result<Config, AppError>, no_progress_bar: bool
 
 fn ssh_agent_running() -> bool {
   match std::env::var("SSH_AUTH_SOCK") {
-    Ok(auth_socket) => std::fs::metadata(auth_socket)
-      .map(|m| m.file_type().is_socket())
-      .unwrap_or(false),
+    Ok(auth_socket) => {
+      std::fs::metadata(auth_socket)
+        .map(|m| m.file_type().is_socket())
+        .unwrap_or(false)
+    }
     Err(_) => false,
   }
 }
@@ -392,19 +388,13 @@ mod tests {
   fn test_username_from_git_url() {
     let user = env::var("USER").unwrap();
     assert_that(&username_from_git_url(&"git+ssh://git@fkbr.org:sxoe.git")).is_equal_to("git".to_string());
-    assert_that(&username_from_git_url(
-      &"ssh://aur@aur.archlinux.org/fw.git",
-    )).is_equal_to("aur".to_string());
+    assert_that(&username_from_git_url(&"ssh://aur@aur.archlinux.org/fw.git")).is_equal_to("aur".to_string());
     assert_that(&username_from_git_url(&"aur@github.com:21re/fkbr.git")).is_equal_to("aur".to_string());
-    assert_that(&username_from_git_url(
-      &"aur_fkbr_1@github.com:21re/fkbr.git",
-    )).is_equal_to("aur_fkbr_1".to_string());
+    assert_that(&username_from_git_url(&"aur_fkbr_1@github.com:21re/fkbr.git")).is_equal_to("aur_fkbr_1".to_string());
     assert_that(&username_from_git_url(&"github.com:21re/fkbr.git")).is_equal_to(user.to_string());
     assert_that(&username_from_git_url(&"git://fkbr.org/sxoe.git")).is_equal_to(user.to_string());
 
     assert_that(&username_from_git_url(&"https://github.com/brocode/fw.git")).is_equal_to(user.to_string());
-    assert_that(&username_from_git_url(
-      &"https://kuci@github.com/brocode/fw.git",
-    )).is_equal_to("kuci".to_string());
+    assert_that(&username_from_git_url(&"https://kuci@github.com/brocode/fw.git")).is_equal_to("kuci".to_string());
   }
 }

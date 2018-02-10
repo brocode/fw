@@ -16,7 +16,8 @@ pub fn projectile(maybe_config: Result<Config, AppError>, logger: &Logger) -> Re
     .into_iter()
     .map(|(_, p)| config.actual_path_to_project(&p, logger))
     .collect();
-  let home_dir: PathBuf = env::home_dir().ok_or_else(|| AppError::UserError("$HOME not set".to_owned()))?;
+  let home_dir: PathBuf = env::home_dir()
+    .ok_or_else(|| AppError::UserError("$HOME not set".to_owned()))?;
   let mut projectile_bookmarks: PathBuf = home_dir.clone();
   projectile_bookmarks.push(".emacs.d");
   projectile_bookmarks.push("projectile-bookmarks.eld");
@@ -25,8 +26,7 @@ pub fn projectile(maybe_config: Result<Config, AppError>, logger: &Logger) -> Re
 }
 
 fn persist<W>(logger: &Logger, home_dir: &PathBuf, writer: W, paths: Vec<PathBuf>) -> Result<(), AppError>
-where
-  W: io::Write,
+  where W: io::Write
 {
   let paths: Vec<String> = paths
     .into_iter()
@@ -67,10 +67,8 @@ mod tests {
     use std::str;
     let mut buffer = Cursor::new(vec![0; 61]);
     let logger = a_logger();
-    let paths = vec![
-      PathBuf::from("/home/mriehl/test"),
-      PathBuf::from("/home/mriehl/go/src/github.com/test2"),
-    ];
+    let paths = vec![PathBuf::from("/home/mriehl/test"),
+                     PathBuf::from("/home/mriehl/go/src/github.com/test2")];
 
     let home_dir = Path::new("/home/blubb").to_path_buf();
     persist(&logger, &home_dir, &mut buffer, paths).unwrap();
