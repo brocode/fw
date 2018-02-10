@@ -66,7 +66,240 @@ fn main() {
 }
 
 fn _main() -> i32 {
-  let matches = App::new("fw")
+  let matches = app().get_matches();
+
+  let logger = logger_from_verbosity(matches.occurrences_of("v"), &matches.is_present("q"));
+  let config = config::get_config(&logger);
+
+  let subcommand_name = matches
+    .subcommand_name()
+    .expect("subcommand required by clap.rs")
+    .to_owned();
+  let subcommand_matches = matches
+    .subcommand_matches(&subcommand_name)
+    .expect("subcommand matches enforced by clap.rs");
+  let subcommand_logger = logger.new(o!("command" => subcommand_name.clone()));
+  let now = SystemTime::now();
+  let result: Result<String, AppError> = match subcommand_name.as_ref() {
+    "sync" => sync::synchronize(
+      config,
+      subcommand_matches.is_present("no-progress-bar"),
+      subcommand_matches.is_present("only-new"),
+      &subcommand_logger,
+    ),
+    "add" => config::add_entry(
+      config,
+      subcommand_matches.value_of("NAME"),
+      subcommand_matches
+        .value_of("URL")
+        .expect("argument required by clap.rs"),
+      &subcommand_logger,
+    ),
+    "update" => {
+      let name: &str = subcommand_matches
+        .value_of("NAME")
+        .expect("argument required by clap.rs");
+      let git: Option<String> = subcommand_matches.value_of("git").map(str::to_string);
+      let after_workon: Option<String> = subcommand_matches
+        .value_of("after-workon")
+        .map(str::to_string);
+      let after_clone: Option<String> = subcommand_matches
+        .value_of("after-clone")
+        .map(str::to_string);
+      let override_path: Option<String> = subcommand_matches
+        .value_of("override-path")
+        .map(str::to_string);
+      config::update_entry(
+        config,
+        name,
+        git,
+        after_workon,
+        after_clone,
+        override_path,
+        &subcommand_logger,
+      )
+    }
+    "setup" => setup::setup(
+      subcommand_matches
+        .value_of("WORKSPACE_DIR")
+        .expect("argument required by clap.rs"),
+      &subcommand_logger,
+    ),
+    "import" => setup::import(
+      config,
+      subcommand_matches
+        .value_of("PROJECT_DIR")
+        .expect("argument required by clap.rs"),
+      &subcommand_logger,
+    ),
+    "org-import" => setup::org_import(
+      config,
+      subcommand_matches
+        .value_of("ORG_NAME")
+        .expect("argument required by clap.rs"),
+      &subcommand_logger,
+    ),
+    "gen-workon" => workon::gen(
+      subcommand_matches
+        .value_of("PROJECT_NAME")
+        .expect("argument required by clap.rs"),
+      config,
+      subcommand_matches.is_present("quick"),
+      &subcommand_logger,
+    ),
+    "gen-reworkon" => workon::gen_reworkon(config, &subcommand_logger),
+    "reworkon" => workon::reworkon(config, &subcommand_logger),
+    "inspect" => workon::inspect(
+      subcommand_matches
+        .value_of("PROJECT_NAME")
+        .expect("argument required by clap.rs"),
+      config,
+      &subcommand_logger,
+    ),
+    "projectile" => projectile::projectile(config, &subcommand_logger),
+    "print-path" => workon::print_path(
+      config,
+      subcommand_matches
+        .value_of("PROJECT_NAME")
+        .expect("argument required by clap.rs"),
+      &subcommand_logger,
+    ),
+    "export" => export::export_project(
+      config,
+      subcommand_matches
+        .value_of("PROJECT_NAME")
+        .expect("argument required by clap.rs"),
+    ),
+    "foreach" => sync::foreach(
+      config,
+      subcommand_matches
+        .value_of("CMD")
+        .expect("argument required by clap.rs"),
+      &subcommand_matches
+        .values_of_lossy("tag")
+        .unwrap_or_default()
+        .into_iter()
+        .collect(),
+      &subcommand_logger,
+      &subcommand_matches
+        .value_of("parallel")
+        .map(|p| p.to_owned()),
+    ),
+    "print-zsh-setup" => print_zsh_setup(subcommand_matches.is_present("with-fzf")),
+    "tag" => {
+      let subsubcommand_name: String = subcommand_matches
+        .subcommand_name()
+        .expect("subcommand matches enforced by clap.rs")
+        .to_owned();
+      let subsubcommand_matches: clap::ArgMatches = subcommand_matches
+        .subcommand_matches(&subsubcommand_name)
+        .expect("subcommand matches enforced by clap.rs")
+        .to_owned();
+      execute_tag_subcommand(
+        config,
+        &subsubcommand_name,
+        &subsubcommand_matches,
+        &subcommand_logger,
+      )
+    }
+    "ls" => workon::ls(config),
+    _ => Result::Err(AppError::InternalError("Command not implemented")),
+  }.and_then(|_| now.elapsed().map_err(AppError::ClockError))
+    .map(|duration| format!("{}sec", duration.as_secs()));
+
+  match result {
+    Ok(time) => {
+      debug!(subcommand_logger, "Done"; "time" => time);
+      0
+    }
+    Err(error) => {
+      crit!(subcommand_logger, "Error running command"; "error" => format!("{:?}", error));
+      1
+    }
+  }
+}
+
+fn execute_tag_subcommand(
+  maybe_config: Result<config::Config, AppError>,
+  tag_command_name: &str,
+  tag_matches: &clap::ArgMatches,
+  logger: &Logger,
+) -> Result<(), AppError> {
+  match tag_command_name {
+    "ls" => {
+      let maybe_project_name: Option<String> = tag_matches.value_of("PROJECT_NAME").map(str::to_string);
+      tag::list_tags(maybe_config, maybe_project_name, logger)
+    }
+    "tag-project" => {
+      let project_name: String = tag_matches
+        .value_of("PROJECT_NAME")
+        .map(str::to_string)
+        .expect("argument enforced by clap.rs");
+      let tag_name: String = tag_matches
+        .value_of("tag-name")
+        .map(str::to_string)
+        .expect("argument enforced by clap.rs");
+      tag::add_tag(maybe_config, project_name, tag_name, logger)
+    }
+    "untag-project" => {
+      let project_name: String = tag_matches
+        .value_of("PROJECT_NAME")
+        .map(str::to_string)
+        .expect("argument enforced by clap.rs");
+      let tag_name: String = tag_matches
+        .value_of("tag-name")
+        .map(str::to_string)
+        .expect("argument enforced by clap.rs");
+      tag::remove_tag(maybe_config, project_name, &tag_name, logger)
+    }
+    "rm" => {
+      let tag_name: String = tag_matches
+        .value_of("tag-name")
+        .map(str::to_string)
+        .expect("argument enforced by clap.rs");
+      tag::delete_tag(maybe_config, &tag_name, logger)
+    }
+    "add" => {
+      let tag_name: String = tag_matches
+        .value_of("tag-name")
+        .map(str::to_string)
+        .expect("argument enforced by clap.rs");
+      let after_workon: Option<String> = tag_matches.value_of("after-workon").map(str::to_string);
+      let after_clone: Option<String> = tag_matches.value_of("after-clone").map(str::to_string);
+      let tag_workspace: Option<String> = tag_matches.value_of("workspace").map(str::to_string);
+      let priority: Option<u8> = tag_matches
+        .value_of("priority")
+        .map(u8::from_str)
+        .map(|p| p.expect("invalid tag priority value, must be an u8"));
+      tag::create_tag(
+        maybe_config,
+        tag_name,
+        after_workon,
+        after_clone,
+        priority,
+        tag_workspace,
+        logger,
+      )
+    }
+    _ => Result::Err(AppError::InternalError("Command not implemented")),
+  }
+}
+
+fn print_zsh_setup(use_fzf: bool) -> Result<(), AppError> {
+  let fw_completion = include_str!("shell/setup.zsh");
+  let basic_workon = include_str!("shell/workon.zsh");
+  let fzf_workon = include_str!("shell/workon-fzf.zsh");
+  println!("{}", fw_completion);
+  if use_fzf {
+    println!("{}", fzf_workon);
+  } else {
+    println!("{}", basic_workon);
+  }
+  Ok(())
+}
+
+fn app<'a>() -> App<'a, 'a> {
+  App::new("fw")
     .version(crate_version!())
     .author("Brocode <bros@brocode.sh>")
     .about("fast workspace manager. Config set by FW_CONFIG_PATH or default.\nFor further information please have a look at our README https://github.com/brocode/fw/blob/master/README.org")
@@ -343,236 +576,6 @@ fn _main() -> i32 {
             ),
         ),
     )
-    .get_matches();
-
-  let logger = logger_from_verbosity(matches.occurrences_of("v"), &matches.is_present("q"));
-  let config = config::get_config(&logger);
-
-  let subcommand_name = matches
-    .subcommand_name()
-    .expect("subcommand required by clap.rs")
-    .to_owned();
-  let subcommand_matches = matches
-    .subcommand_matches(&subcommand_name)
-    .expect("subcommand matches enforced by clap.rs");
-  let subcommand_logger = logger.new(o!("command" => subcommand_name.clone()));
-  let now = SystemTime::now();
-  let result: Result<String, AppError> = match subcommand_name.as_ref() {
-    "sync" => sync::synchronize(
-      config,
-      subcommand_matches.is_present("no-progress-bar"),
-      subcommand_matches.is_present("only-new"),
-      &subcommand_logger,
-    ),
-    "add" => config::add_entry(
-      config,
-      subcommand_matches.value_of("NAME"),
-      subcommand_matches
-        .value_of("URL")
-        .expect("argument required by clap.rs"),
-      &subcommand_logger,
-    ),
-    "update" => {
-      let name: &str = subcommand_matches
-        .value_of("NAME")
-        .expect("argument required by clap.rs");
-      let git: Option<String> = subcommand_matches.value_of("git").map(str::to_string);
-      let after_workon: Option<String> = subcommand_matches
-        .value_of("after-workon")
-        .map(str::to_string);
-      let after_clone: Option<String> = subcommand_matches
-        .value_of("after-clone")
-        .map(str::to_string);
-      let override_path: Option<String> = subcommand_matches
-        .value_of("override-path")
-        .map(str::to_string);
-      config::update_entry(
-        config,
-        name,
-        git,
-        after_workon,
-        after_clone,
-        override_path,
-        &subcommand_logger,
-      )
-    }
-    "setup" => setup::setup(
-      subcommand_matches
-        .value_of("WORKSPACE_DIR")
-        .expect("argument required by clap.rs"),
-      &subcommand_logger,
-    ),
-    "import" => setup::import(
-      config,
-      subcommand_matches
-        .value_of("PROJECT_DIR")
-        .expect("argument required by clap.rs"),
-      &subcommand_logger,
-    ),
-    "org-import" => setup::org_import(
-      config,
-      subcommand_matches
-        .value_of("ORG_NAME")
-        .expect("argument required by clap.rs"),
-      &subcommand_logger,
-    ),
-    "gen-workon" => workon::gen(
-      subcommand_matches
-        .value_of("PROJECT_NAME")
-        .expect("argument required by clap.rs"),
-      config,
-      subcommand_matches.is_present("quick"),
-      &subcommand_logger,
-    ),
-    "gen-reworkon" => workon::gen_reworkon(config, &subcommand_logger),
-    "reworkon" => workon::reworkon(config, &subcommand_logger),
-    "inspect" => workon::inspect(
-      subcommand_matches
-        .value_of("PROJECT_NAME")
-        .expect("argument required by clap.rs"),
-      config,
-      &subcommand_logger,
-    ),
-    "projectile" => projectile::projectile(config, &subcommand_logger),
-    "print-path" => workon::print_path(
-      config,
-      subcommand_matches
-        .value_of("PROJECT_NAME")
-        .expect("argument required by clap.rs"),
-      &subcommand_logger,
-    ),
-    "export" => export::export_project(
-      config,
-      subcommand_matches
-        .value_of("PROJECT_NAME")
-        .expect("argument required by clap.rs"),
-    ),
-    "foreach" => sync::foreach(
-      config,
-      subcommand_matches
-        .value_of("CMD")
-        .expect("argument required by clap.rs"),
-      &subcommand_matches
-        .values_of_lossy("tag")
-        .unwrap_or_default()
-        .into_iter()
-        .collect(),
-      &subcommand_logger,
-      &subcommand_matches
-        .value_of("parallel")
-        .map(|p| p.to_owned()),
-    ),
-    "print-zsh-setup" => print_zsh_setup(subcommand_matches.is_present("with-fzf")),
-    "tag" => {
-      let subsubcommand_name: String = subcommand_matches
-        .subcommand_name()
-        .expect("subcommand matches enforced by clap.rs")
-        .to_owned();
-      let subsubcommand_matches: clap::ArgMatches = subcommand_matches
-        .subcommand_matches(&subsubcommand_name)
-        .expect("subcommand matches enforced by clap.rs")
-        .to_owned();
-      execute_tag_subcommand(
-        config,
-        &subsubcommand_name,
-        &subsubcommand_matches,
-        &subcommand_logger,
-      )
-    }
-    "ls" => workon::ls(config),
-    _ => Result::Err(AppError::InternalError("Command not implemented")),
-  }.and_then(|_| now.elapsed().map_err(AppError::ClockError))
-    .map(|duration| format!("{}sec", duration.as_secs()));
-
-  match result {
-    Ok(time) => {
-      debug!(subcommand_logger, "Done"; "time" => time);
-      0
-    }
-    Err(error) => {
-      crit!(subcommand_logger, "Error running command"; "error" => format!("{:?}", error));
-      1
-    }
-  }
-}
-
-fn execute_tag_subcommand(
-  maybe_config: Result<config::Config, AppError>,
-  tag_command_name: &str,
-  tag_matches: &clap::ArgMatches,
-  logger: &Logger,
-) -> Result<(), AppError> {
-  match tag_command_name {
-    "ls" => {
-      let maybe_project_name: Option<String> = tag_matches.value_of("PROJECT_NAME").map(str::to_string);
-      tag::list_tags(maybe_config, maybe_project_name, logger)
-    }
-    "tag-project" => {
-      let project_name: String = tag_matches
-        .value_of("PROJECT_NAME")
-        .map(str::to_string)
-        .expect("argument enforced by clap.rs");
-      let tag_name: String = tag_matches
-        .value_of("tag-name")
-        .map(str::to_string)
-        .expect("argument enforced by clap.rs");
-      tag::add_tag(maybe_config, project_name, tag_name, logger)
-    }
-    "untag-project" => {
-      let project_name: String = tag_matches
-        .value_of("PROJECT_NAME")
-        .map(str::to_string)
-        .expect("argument enforced by clap.rs");
-      let tag_name: String = tag_matches
-        .value_of("tag-name")
-        .map(str::to_string)
-        .expect("argument enforced by clap.rs");
-      tag::remove_tag(maybe_config, project_name, &tag_name, logger)
-    }
-    "rm" => {
-      let tag_name: String = tag_matches
-        .value_of("tag-name")
-        .map(str::to_string)
-        .expect("argument enforced by clap.rs");
-      tag::delete_tag(maybe_config, &tag_name, logger)
-    }
-    "add" => {
-      let tag_name: String = tag_matches
-        .value_of("tag-name")
-        .map(str::to_string)
-        .expect("argument enforced by clap.rs");
-      let after_workon: Option<String> = tag_matches.value_of("after-workon").map(str::to_string);
-      let after_clone: Option<String> = tag_matches.value_of("after-clone").map(str::to_string);
-      let tag_workspace: Option<String> = tag_matches.value_of("workspace").map(str::to_string);
-      let priority: Option<u8> = tag_matches
-        .value_of("priority")
-        .map(u8::from_str)
-        .map(|p| p.expect("invalid tag priority value, must be an u8"));
-      tag::create_tag(
-        maybe_config,
-        tag_name,
-        after_workon,
-        after_clone,
-        priority,
-        tag_workspace,
-        logger,
-      )
-    }
-    _ => Result::Err(AppError::InternalError("Command not implemented")),
-  }
-}
-
-fn print_zsh_setup(use_fzf: bool) -> Result<(), AppError> {
-  let fw_completion = include_str!("shell/setup.zsh");
-  let basic_workon = include_str!("shell/workon.zsh");
-  let fzf_workon = include_str!("shell/workon-fzf.zsh");
-  println!("{}", fw_completion);
-  if use_fzf {
-    println!("{}", fzf_workon);
-  } else {
-    println!("{}", basic_workon);
-  }
-  Ok(())
 }
 
 mod errors;
