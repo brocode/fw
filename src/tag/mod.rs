@@ -16,14 +16,15 @@ pub fn list_tags(maybe_config: Result<Config, AppError>, maybe_project_name: Opt
   }
 }
 
-pub fn create_tag(maybe_config: Result<Config, AppError>,
-                  tag_name: String,
-                  after_workon: Option<String>,
-                  after_clone: Option<String>,
-                  priority: Option<u8>,
-                  tag_workspace: Option<String>,
-                  logger: &Logger)
-                  -> Result<(), AppError> {
+pub fn create_tag(
+  maybe_config: Result<Config, AppError>,
+  tag_name: String,
+  after_workon: Option<String>,
+  after_clone: Option<String>,
+  priority: Option<u8>,
+  tag_workspace: Option<String>,
+  logger: &Logger,
+) -> Result<(), AppError> {
   let mut config: Config = maybe_config?;
   let mut tags: BTreeMap<String, Tag> = config.settings.tags.unwrap_or_else(BTreeMap::new);
   info!(logger, "Create tag");
@@ -70,7 +71,10 @@ pub fn add_tag(maybe_config: Result<Config, AppError>, project_name: String, tag
     config.projects.insert(project_name, project);
     config::write_config(config, logger)
   } else {
-    Result::Err(AppError::UserError(format!("Unknown project {}", project_name)))
+    Result::Err(AppError::UserError(format!(
+      "Unknown project {}",
+      project_name
+    )))
   }
 }
 
@@ -88,7 +92,10 @@ pub fn remove_tag(maybe_config: Result<Config, AppError>, project_name: String, 
       Result::Ok(())
     }
   } else {
-    return Result::Err(AppError::UserError(format!("Unknown project {}", project_name)));
+    return Result::Err(AppError::UserError(format!(
+      "Unknown project {}",
+      project_name
+    )));
   }
 }
 
@@ -101,6 +108,9 @@ fn list_project_tags(config: &Config, project_name: &str) -> Result<(), AppError
     }
     Result::Ok(())
   } else {
-    Result::Err(AppError::UserError(format!("Unknown project {}", project_name)))
+    Result::Err(AppError::UserError(format!(
+      "Unknown project {}",
+      project_name
+    )))
   }
 }
