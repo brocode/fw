@@ -159,6 +159,7 @@ fn write_config(projects: BTreeMap<String, Project>, logger: &Logger, workspace_
       shell: None,
       tags: Some(BTreeMap::new()),
       github_token: None,
+      tag_from_repo: None,
     },
   };
   debug!(logger, "Finished"; "projects" => format!("{:?}", config.projects.len()));
