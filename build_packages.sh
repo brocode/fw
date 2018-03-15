@@ -5,8 +5,7 @@ set -e -u -o pipefail
 name=fw
 
 rm -rf target
-docker build rust-musl-builder -t fw-rust-musl-builder
-docker run --rm -it -v "$(pwd)":/home/rust/src fw-rust-musl-builder cargo build --release
+docker run --rm -it -v "$(pwd)":/home/rust/src ekidd/rust-musl-builder:1.24.0 cargo build --release
 
 target_dir="target/x86_64-unknown-linux-musl/release"
 
