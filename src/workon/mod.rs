@@ -3,6 +3,7 @@ use ansi_term::Style;
 use config;
 use config::Project;
 use errors::AppError;
+use serde_json;
 use slog::Logger;
 use std::env;
 use sync;
@@ -29,24 +30,24 @@ pub fn print_path(maybe_config: Result<config::Config, AppError>, name: &str, lo
   Ok(())
 }
 
-pub fn inspect(name: &str, maybe_config: Result<config::Config, AppError>, logger: &Logger) -> Result<(), AppError> {
+pub fn inspect(name: &str, maybe_config: Result<config::Config, AppError>, json: bool, logger: &Logger) -> Result<(), AppError> {
   let config = maybe_config?;
   let project = config
     .projects
     .get(name)
     .ok_or_else(|| AppError::UserError(format!("project {} not found", name)))?;
-  println!(
-    "{}",
-    Style::new().underline().bold().paint(project.name.clone())
-  );
-  let project = config
-    .projects
-    .get(name)
-    .ok_or_else(|| AppError::UserError(format!("project {} not found", name)))?;
+  if json {
+    println!("{}", serde_json::to_string(project)?);
+    return Ok(());
+  }
   let canonical_project_path = config.actual_path_to_project(project, logger);
   let path = canonical_project_path
     .to_str()
     .ok_or(AppError::InternalError("project path is not valid unicode"))?;
+  println!(
+    "{}",
+    Style::new().underline().bold().paint(project.name.clone())
+  );
   println!("{:<20}: {}", "Path", path);
   let tags = project
     .tags

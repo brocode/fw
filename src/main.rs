@@ -154,6 +154,7 @@ fn _main() -> i32 {
         .value_of("PROJECT_NAME")
         .expect("argument required by clap.rs"),
       config,
+      subcommand_matches.is_present("json"),
       &subcommand_logger,
     ),
     "projectile" => projectile::projectile(config, &subcommand_logger),
@@ -461,6 +462,13 @@ For further information please have a look at our README https://github.com/broc
             .value_name("PROJECT_NAME")
             .index(1)
             .required(true),
+        )
+        .arg(
+          Arg::with_name("json")
+            .help("output json instead of cool text")
+            .short("j")
+            .long("json")
+            .required(false),
         ),
     )
     .subcommand(
