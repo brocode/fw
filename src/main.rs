@@ -37,6 +37,8 @@ extern crate regex;
 #[cfg(test)]
 extern crate spectral;
 
+extern crate openssl_probe;
+
 use clap::{App, AppSettings, Arg, SubCommand};
 use errors::AppError;
 use slog::{Drain, Level, LevelFilter, Logger};
@@ -61,6 +63,7 @@ fn logger_from_verbosity(verbosity: u64, quiet: &bool) -> Logger {
 }
 
 fn main() {
+  openssl_probe::init_ssl_cert_env_vars();
   let return_code = _main();
   std::process::exit(return_code)
 }

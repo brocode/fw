@@ -1,0 +1,3 @@
+[submodule "rust-musl-builder"]
+	path = rust-musl-builder
+	url = https://github.com/emk/rust-musl-builder.git
