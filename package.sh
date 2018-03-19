@@ -9,9 +9,7 @@ if [ "$TRAVIS" = true ]; then
     chmod -R 777 .
 fi
 
-# docker build --pull --no-cache rust-musl-builder -t fw-rust-musl-builder
-# docker run --rm -it -v "$(pwd)":/home/rust/src fw-rust-musl-builder cargo build --release
-docker run --rm -it -v "$(pwd)":/home/rust/src bomgar/fw-rust-musl-builder:1.24.1 cargo build --release
+docker run -e LIBZ_SYS_STATIC=1 --rm -it -v "$(pwd)":/home/rust/src ekidd/rust-musl-builder:1.24.0 cargo build --release
 
 target_dir="target/x86_64-unknown-linux-musl/release"
 
