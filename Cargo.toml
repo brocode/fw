@@ -33,10 +33,6 @@ github-gql-rs = "0.0.1"
 # `libssl`. This should happen automatically, but it doesn't.
 openssl-sys = "0.9"
 
-[patch.crates-io]
-# This is needed to handle cross-compilation of libpq.
-pq-sys = { git = 'https://github.com/golddranks/pq-sys' }
-
 [dependencies.slog]
 version = "2"
 features = ["release_max_level_trace", "max_level_trace"]
