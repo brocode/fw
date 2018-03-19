@@ -26,7 +26,7 @@ rand = "0.4"
 spectral = "0.6"
 crossbeam = "0.3"
 indicatif = "0.9"
-openssl-probe = "0.1.2"
+openssl-probe = "0.1"
 github-gql-rs = "0.0.1"
 
 # This is needed to make sure that Cargo statically links against
