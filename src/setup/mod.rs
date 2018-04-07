@@ -1,7 +1,8 @@
 use config;
-use config::{Config, Project, Settings};
+use config::{Config, GitlabSettings, Project, Settings};
 use errors::AppError;
 use git2::Repository;
+use gitlab;
 use slog::Logger;
 use std::collections::BTreeMap;
 use std::fs;
@@ -106,6 +107,53 @@ pub fn org_import(maybe_config: Result<Config, AppError>, org_name: &str, logger
   Ok(())
 }
 
+pub fn gitlab_import(maybe_config: Result<Config, AppError>, logger: &Logger) -> Result<(), AppError> {
+  let mut current_config = maybe_config?;
+
+  let gitlab_config: GitlabSettings = current_config.settings.gitlab.clone().ok_or_else(|| {
+    AppError::UserError(format!(
+      "Can't call Gitlab API because no gitlab settings (settings.gitlab) specified in the configuration."
+    ))
+  })?;
+
+  let gitlab = gitlab::Gitlab::new(gitlab_config.host, gitlab_config.token)?;
+
+  // This will not cover projects from groups :/
+  let accessible_projects: Vec<gitlab::Project> = gitlab.owned_projects()?;
+
+  let new_projects: Vec<config::Project> = accessible_projects
+    .into_iter()
+    .map(|project| config::Project {
+      name: project.name.clone(),
+      git: project.ssh_url_to_repo.clone(),
+      after_clone: None,
+      after_workon: None,
+      override_path: None,
+      tags: None,
+    })
+    .collect();
+
+  let mut current_projects = current_config.projects.clone();
+
+  for new_project in new_projects {
+    if current_projects.contains_key(&new_project.name) {
+      warn!(
+        logger,
+        "Skipping new project from gitlab import because it already exists in the current fw config"; "project_name" => &new_project.name);
+    } else {
+      info!(logger, "Adding new project"; "project_name" => &new_project.name);
+
+      current_projects.insert(new_project.name.clone(), new_project);
+    }
+  }
+
+  current_config.projects = current_projects;
+
+  config::write_config(current_config, logger)?;
+
+  Ok(())
+}
+
 pub fn import(maybe_config: Result<Config, AppError>, path: &str, logger: &Logger) -> Result<(), AppError> {
   let mut config: Config = maybe_config?;
   let path = fs::canonicalize(Path::new(path))?;
@@ -159,6 +207,7 @@ fn write_config(projects: BTreeMap<String, Project>, logger: &Logger, workspace_
       shell: None,
       tags: Some(BTreeMap::new()),
       github_token: None,
+      gitlab: None,
     },
   };
   debug!(logger, "Finished"; "projects" => format!("{:?}", config.projects.len()));
