@@ -27,6 +27,7 @@ _fw() {
             'setup:Setup config from existing workspace'
             'import:Import existing git folder to fw'
             'add:Add project to workspace'
+            'remove:Remove project from workspace'
             'foreach:Run script on each project'
             'projectile:Create projectile bookmarks'
             'ls:List projects'
@@ -47,6 +48,9 @@ _fw() {
               __fw_projects;
             ;;
             update)
+              __fw_projects;
+            ;;
+            remove)
               __fw_projects;
             ;;
             export)
@@ -70,6 +74,9 @@ _fw() {
           case $words[2] in
             update)
               _arguments '*:option:(--override-path --git-url --after-clone --after-workon)';
+            ;;
+            remove)
+              _arguments '*:option:(--purge-directory)';
             ;;
             tag)
               case $words[3] in
