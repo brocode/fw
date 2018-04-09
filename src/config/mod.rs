@@ -3,7 +3,7 @@ use serde_json;
 use slog::Logger;
 use std::collections::{BTreeMap, BTreeSet};
 use std::env;
-use std::fs::File;
+use std::fs::{File, remove_dir_all};
 use std::io::BufReader;
 use std::io::Read;
 use std::path::{Path, PathBuf};
@@ -221,6 +221,35 @@ pub fn add_entry(maybe_config: Result<Config, AppError>, maybe_name: Option<&str
     );
     info!(logger, "Updated config"; "config" => format!("{:?}", config));
     write_config(config, logger)
+  }
+}
+
+pub fn remove_entry(maybe_config: Result<Config, AppError>, project_name: &str, purge_directory: bool, logger: &Logger) -> Result<(), AppError> {
+  let mut config: Config = maybe_config?;
+
+  info!(logger, "Prepare remove project entry"; "name" => project_name);
+
+  if !config.projects.contains_key(project_name) {
+    Err(AppError::UserError(format!(
+      "Project key {} does not exist in config",
+      project_name
+    )))
+  } else if let Some(project) = config.projects.get(&project_name.to_owned()).cloned() {
+    config.projects.remove(&project_name.to_owned());
+
+    info!(logger, "Updated config"; "config" => format!("{:?}", config));
+
+    if purge_directory {
+      remove_dir_all(config.actual_path_to_project(&project, logger))
+        .expect("Cannot remove directory");
+    }
+
+    write_config(config, logger)
+  } else {
+    Result::Err(AppError::UserError(format!(
+      "Unknown project {}",
+      project_name
+    )))
   }
 }
 
