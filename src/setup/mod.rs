@@ -111,9 +111,9 @@ pub fn gitlab_import(maybe_config: Result<Config, AppError>, logger: &Logger) ->
   let mut current_config = maybe_config?;
 
   let gitlab_config: GitlabSettings = current_config.settings.gitlab.clone().ok_or_else(|| {
-    AppError::UserError(format!(
-      "Can't call Gitlab API because no gitlab settings (settings.gitlab) specified in the configuration."
-    ))
+    AppError::UserError(
+      "Can't call Gitlab API because no gitlab settings (settings.gitlab) specified in the configuration.".to_string()
+    )
   })?;
 
   let gitlab = gitlab::Gitlab::new(gitlab_config.host, gitlab_config.token)?;
@@ -126,14 +126,14 @@ pub fn gitlab_import(maybe_config: Result<Config, AppError>, logger: &Logger) ->
     .map(|project| config::Project {
       name: project.name.clone(),
       git: project.ssh_url_to_repo.clone(),
-      after_clone: None,
-      after_workon: None,
+      after_clone: current_config.settings.default_after_clone.clone(),
+      after_workon: current_config.settings.default_after_workon.clone(),
       override_path: None,
-      tags: None,
+      tags: current_config.settings.default_tags.clone(),
     })
     .collect();
 
-  let mut current_projects = current_config.projects.clone();
+  let mut current_projects = current_config.projects;
 
   for new_project in new_projects {
     if current_projects.contains_key(&new_project.name) {
