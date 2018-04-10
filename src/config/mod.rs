@@ -242,7 +242,9 @@ pub fn remove_entry(maybe_config: Result<Config, AppError>, project_name: &str, 
     if purge_directory {
       let path = config.actual_path_to_project(&project, logger);
 
-      remove_dir_all(&path)?;
+      if path.exists() {
+        remove_dir_all(&path)?;
+      }
     }
     write_config(config, logger)
   } else {
