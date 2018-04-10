@@ -242,12 +242,9 @@ pub fn remove_entry(maybe_config: Result<Config, AppError>, project_name: &str, 
     if purge_directory {
       let path = config.actual_path_to_project(&project, logger);
 
-      remove_dir_all(&path)
-        .map_err(AppError::IO)
-        .and_then(|_| write_config(config, logger))
-    } else {
-      write_config(config, logger)
+      remove_dir_all(&path)?;
     }
+    write_config(config, logger)
   } else {
     Result::Err(AppError::UserError(format!(
       "Unknown project {}",
