@@ -133,21 +133,21 @@ pub fn gitlab_import(maybe_config: Result<Config, AppError>, logger: &Logger) ->
     })
     .collect();
 
-  let mut current_projects = current_config.projects;
+  {
+    let current_projects = &mut current_config.projects;
 
-  for new_project in new_projects {
-    if current_projects.contains_key(&new_project.name) {
-      warn!(
-        logger,
-        "Skipping new project from gitlab import because it already exists in the current fw config"; "project_name" => &new_project.name);
-    } else {
-      info!(logger, "Adding new project"; "project_name" => &new_project.name);
+    for new_project in new_projects {
+      if current_projects.contains_key(&new_project.name) {
+        warn!(
+          logger,
+          "Skipping new project from gitlab import because it already exists in the current fw config"; "project_name" => &new_project.name);
+      } else {
+        info!(logger, "Adding new project"; "project_name" => &new_project.name);
 
-      current_projects.insert(new_project.name.clone(), new_project);
+        current_projects.insert(new_project.name.clone(), new_project);
+      }
     }
   }
-
-  current_config.projects = current_projects;
 
   config::write_config(current_config, logger)?;
 
