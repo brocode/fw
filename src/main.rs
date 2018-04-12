@@ -98,6 +98,15 @@ fn _main() -> i32 {
         .expect("argument required by clap.rs"),
       &subcommand_logger,
     ),
+    "remove" => config::remove_entry(
+      config,
+      subcommand_matches
+        .value_of("NAME")
+        .expect("argument required by clap.rs"),
+      subcommand_matches
+        .is_present("purge-directory"),
+      &subcommand_logger,
+    ),
     "update" => {
       let name: &str = subcommand_matches
         .value_of("NAME")
@@ -395,6 +404,24 @@ For further information please have a look at our README https://github.com/broc
             .value_name("URL")
             .index(1)
             .required(true),
+        ),
+    )
+    .subcommand(
+      SubCommand::with_name("remove")
+        .alias("rm")
+        .about("Remove project from config")
+        .arg(
+          Arg::with_name("NAME")
+            .value_name("NAME")
+            .index(1)
+            .required(true),
+        )
+        .arg(
+          Arg::with_name("purge-directory")
+            .long("purge-directory")
+            .short("p")
+            .help("Purges the project directory")
+            .takes_value(false),
         ),
     )
     .subcommand(
