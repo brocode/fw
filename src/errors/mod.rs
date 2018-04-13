@@ -1,6 +1,7 @@
 use core;
 use git2;
 use github_gql;
+use gitlab;
 use regex;
 use serde_json;
 use std::error::Error;
@@ -19,6 +20,7 @@ pub enum AppError {
   GitError(git2::Error),
   Regex(regex::Error),
   GithubApiError(github_gql::errors::Error),
+  GitlabApiError(gitlab::Error),
 }
 
 impl AppError {
@@ -43,6 +45,7 @@ impl fmt::Display for AppError {
       AppError::GitError(ref err) => write!(f, "Git error: {}", err),
       AppError::Regex(ref err) => write!(f, "Regex error: {}", err),
       AppError::GithubApiError(ref err) => write!(f, "GitHub API error: {}", err),
+      AppError::GitlabApiError(ref err) => write!(f, "GitLab API error: {}", err),
     }
   }
 }
@@ -58,6 +61,7 @@ impl Error for AppError {
       AppError::GitError(ref err) => err.description(),
       AppError::Regex(ref err) => err.description(),
       AppError::GithubApiError(ref err) => err.description(),
+      AppError::GitlabApiError(ref err) => err.description(),
     }
   }
 
@@ -70,6 +74,7 @@ impl Error for AppError {
       AppError::GitError(ref err) => Some(err),
       AppError::Regex(ref err) => Some(err),
       AppError::GithubApiError(ref err) => Some(err),
+      AppError::GitlabApiError(ref err) => Some(err),
     }
   }
 }
@@ -83,6 +88,12 @@ impl From<core::num::ParseIntError> for AppError {
 impl From<github_gql::errors::Error> for AppError {
   fn from(err: github_gql::errors::Error) -> AppError {
     AppError::GithubApiError(err)
+  }
+}
+
+impl From<gitlab::Error> for AppError {
+  fn from(err: gitlab::Error) -> AppError {
+    AppError::GitlabApiError(err)
   }
 }
 

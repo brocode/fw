@@ -12,6 +12,8 @@ extern crate serde_json;
 
 extern crate github_gql;
 
+extern crate gitlab;
+
 extern crate git2;
 
 extern crate rayon;
@@ -149,6 +151,10 @@ fn _main() -> i32 {
       subcommand_matches
         .value_of("ORG_NAME")
         .expect("argument required by clap.rs"),
+      &subcommand_logger,
+    ),
+    "gitlab-import" => setup::gitlab_import(
+      config,
       &subcommand_logger,
     ),
     "gen-workon" => workon::gen(
@@ -389,6 +395,10 @@ For further information please have a look at our README https://github.com/broc
             .index(1)
             .required(true),
         ),
+    )
+    .subcommand(
+      SubCommand::with_name("gitlab-import")
+        .about("Import all accessible repositories from a gitlab host into fw")
     )
     .subcommand(
       SubCommand::with_name("add")

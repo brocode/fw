@@ -17,6 +17,13 @@ pub struct Settings {
   pub default_tags: Option<BTreeSet<String>>,
   pub tags: Option<BTreeMap<String, Tag>>,
   pub github_token: Option<String>,
+  pub gitlab: Option<GitlabSettings>,
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct GitlabSettings {
+  pub host: String,
+  pub token: String,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -525,6 +532,7 @@ mod tests {
       shell: None,
       tags: Some(tags),
       github_token: None,
+      gitlab: None,
     };
     Config {
       projects: projects,
