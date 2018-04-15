@@ -36,6 +36,7 @@ _fw() {
             'tag:Manipulate tags'
             'export:Exports a project as shell commands'
             'print-path:Print project path to stdout'
+            'org-import:Import all repositories from a github org'
           );
           _describe action actions && ret=0;
         ;;
