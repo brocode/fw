@@ -131,8 +131,8 @@ fw tag tag-project why-i-suck unknown_tag
       ]),
       after_clone: Some("echo 1".to_owned()),
       after_workon: Some("echo 2".to_owned()),
-
       override_path: Some("/home/bauer/docs/why-i-suck".to_string()),
+      bare: None,
     };
     let tag1 = Tag {
       after_clone: Some("clone1".to_owned()),

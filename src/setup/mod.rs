@@ -90,6 +90,7 @@ pub fn org_import(maybe_config: Result<Config, AppError>, org_name: &str, logger
     after_workon: None,
     override_path: None,
     tags: None,
+    bare: None,
   });
   for new_project in new_projects {
     if current_projects.contains_key(&new_project.name) {
@@ -145,6 +146,7 @@ fn load_project(path_to_repo: PathBuf, name: &str, logger: &Logger) -> Result<Pr
     after_workon: None,
     override_path: None,
     tags: None,
+    bare: None,
   })
 }
 

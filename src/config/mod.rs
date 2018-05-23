@@ -35,6 +35,7 @@ pub struct Project {
   pub after_workon: Option<String>,
   pub override_path: Option<String>,
   pub tags: Option<BTreeSet<String>>,
+  pub bare: Option<bool>,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -217,6 +218,7 @@ pub fn add_entry(maybe_config: Result<Config, AppError>, maybe_name: Option<&str
         after_workon: config.settings.default_after_workon.clone(),
         override_path: None,
         tags: config.settings.default_tags.clone(),
+        bare: None,
       },
     );
     info!(logger, "Updated config"; "config" => format!("{:?}", config));
@@ -291,6 +293,7 @@ pub fn update_entry(
         after_workon: after_workon.or(old_project_config.after_workon),
         override_path: override_path.or(old_project_config.override_path),
         tags: None,
+        bare: None,
       },
     );
     debug!(logger, "Updated config"; "config" => format!("{:?}", config));
@@ -446,6 +449,7 @@ mod tests {
       after_clone: None,
       after_workon: None,
       override_path: None,
+      bare: None,
     };
     let project2 = Project {
       name: "test2".to_owned(),
@@ -457,6 +461,7 @@ mod tests {
       after_clone: None,
       after_workon: None,
       override_path: None,
+      bare: None,
     };
     let project3 = Project {
       name: "test3".to_owned(),
@@ -465,6 +470,7 @@ mod tests {
       after_clone: Some("clone override in project".to_owned()),
       after_workon: Some("workon override in project".to_owned()),
       override_path: None,
+      bare: None,
     };
     let project4 = Project {
       name: "test4".to_owned(),
@@ -473,6 +479,7 @@ mod tests {
       after_clone: None,
       after_workon: None,
       override_path: None,
+      bare: None,
     };
     let project5 = Project {
       name: "test5".to_owned(),
@@ -481,6 +488,7 @@ mod tests {
       after_clone: None,
       after_workon: None,
       override_path: None,
+      bare: None,
     };
     let tag1 = Tag {
       after_clone: Some("clone1".to_owned()),

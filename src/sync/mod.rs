@@ -231,7 +231,7 @@ pub fn foreach(
 
 fn update_project_remotes(project: &Project, path: &PathBuf, project_logger: &Logger) -> Result<(), AppError> {
   debug!(project_logger, "Update project remotes");
-  let local = Repository::init(path).map_err(|error| {
+  let local = Repository::open(path).map_err(|error| {
     warn!(project_logger, "Error opening local repo"; "error" => format!("{}", error));
     AppError::GitError(error)
   })?;
@@ -263,6 +263,7 @@ fn clone_project(config: &Config, project: &Project, path: &PathBuf, project_log
   let mut repo_builder = builder(&git_user);
   debug!(project_logger, "Cloning project");
   repo_builder
+    .bare(project.bare.unwrap_or_default())
     .clone(project.git.as_str(), path)
     .map_err(|error| {
       warn!(project_logger, "Error cloning repo"; "error" => format!("{}", error));
