@@ -152,7 +152,7 @@ fn load_project(path_to_repo: PathBuf, name: &str, logger: &Logger) -> Result<Pr
 
 fn write_config(projects: BTreeMap<String, Project>, logger: &Logger, workspace_dir: &str) -> Result<(), AppError> {
   let config = Config {
-    projects: projects,
+    projects,
     settings: Settings {
       workspace: workspace_dir.to_owned(),
       default_after_workon: None,

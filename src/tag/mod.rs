@@ -29,9 +29,9 @@ pub fn create_tag(
   let mut tags: BTreeMap<String, Tag> = config.settings.tags.unwrap_or_else(BTreeMap::new);
   info!(logger, "Create tag");
   let new_tag = Tag {
-    after_clone: after_clone,
-    after_workon: after_workon,
-    priority: priority,
+    after_clone,
+    after_workon,
+    priority,
     workspace: tag_workspace,
   };
   tags.insert(tag_name, new_tag);
