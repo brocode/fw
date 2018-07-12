@@ -10,6 +10,8 @@ extern crate slog_term;
 extern crate serde_derive;
 extern crate serde_json;
 
+extern crate dirs;
+
 extern crate github_gql;
 
 extern crate git2;
@@ -45,9 +47,9 @@ use slog::{Drain, Level, LevelFilter, Logger};
 use std::str::FromStr;
 use std::time::SystemTime;
 
-fn logger_from_verbosity(verbosity: u64, quiet: &bool) -> Logger {
+fn logger_from_verbosity(verbosity: u64, quiet: bool) -> Logger {
   let log_level: Level = match verbosity {
-    _ if *quiet => Level::Error,
+    _ if quiet => Level::Error,
     0 => Level::Warning,
     1 => Level::Info,
     2 => Level::Debug,
@@ -71,7 +73,7 @@ fn main() {
 fn _main() -> i32 {
   let matches = app().get_matches();
 
-  let logger = logger_from_verbosity(matches.occurrences_of("v"), &matches.is_present("q"));
+  let logger = logger_from_verbosity(matches.occurrences_of("v"), matches.is_present("q"));
   let config = config::get_config(&logger);
 
   let subcommand_name = matches

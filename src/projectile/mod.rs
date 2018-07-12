@@ -2,11 +2,11 @@ use config::Config;
 use errors::AppError;
 use regex::Regex;
 use slog::Logger;
-use std::env;
 use std::fs;
 use std::io;
 use std::io::Write;
 use std::path::PathBuf;
+use dirs;
 
 pub fn projectile(maybe_config: Result<Config, AppError>, logger: &Logger) -> Result<(), AppError> {
   let config: Config = maybe_config?;
@@ -16,7 +16,7 @@ pub fn projectile(maybe_config: Result<Config, AppError>, logger: &Logger) -> Re
     .into_iter()
     .map(|(_, p)| config.actual_path_to_project(&p, logger))
     .collect();
-  let home_dir: PathBuf = env::home_dir().ok_or_else(|| AppError::UserError("$HOME not set".to_owned()))?;
+  let home_dir: PathBuf = dirs::home_dir().ok_or_else(|| AppError::UserError("$HOME not set".to_owned()))?;
   let mut projectile_bookmarks: PathBuf = home_dir.clone();
   projectile_bookmarks.push(".emacs.d");
   projectile_bookmarks.push("projectile-bookmarks.eld");

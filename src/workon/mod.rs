@@ -104,7 +104,7 @@ pub fn reworkon(maybe_config: Result<config::Config, AppError>, logger: &Logger)
     &commands.join(" && "),
     &path,
     &project.name,
-    &Colour::Yellow,
+    Colour::Yellow,
     logger,
   )
 }

@@ -80,7 +80,7 @@ fn builder(git_user: &str) -> RepoBuilder {
   repo_builder
 }
 
-fn forward_process_output_to_stdout<T: std::io::Read>(read: T, prefix: &str, colour: &Colour, atty: bool, mark_err: bool) -> Result<(), AppError> {
+fn forward_process_output_to_stdout<T: std::io::Read>(read: T, prefix: &str, colour: Colour, atty: bool, mark_err: bool) -> Result<(), AppError> {
   let mut buf = BufReader::new(read);
   loop {
     let mut line = String::new();
@@ -112,7 +112,7 @@ fn forward_process_output_to_stdout<T: std::io::Read>(read: T, prefix: &str, col
   Ok(())
 }
 
-pub fn spawn_maybe(shell: &[String], cmd: &str, workdir: &PathBuf, project_name: &str, colour: &Colour, logger: &Logger) -> Result<(), AppError> {
+pub fn spawn_maybe(shell: &[String], cmd: &str, workdir: &PathBuf, project_name: &str, colour: Colour, logger: &Logger) -> Result<(), AppError> {
   let program: &str = shell
     .first()
     .ok_or_else(|| AppError::UserError("shell entry in project settings must have at least one element".to_owned()))?;
@@ -128,11 +128,10 @@ pub fn spawn_maybe(shell: &[String], cmd: &str, workdir: &PathBuf, project_name:
     .spawn()?;
 
   let stdout_child = if let Some(stdout) = result.stdout.take() {
-    let colour = *colour;
     let project_name = project_name.to_owned();
     Some(thread::spawn(move || {
       let atty: bool = is_stdout_a_tty();
-      forward_process_output_to_stdout(stdout, &project_name, &colour, atty, false)
+      forward_process_output_to_stdout(stdout, &project_name, colour, atty, false)
     }))
   } else {
     None
@@ -218,7 +217,7 @@ pub fn foreach(
         cmd,
         &path,
         &p.name,
-        &random_colour(),
+        random_colour(),
         &project_logger,
       )
     })
@@ -278,7 +277,7 @@ fn clone_project(config: &Config, project: &Project, path: &PathBuf, project_log
           &after_clone.join(" && "),
           path,
           &project.name,
-          &random_colour(),
+          random_colour(),
           project_logger,
         ).map_err(|error| {
           AppError::UserError(format!(

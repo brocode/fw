@@ -7,6 +7,7 @@ use std::fs::{File, remove_dir_all};
 use std::io::BufReader;
 use std::io::Read;
 use std::path::{Path, PathBuf};
+use dirs;
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Settings {
@@ -324,7 +325,7 @@ fn do_expand(path: PathBuf, home_dir: Option<PathBuf>) -> PathBuf {
 
 pub fn expand_path(path: PathBuf) -> PathBuf {
   if path.starts_with("~") {
-    do_expand(path, env::home_dir())
+    do_expand(path, dirs::home_dir())
   } else {
     path
   }
