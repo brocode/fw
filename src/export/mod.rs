@@ -1,24 +1,20 @@
 use config::{Config, Project};
-use errors::AppError;
-use std::error::Error;
+use errors::*;
 
-pub fn export_project(maybe_config: Result<Config, AppError>, name: &str) -> Result<(), AppError> {
+pub fn export_project(maybe_config: Result<Config>, name: &str) -> Result<()> {
   let config = maybe_config?;
   let project: &Project = config
     .projects
     .get(name)
-    .ok_or_else(|| AppError::UserError(format!("project {} not found", name)))?;
+    .chain_err(|| ErrorKind::UserError(format!("project {} not found", name)))?;
   println!("{}", project_to_shell_commands(&config, project)?);
   Ok(())
 }
 
-fn project_to_shell_commands(config: &Config, project: &Project) -> Result<String, AppError> {
+fn project_to_shell_commands(config: &Config, project: &Project) -> Result<String> {
   fn push_update(commands: &mut Vec<String>, parameter_name: &str, maybe_value: &Option<String>, project_name: &str) {
     if let Some(ref value) = *maybe_value {
-      commands.push(format!(
-        "fw update {} --{} \"{}\"",
-        project_name, parameter_name, value
-      ))
+      commands.push(format!("fw update {} --{} \"{}\"", project_name, parameter_name, value))
     }
   }
 
@@ -26,24 +22,9 @@ fn project_to_shell_commands(config: &Config, project: &Project) -> Result<Strin
   shell_commands.push("# fw export".to_owned());
 
   shell_commands.push(format!("fw add {} {}", project.git, project.name));
-  push_update(
-    &mut shell_commands,
-    "override-path",
-    &project.override_path,
-    &project.name,
-  );
-  push_update(
-    &mut shell_commands,
-    "after-workon",
-    &project.after_workon,
-    &project.name,
-  );
-  push_update(
-    &mut shell_commands,
-    "after-clone",
-    &project.after_clone,
-    &project.name,
-  );
+  push_update(&mut shell_commands, "override-path", &project.override_path, &project.name);
+  push_update(&mut shell_commands, "after-workon", &project.after_workon, &project.name);
+  push_update(&mut shell_commands, "after-clone", &project.after_clone, &project.name);
 
   if let Some(ref tags) = project.tags {
     for tag in tags {
@@ -58,7 +39,7 @@ fn project_to_shell_commands(config: &Config, project: &Project) -> Result<Strin
   Ok(shell_commands.join("\n") + "\n")
 }
 
-fn tag_to_shell_commands(tag_name: &str, config: &Config) -> Result<String, AppError> {
+fn tag_to_shell_commands(tag_name: &str, config: &Config) -> Result<String> {
   if let Some(ref tags) = config.settings.tags {
     if let Some(tag) = tags.get(tag_name) {
       let after_workon = tag
@@ -71,24 +52,18 @@ fn tag_to_shell_commands(tag_name: &str, config: &Config) -> Result<String, AppE
         .clone()
         .map(|a| format!(" --after-clone=\"{}\"", a))
         .unwrap_or_else(|| "".to_string());
-      let priority = tag
-        .priority
-        .map(|p| format!(" --priority=\"{}\"", p))
-        .unwrap_or_else(|| "".to_string());
+      let priority = tag.priority.map(|p| format!(" --priority=\"{}\"", p)).unwrap_or_else(|| "".to_string());
       let workspace = tag
         .workspace
         .clone()
         .map(|p| format!(" --workspace=\"{}\"", p))
         .unwrap_or_else(|| "".to_string());
-      Ok(format!(
-        "fw tag add {}{}{}{}{}",
-        tag_name, after_workon, after_clone, priority, workspace
-      ))
+      Ok(format!("fw tag add {}{}{}{}{}", tag_name, after_workon, after_clone, priority, workspace))
     } else {
-      Result::Err(AppError::UserError(format!("Unknown tag {}", tag_name)))
+      Err(ErrorKind::UserError(format!("Unknown tag {}", tag_name)).into())
     }
   } else {
-    Result::Err(AppError::UserError("No tags configured".to_string()))
+    Err(ErrorKind::UserError("No tags configured".to_string()).into())
   }
 }
 
@@ -124,11 +99,7 @@ fw tag tag-project why-i-suck unknown_tag
     let project = Project {
       name: "why-i-suck".to_owned(),
       git: "git@github.com:codingberlin/why-i-suck.git".to_owned(),
-      tags: Some(btreeset![
-        "tag1".to_owned(),
-        "tag2".to_owned(),
-        "unknown_tag".to_owned(),
-      ]),
+      tags: Some(btreeset!["tag1".to_owned(), "tag2".to_owned(), "unknown_tag".to_owned(),]),
       after_clone: Some("echo 1".to_owned()),
       after_workon: Some("echo 2".to_owned()),
       override_path: Some("/home/bauer/docs/why-i-suck".to_string()),

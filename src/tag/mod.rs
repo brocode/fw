@@ -1,11 +1,11 @@
 use config;
 use config::Config;
 use config::Tag;
-use errors::AppError;
+use errors::*;
 use slog::Logger;
 use std::collections::{BTreeMap, BTreeSet};
 
-pub fn list_tags(maybe_config: Result<Config, AppError>, maybe_project_name: Option<String>, logger: &Logger) -> Result<(), AppError> {
+pub fn list_tags(maybe_config: Result<Config>, maybe_project_name: Option<String>, logger: &Logger) -> Result<()> {
   let config: Config = maybe_config?;
   if let Some(project_name) = maybe_project_name {
     debug!(logger, "Listing tags for project"; "project" => &project_name);
@@ -17,14 +17,14 @@ pub fn list_tags(maybe_config: Result<Config, AppError>, maybe_project_name: Opt
 }
 
 pub fn create_tag(
-  maybe_config: Result<Config, AppError>,
+  maybe_config: Result<Config>,
   tag_name: String,
   after_workon: Option<String>,
   after_clone: Option<String>,
   priority: Option<u8>,
   tag_workspace: Option<String>,
   logger: &Logger,
-) -> Result<(), AppError> {
+) -> Result<()> {
   let mut config: Config = maybe_config?;
   let mut tags: BTreeMap<String, Tag> = config.settings.tags.unwrap_or_else(BTreeMap::new);
   info!(logger, "Create tag");
@@ -39,7 +39,7 @@ pub fn create_tag(
   config::write_config(config, logger)
 }
 
-pub fn delete_tag(maybe_config: Result<Config, AppError>, tag_name: &str, logger: &Logger) -> Result<(), AppError> {
+pub fn delete_tag(maybe_config: Result<Config>, tag_name: &str, logger: &Logger) -> Result<()> {
   let mut config: Config = maybe_config?;
   let mut tags: BTreeMap<String, Tag> = config.settings.tags.unwrap_or_else(BTreeMap::new);
   info!(logger, "Delete tag"; "tag" => tag_name);
@@ -47,20 +47,20 @@ pub fn delete_tag(maybe_config: Result<Config, AppError>, tag_name: &str, logger
     config.settings.tags = Some(tags);
     config::write_config(config, logger)
   } else {
-    Result::Ok(())
+    Ok(())
   }
 }
 
-fn list_all_tags(config: Config) -> Result<(), AppError> {
+fn list_all_tags(config: Config) -> Result<()> {
   if let Some(tags) = config.settings.tags {
     for tag_name in tags.keys() {
       println!("{}", tag_name);
     }
   }
-  Result::Ok(())
+  Ok(())
 }
 
-pub fn add_tag(maybe_config: Result<Config, AppError>, project_name: String, tag_name: String, logger: &Logger) -> Result<(), AppError> {
+pub fn add_tag(maybe_config: Result<Config>, project_name: String, tag_name: String, logger: &Logger) -> Result<()> {
   let mut config: Config = maybe_config?;
 
   if let Some(mut project) = config.projects.get(&project_name).cloned() {
@@ -71,14 +71,11 @@ pub fn add_tag(maybe_config: Result<Config, AppError>, project_name: String, tag
     config.projects.insert(project_name, project);
     config::write_config(config, logger)
   } else {
-    Result::Err(AppError::UserError(format!(
-      "Unknown project {}",
-      project_name
-    )))
+    Err(ErrorKind::UserError(format!("Unknown project {}", project_name)).into())
   }
 }
 
-pub fn remove_tag(maybe_config: Result<Config, AppError>, project_name: String, tag_name: &str, logger: &Logger) -> Result<(), AppError> {
+pub fn remove_tag(maybe_config: Result<Config>, project_name: String, tag_name: &str, logger: &Logger) -> Result<()> {
   let mut config: Config = maybe_config?;
 
   if let Some(mut project) = config.projects.get(&project_name).cloned() {
@@ -89,28 +86,22 @@ pub fn remove_tag(maybe_config: Result<Config, AppError>, project_name: String, 
       config.projects.insert(project_name, project);
       config::write_config(config, logger)
     } else {
-      Result::Ok(())
+      Ok(())
     }
   } else {
-    return Result::Err(AppError::UserError(format!(
-      "Unknown project {}",
-      project_name
-    )));
+    return Err(ErrorKind::UserError(format!("Unknown project {}", project_name)).into());
   }
 }
 
-fn list_project_tags(config: &Config, project_name: &str) -> Result<(), AppError> {
+fn list_project_tags(config: &Config, project_name: &str) -> Result<()> {
   if let Some(project) = config.projects.get(project_name) {
     if let Some(tags) = project.clone().tags {
       for tag_name in tags {
         println!("{}", tag_name);
       }
     }
-    Result::Ok(())
+    Ok(())
   } else {
-    Result::Err(AppError::UserError(format!(
-      "Unknown project {}",
-      project_name
-    )))
+    Err(ErrorKind::UserError(format!("Unknown project {}", project_name)).into())
   }
 }

@@ -1,14 +1,14 @@
 use config::Config;
-use errors::AppError;
+use dirs;
+use errors::*;
 use regex::Regex;
 use slog::Logger;
 use std::fs;
 use std::io;
 use std::io::Write;
 use std::path::PathBuf;
-use dirs;
 
-pub fn projectile(maybe_config: Result<Config, AppError>, logger: &Logger) -> Result<(), AppError> {
+pub fn projectile(maybe_config: Result<Config>, logger: &Logger) -> Result<()> {
   let config: Config = maybe_config?;
   let projects_paths: Vec<PathBuf> = config
     .clone()
@@ -16,7 +16,7 @@ pub fn projectile(maybe_config: Result<Config, AppError>, logger: &Logger) -> Re
     .into_iter()
     .map(|(_, p)| config.actual_path_to_project(&p, logger))
     .collect();
-  let home_dir: PathBuf = dirs::home_dir().ok_or_else(|| AppError::UserError("$HOME not set".to_owned()))?;
+  let home_dir: PathBuf = dirs::home_dir().chain_err(|| ErrorKind::UserError("$HOME not set".to_owned()))?;
   let mut projectile_bookmarks: PathBuf = home_dir.clone();
   projectile_bookmarks.push(".emacs.d");
   projectile_bookmarks.push("projectile-bookmarks.eld");
@@ -24,14 +24,11 @@ pub fn projectile(maybe_config: Result<Config, AppError>, logger: &Logger) -> Re
   persist(logger, &home_dir, writer, projects_paths)
 }
 
-fn persist<W>(logger: &Logger, home_dir: &PathBuf, writer: W, paths: Vec<PathBuf>) -> Result<(), AppError>
+fn persist<W>(logger: &Logger, home_dir: &PathBuf, writer: W, paths: Vec<PathBuf>) -> Result<()>
 where
   W: io::Write,
 {
-  let paths: Vec<String> = paths
-    .into_iter()
-    .flat_map(|path_buf| path_buf.to_str().map(|p| p.to_owned()))
-    .collect();
+  let paths: Vec<String> = paths.into_iter().flat_map(|path_buf| path_buf.to_str().map(|p| p.to_owned())).collect();
   let mut buffer = io::BufWriter::new(writer);
   buffer.write_all(b"(")?;
   for path in paths {
@@ -44,11 +41,8 @@ where
   Ok(())
 }
 
-fn replace_path_with_tilde(path: &str, path_to_replace: PathBuf) -> Result<String, AppError> {
-  let replace_string = path_to_replace
-    .into_os_string()
-    .into_string()
-    .expect("path should be a valid string");
+fn replace_path_with_tilde(path: &str, path_to_replace: PathBuf) -> Result<String> {
+  let replace_string = path_to_replace.into_os_string().into_string().expect("path should be a valid string");
   let mut pattern: String = "^".to_string();
   pattern.push_str(&replace_string);
   let regex = Regex::new(&pattern)?;
@@ -67,10 +61,7 @@ mod tests {
     use std::str;
     let mut buffer = Cursor::new(vec![0; 61]);
     let logger = a_logger();
-    let paths = vec![
-      PathBuf::from("/home/mriehl/test"),
-      PathBuf::from("/home/mriehl/go/src/github.com/test2"),
-    ];
+    let paths = vec![PathBuf::from("/home/mriehl/test"), PathBuf::from("/home/mriehl/go/src/github.com/test2")];
 
     let home_dir = Path::new("/home/blubb").to_path_buf();
     persist(&logger, &home_dir, &mut buffer, paths).unwrap();
