@@ -506,8 +506,8 @@ mod tests {
       github_token: None,
     };
     Config {
-      projects: projects,
-      settings: settings,
+      projects,
+      settings,
     }
   }
 
