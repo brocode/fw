@@ -88,6 +88,7 @@ fn _main() -> i32 {
       config,
       subcommand_matches.is_present("no-progress-bar"),
       subcommand_matches.is_present("only-new"),
+      subcommand_matches.is_present("fast-forward-merge"),
       &subcommand_logger,
     ),
     "add" => config::add_entry(
@@ -257,6 +258,7 @@ For further information please have a look at our README https://github.com/broc
       SubCommand::with_name("sync")
         .about("Sync workspace. Clones projects or updates remotes for existing projects.")
         .arg(Arg::with_name("no-progress-bar").long("no-progress-bar").short("q").takes_value(false))
+        .arg(Arg::with_name("fast-forward-merge").long("ff-merge").help("Fast forward merges current branch if possible. (Experimental!)").takes_value(false))
         .arg(
           Arg::with_name("only-new")
             .long("only-new")

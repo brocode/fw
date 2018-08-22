@@ -5,11 +5,7 @@ use crossbeam::queue::MsQueue;
 use errors::*;
 use git2;
 use git2::build::RepoBuilder;
-use git2::AutotagOption;
-use git2::Direction;
-use git2::FetchOptions;
-use git2::RemoteCallbacks;
-use git2::Repository;
+use git2::{AutotagOption, Branch, Direction, FetchOptions, MergeAnalysis, RemoteCallbacks, Repository};
 use indicatif::{MultiProgress, ProgressBar, ProgressDrawTarget, ProgressStyle};
 use rand;
 use rand::Rng;
@@ -189,13 +185,12 @@ pub fn foreach(maybe_config: Result<Config>, cmd: &str, tags: &BTreeSet<String>,
       let path = config.actual_path_to_project(p, &project_logger);
       info!(project_logger, "Entering");
       spawn_maybe(&shell, cmd, &path, &p.name, random_colour(), &project_logger)
-    })
-    .collect::<Vec<Result<()>>>();
+    }).collect::<Vec<Result<()>>>();
 
   script_results.into_iter().fold(Ok(()), |accu, maybe_error| accu.and(maybe_error))
 }
 
-fn update_project_remotes(project: &Project, path: &PathBuf, project_logger: &Logger) -> Result<()> {
+fn update_project_remotes(project: &Project, path: &PathBuf, project_logger: &Logger, ff_merge: bool) -> Result<()> {
   debug!(project_logger, "Update project remotes");
   let local: Repository = Repository::open(path).map_err(|error| {
     warn!(project_logger, "Error opening local repo"; "error" => format!("{}", error));
@@ -216,6 +211,35 @@ fn update_project_remotes(project: &Project, path: &PathBuf, project_logger: &Lo
   })?;
   remote.disconnect();
   remote.update_tips(None, true, AutotagOption::Unspecified, None)?;
+
+  if ff_merge {
+    if let Err(error) = fast_forward_merge(&local, project_logger) {
+      debug!(project_logger, "Fast forward failed: {}", error)
+    }
+  }
+
+  Ok(())
+}
+
+fn fast_forward_merge(local: &Repository, project_logger: &Logger) -> Result<()> {
+  let head_ref = local.head()?;
+  if head_ref.is_branch() {
+    let branch = Branch::wrap(head_ref);
+    let upstream = branch.upstream()?;
+    let upstream_commit = local.reference_to_annotated_commit(upstream.get())?;
+
+    debug!(project_logger, "Check fast forward for {:?} {:?}", branch.name(), upstream.name());
+
+    let (analysis_result, _) = local.merge_analysis(&[&upstream_commit])?;
+    if MergeAnalysis::is_fast_forward(&analysis_result) {
+      debug!(project_logger, "Fast forward possible");
+      let target_id = upstream_commit.id();
+      local.checkout_tree(&local.find_object(upstream_commit.id(), None)?, None)?;
+      local.head()?.set_target(target_id, "fw fast-forward")?;
+    } else {
+      debug!(project_logger, "Fast forward not possible: {:?}", analysis_result)
+    }
+  }
   Ok(())
 }
 
@@ -230,8 +254,7 @@ fn clone_project(config: &Config, project: &Project, path: &PathBuf, project_log
     .map_err(|error| {
       warn!(project_logger, "Error cloning repo"; "error" => format!("{}", error));
       error.into()
-    })
-    .and_then(|_| {
+    }).and_then(|_| {
       let after_clone = config.resolve_after_clone(project_logger, project);
       if !after_clone.is_empty() {
         debug!(project_logger, "Handling post hooks"; "after_clone" => format!("{:?}", after_clone));
@@ -243,7 +266,7 @@ fn clone_project(config: &Config, project: &Project, path: &PathBuf, project_log
     })
 }
 
-fn sync_project(config: &Config, project: &Project, logger: &Logger, only_new: bool) -> Result<()> {
+fn sync_project(config: &Config, project: &Project, logger: &Logger, only_new: bool, ff_merge: bool) -> Result<()> {
   let path = config.actual_path_to_project(project, logger);
   let exists = path.exists();
   let project_logger = logger.new(o!(
@@ -255,13 +278,13 @@ fn sync_project(config: &Config, project: &Project, logger: &Logger, only_new: b
     if only_new {
       Ok(())
     } else {
-      update_project_remotes(project, &path, &project_logger)
+      update_project_remotes(project, &path, &project_logger, ff_merge)
     }
   } else {
     clone_project(config, project, &path, &project_logger)
   }
 }
-pub fn synchronize(maybe_config: Result<Config>, no_progress_bar: bool, only_new: bool, logger: &Logger) -> Result<()> {
+pub fn synchronize(maybe_config: Result<Config>, no_progress_bar: bool, only_new: bool, ff_merge: bool, logger: &Logger) -> Result<()> {
   eprintln!("Synchronizing everything");
   if !ssh_agent_running() {
     warn!(logger, "SSH Agent not running. Process may hang.")
@@ -306,7 +329,7 @@ pub fn synchronize(maybe_config: Result<Config>, no_progress_bar: bool, only_new
       loop {
         if let Some(project) = job_q.try_pop() {
           pb.set_message(&project.name);
-          let sync_result = sync_project(&job_config, &project, &job_logger, only_new);
+          let sync_result = sync_project(&job_config, &project, &job_logger, only_new, ff_merge);
           job_result = job_result.and(sync_result);
         } else {
           pb.finish_with_message("waiting...");
