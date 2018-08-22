@@ -1,7 +1,7 @@
 use ansi_term::Colour;
 use atty;
 use config::{Config, Project, Settings};
-use crossbeam::sync::MsQueue;
+use crossbeam::queue::MsQueue;
 use errors::*;
 use git2;
 use git2::build::RepoBuilder;
