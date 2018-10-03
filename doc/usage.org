@@ -20,7 +20,7 @@
   From now on you can
 
   #+BEGIN_SRC bash
-  fw sync
+  fw sync # Make sure your ssh agent has your key otherwise this command will just hang because it waits for your password (you can't enter it!).
   #+END_SRC
 
   which will clone all missing projects that are described by ~.fw.json~ but not present in your workspace.
