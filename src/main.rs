@@ -91,12 +91,15 @@ fn _main() -> i32 {
       subcommand_matches.is_present("fast-forward-merge"),
       &subcommand_logger,
     ),
-    "add" => config::add_entry(
-      config,
-      subcommand_matches.value_of("NAME"),
-      subcommand_matches.value_of("URL").expect("argument required by clap.rs"),
-      &subcommand_logger,
-    ),
+    "add" => {
+        let name: Option<&str> = subcommand_matches.value_of("NAME");
+        let url: &str = subcommand_matches.value_of("URL").expect("argument required by clap.rs");
+        let after_workon: Option<String> = subcommand_matches.value_of("after-workon").map(str::to_string);
+        let after_clone: Option<String> = subcommand_matches.value_of("after-clone").map(str::to_string);
+        let override_path: Option<String> = subcommand_matches.value_of("override-path").map(str::to_string);
+        config::add_entry( config, name, url, after_workon, after_clone, override_path, &subcommand_logger)
+    }
+
     "remove" => config::remove_entry(
       config,
       subcommand_matches.value_of("NAME").expect("argument required by clap.rs"),
@@ -296,7 +299,28 @@ For further information please have a look at our README https://github.com/broc
       SubCommand::with_name("add")
         .about("Add project to config")
         .arg(Arg::with_name("NAME").value_name("NAME").index(2).required(false))
-        .arg(Arg::with_name("URL").value_name("URL").index(1).required(true)),
+        .arg(Arg::with_name("URL").value_name("URL").index(1).required(true))
+        .arg(
+          Arg::with_name("override-path")
+            .value_name("override-path")
+            .long("override-path")
+            .takes_value(true)
+            .required(false),
+        )
+        .arg(
+          Arg::with_name("after-workon")
+            .value_name("after-workon")
+            .long("after-workon")
+            .takes_value(true)
+            .required(false),
+        )
+        .arg(
+          Arg::with_name("after-clone")
+            .value_name("after-clone")
+            .long("after-clone")
+            .takes_value(true)
+            .required(false),
+        ),
     )
     .subcommand(
       SubCommand::with_name("remove")

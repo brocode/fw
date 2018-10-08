@@ -200,7 +200,15 @@ fn repo_name_from_url(url: &str) -> Result<&str> {
   })
 }
 
-pub fn add_entry(maybe_config: Result<Config>, maybe_name: Option<&str>, url: &str, logger: &Logger) -> Result<()> {
+pub fn add_entry(
+    maybe_config: Result<Config>,
+    maybe_name: Option<&str>,
+    url: &str,
+    after_workon: Option<String>,
+    after_clone: Option<String>,
+    override_path: Option<String>,
+    logger: &Logger
+) -> Result<()> {
   let name = maybe_name
     .ok_or_else(|| ErrorKind::UserError(format!("No project name specified for {}", url)))
     .or_else(|_| repo_name_from_url(url))?;
@@ -214,9 +222,9 @@ pub fn add_entry(maybe_config: Result<Config>, maybe_name: Option<&str>, url: &s
       Project {
         git: url.to_owned(),
         name: name.to_owned(),
-        after_clone: config.settings.default_after_clone.clone(),
-        after_workon: config.settings.default_after_workon.clone(),
-        override_path: None,
+        after_clone: after_clone.or(config.settings.default_after_clone.clone()),
+        after_workon: after_workon.or(config.settings.default_after_workon.clone()),
+        override_path: override_path,
         tags: config.settings.default_tags.clone(),
         bare: None,
       },
