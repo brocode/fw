@@ -224,7 +224,7 @@ pub fn add_entry(
         name: name.to_owned(),
         after_clone: after_clone.or(config.settings.default_after_clone.clone()),
         after_workon: after_workon.or(config.settings.default_after_workon.clone()),
-        override_path: override_path.or(None),
+        override_path: override_path,
         tags: config.settings.default_tags.clone(),
         bare: None,
       },

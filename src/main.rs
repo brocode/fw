@@ -98,11 +98,6 @@ fn _main() -> i32 {
         let after_clone: Option<String> = subcommand_matches.value_of("after-clone").map(str::to_string);
         let override_path: Option<String> = subcommand_matches.value_of("override-path").map(str::to_string);
         config::add_entry( config, name, url, after_workon, after_clone, override_path, &subcommand_logger)
-        // config::add_entry(
-        //     config,
-        //     subcommand_matches.value_of("NAME"),
-        //     subcommand_matches.value_of("URL").expect("argument required by clap.rs"),
-        //     &subcommand_logger,
     }
 
     "remove" => config::remove_entry(
