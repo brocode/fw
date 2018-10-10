@@ -68,15 +68,22 @@ pub fn org_import(maybe_config: Result<Config>, org_name: &str, logger: &Logger)
   let mut api = github::github_api(token)?;
   let mut current_projects = current_config.projects.clone();
   let org_repository_names: Vec<String> = api.list_repositories(org_name)?;
-  let new_projects = org_repository_names.into_iter().map(|repo_name| Project {
-    name: repo_name.clone(),
-    git: format!("git@github.com:{}/{}.git", org_name, repo_name),
-    after_clone: None,
-    after_workon: None,
-    override_path: None,
-    tags: None,
-    bare: None,
-  });
+  let new_projects = {
+
+    let after_clone= current_config.settings.default_after_clone.clone();
+    let after_workon= current_config.settings.default_after_workon.clone();
+    let tags= current_config.settings.default_tags.clone();
+
+    org_repository_names.into_iter().map(move |repo_name| Project {
+      name: repo_name.clone(),
+      git: format!("git@github.com:{}/{}.git", org_name, repo_name),
+      after_clone: after_clone.clone(),
+      after_workon: after_workon.clone(),
+      override_path: None,
+      tags: tags.clone(),
+      bare: None,
+    })
+  };
   for new_project in new_projects {
     if current_projects.contains_key(&new_project.name) {
       warn!(
