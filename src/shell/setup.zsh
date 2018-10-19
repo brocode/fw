@@ -42,6 +42,9 @@ _fw() {
         ;;
         second)
           case $words[2] in
+            sync)
+              _arguments '*:option:(--no-ff-merge)';
+            ;;
             print-path)
               __fw_projects;
             ;;
