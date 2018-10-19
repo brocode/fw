@@ -150,8 +150,7 @@ conscious choice and set the value."#;
           Some(actual_tag) => resolver(actual_tag)
             .clone()
             .map(|val| (val, self.tag_priority_or_fallback(t, actual_tag, logger))),
-        })
-        .collect();
+        }).collect();
       trace!(logger, "before sort"; "tags" => format!("{:?}", resolved_with_priority));
       resolved_with_priority.sort_by_key(|resolved_and_priority| resolved_and_priority.1);
       trace!(logger, "after sort"; "tags" => format!("{:?}", resolved_with_priority));
@@ -201,13 +200,13 @@ fn repo_name_from_url(url: &str) -> Result<&str> {
 }
 
 pub fn add_entry(
-    maybe_config: Result<Config>,
-    maybe_name: Option<&str>,
-    url: &str,
-    after_workon: Option<String>,
-    after_clone: Option<String>,
-    override_path: Option<String>,
-    logger: &Logger
+  maybe_config: Result<Config>,
+  maybe_name: Option<&str>,
+  url: &str,
+  after_workon: Option<String>,
+  after_clone: Option<String>,
+  override_path: Option<String>,
+  logger: &Logger,
 ) -> Result<()> {
   let name = maybe_name
     .ok_or_else(|| ErrorKind::UserError(format!("No project name specified for {}", url)))
@@ -513,10 +512,7 @@ mod tests {
       tags: Some(tags),
       github_token: None,
     };
-    Config {
-      projects,
-      settings,
-    }
+    Config { projects, settings }
   }
 
   fn a_logger() -> Logger {

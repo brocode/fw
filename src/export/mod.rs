@@ -90,8 +90,7 @@ fw tag add tag2 --after-workon=\"workon2\" --after-clone=\"clone2\" --priority=\
 fw tag tag-project why-i-suck tag2
 # Error exporting tag: Unknown tag unknown_tag
 fw tag tag-project why-i-suck unknown_tag
-"
-        .to_owned(),
+".to_owned(),
     );
   }
 
@@ -131,9 +130,6 @@ fw tag tag-project why-i-suck unknown_tag
       tags: Some(tags),
       github_token: None,
     };
-    Config {
-      projects,
-      settings,
-    }
+    Config { projects, settings }
   }
 }

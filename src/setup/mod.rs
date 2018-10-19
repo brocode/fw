@@ -25,8 +25,7 @@ pub fn setup(workspace_dir: &str, logger: &Logger) -> Result<()> {
       } else {
         Err(ErrorKind::UserError(format!("Workspace path {} needs to be absolute", workspace_dir)).into())
       }
-    })
-    .and_then(|path| determine_projects(path, logger))
+    }).and_then(|path| determine_projects(path, logger))
     .and_then(|projects| write_config(projects, logger, workspace_dir))
 }
 
@@ -69,10 +68,9 @@ pub fn org_import(maybe_config: Result<Config>, org_name: &str, logger: &Logger)
   let mut current_projects = current_config.projects.clone();
   let org_repository_names: Vec<String> = api.list_repositories(org_name)?;
   let new_projects = {
-
-    let after_clone= current_config.settings.default_after_clone.clone();
-    let after_workon= current_config.settings.default_after_workon.clone();
-    let tags= current_config.settings.default_tags.clone();
+    let after_clone = current_config.settings.default_after_clone.clone();
+    let after_workon = current_config.settings.default_after_workon.clone();
+    let tags = current_config.settings.default_tags.clone();
 
     org_repository_names.into_iter().map(move |repo_name| Project {
       name: repo_name.clone(),
