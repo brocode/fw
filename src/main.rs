@@ -82,6 +82,14 @@ fn _main() -> i32 {
   let subcommand_name = matches.subcommand_name().expect("subcommand required by clap.rs").to_owned();
   let subcommand_matches = matches.subcommand_matches(&subcommand_name).expect("subcommand matches enforced by clap.rs");
   let subcommand_logger = logger.new(o!("command" => subcommand_name.clone()));
+  let worker = subcommand_matches
+    .value_of("parallelism")
+    .unwrap_or("4")
+    .parse::<i32>()
+    .map_err(|_e| "")
+    .and_then(|p| if p > 0 && p <= 10 { Ok(p) } else { Err("") })
+    .expect("Expect parallelism to be a number between 1 and 10");
+
   let now = SystemTime::now();
   let result: Result<String> = match subcommand_name.as_ref() {
     "sync" => sync::synchronize(
@@ -89,6 +97,7 @@ fn _main() -> i32 {
       subcommand_matches.is_present("no-progress-bar"),
       subcommand_matches.is_present("only-new"),
       !subcommand_matches.is_present("no-fast-forward-merge"),
+      worker,
       &subcommand_logger,
     ),
     "add" => {
@@ -271,6 +280,13 @@ For further information please have a look at our README https://github.com/broc
             .short("n")
             .help("Only clones projects. Skips all actions for projects already on your machine.")
             .takes_value(false),
+        ).arg(
+          Arg::with_name("parallelism")
+            .long("parallelism")
+            .short("p")
+            .number_of_values(1)
+            .help("Sets the count of worker")
+            .takes_value(true),
         ),
     ).subcommand(
       SubCommand::with_name("print-zsh-setup")

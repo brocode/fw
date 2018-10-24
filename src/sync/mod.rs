@@ -284,7 +284,7 @@ fn sync_project(config: &Config, project: &Project, logger: &Logger, only_new: b
     clone_project(config, project, &path, &project_logger)
   }
 }
-pub fn synchronize(maybe_config: Result<Config>, no_progress_bar: bool, only_new: bool, ff_merge: bool, logger: &Logger) -> Result<()> {
+pub fn synchronize(maybe_config: Result<Config>, no_progress_bar: bool, only_new: bool, ff_merge: bool, worker: i32, logger: &Logger) -> Result<()> {
   eprintln!("Synchronizing everything");
   if !ssh_agent_running() {
     warn!(logger, "SSH Agent not running. Process may hang.")
@@ -310,10 +310,10 @@ pub fn synchronize(maybe_config: Result<Config>, no_progress_bar: bool, only_new
   });
 
   let job_results: Arc<MsQueue<Result<()>>> = Arc::new(MsQueue::new());
-  let progress_bars = (1..5).map(|i| {
+  let progress_bars = (1..worker + 1).map(|i| {
     let pb = m.add(ProgressBar::new(projects_count));
     pb.set_style(spinner_style.clone());
-    pb.set_prefix(&format!("[{}/4]", i));
+    pb.set_prefix(&format!("[{}/{}]", i, worker));
     pb.set_message("initializing...");
     pb.tick();
     pb.enable_steady_tick(250);
