@@ -216,14 +216,17 @@ pub fn add_entry(
   if config.projects.contains_key(name) {
     Err(ErrorKind::UserError(format!("Project key {} already exists, not gonna overwrite it for you", name)).into())
   } else {
+    let default_after_clone = config.settings.default_after_clone.clone();
+    let default_after_workon = config.settings.default_after_clone.clone();
+
     config.projects.insert(
       name.to_owned(),
       Project {
         git: url.to_owned(),
         name: name.to_owned(),
-        after_clone: after_clone.or(config.settings.default_after_clone.clone()),
-        after_workon: after_workon.or(config.settings.default_after_workon.clone()),
-        override_path: override_path,
+        after_clone: after_clone.or(default_after_clone),
+        after_workon: after_workon.or(default_after_workon),
+        override_path,
         tags: config.settings.default_tags.clone(),
         bare: None,
       },
