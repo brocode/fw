@@ -88,9 +88,8 @@ fn _main() -> i32 {
     "sync" => {
       let worker = subcommand_matches
         .value_of("parallelism")
-        .expect("Expect parallelism to be a number between 1 and 9")
-        .parse::<i32>()
-        .expect("Expect parallelism to be a number between 1 and 9");
+        .and_then(|i| i.parse::<i32>().ok())
+        .expect("enforced by clap.rs");
 
       sync::synchronize(
         config,
@@ -287,7 +286,14 @@ For further information please have a look at our README https://github.com/broc
             .short("p")
             .number_of_values(1)
             .default_value("4")
-            .possible_values(&["1", "2", "3", "4", "5", "6", "7", "8", "9"])
+            .validator(|input| {
+              let i = input.parse::<i32>().map_err(|_e| format!("Expected a number. Was '{}'.", input))?;
+              if i > 0 && i < 11 {
+                Ok(())
+              } else {
+                Err(format!("Number must be between 1 and 10. Was {}.", input))
+              }
+            })
             .help("Sets the count of worker")
             .takes_value(true),
         ),
@@ -356,6 +362,14 @@ For further information please have a look at our README https://github.com/broc
             .short("p")
             .help("Parallelism to use (default is set by rayon but probably equal to the number of cores)")
             .required(false)
+            .validator(|input| {
+              let i = input.parse::<i32>().map_err(|_e| format!("Expected a number. Was '{}'.", input))?;
+              if i > 0 && i < 21 {
+                Ok(())
+              } else {
+                Err(format!("Number must be between 1 and 20. Was {}.", input))
+              }
+            })
             .takes_value(true),
         ).arg(
           Arg::with_name("tag")
