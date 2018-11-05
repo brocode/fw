@@ -7,6 +7,7 @@ use std::collections::BTreeMap;
 use std::fs;
 use std::path::{Path, PathBuf};
 use ws::github;
+use slog::{warn, info, debug, o};
 
 pub fn setup(workspace_dir: &str, logger: &Logger) -> Result<()> {
   let setup_logger = logger.new(o!("workspace" => workspace_dir.to_owned()));
