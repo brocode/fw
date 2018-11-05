@@ -1,6 +1,10 @@
+use std::collections::BTreeMap;
+use config::Tag;
 use ansi_term::Colour;
 use atty;
+use config;
 use config::{Config, Project, Settings};
+use tag;
 use crossbeam::queue::MsQueue;
 use errors::*;
 use git2;
@@ -165,16 +169,20 @@ pub fn project_shell(project_settings: &Settings) -> Vec<String> {
   project_settings.shell.clone().unwrap_or_else(|| vec!["sh".to_owned(), "-c".to_owned()])
 }
 
+pub fn init_threads(parallel_raw: &Option<String>, logger: &Logger) -> Result<()> {
+    if let Some(ref raw_num) = *parallel_raw {
+      let num_threads = raw_num.parse::<usize>()?;
+      rayon::ThreadPoolBuilder::new().num_threads(num_threads).build_global().expect(
+        "Tried to initialize rayon more than once (this is a software bug on fw side, please file an issue at https://github.com/brocode/fw/issues/new )",
+      );
+      debug!(logger, "Rayon rolling with thread pool of size {}", raw_num)
+    }
+    Ok(())
+}
+
 pub fn foreach(maybe_config: Result<Config>, cmd: &str, tags: &BTreeSet<String>, logger: &Logger, parallel_raw: &Option<String>) -> Result<()> {
   let config = maybe_config?;
-
-  if let Some(ref raw_num) = *parallel_raw {
-    let num_threads = raw_num.parse::<usize>()?;
-    rayon::ThreadPoolBuilder::new().num_threads(num_threads).build_global().expect(
-      "Tried to initialize rayon more than once (this is a software bug on fw side, please file an issue at https://github.com/brocode/fw/issues/new )",
-    );
-    debug!(logger, "Rayon rolling with thread pool of size {}", raw_num)
-  }
+  init_threads(parallel_raw, logger)?;
 
   let projects: Vec<&Project> = config.projects.values().collect();
   let script_results = projects
@@ -189,6 +197,43 @@ pub fn foreach(maybe_config: Result<Config>, cmd: &str, tags: &BTreeSet<String>,
     }).collect::<Vec<Result<()>>>();
 
   script_results.into_iter().fold(Ok(()), |accu, maybe_error| accu.and(maybe_error))
+}
+
+pub fn autotag(maybe_config: Result<Config>, cmd: &str, tag_name:&str, logger: &Logger, parallel_raw: &Option<String>) -> Result<()> {
+  let mut config = maybe_config?;
+
+  let tags: BTreeMap<String, Tag> = config.settings.tags.clone().unwrap_or_else(BTreeMap::new);
+  if tags.contains_key(tag_name) {
+
+    init_threads(parallel_raw, logger)?;
+
+    let config2 = &config.clone();
+    let projects: Vec<&Project> = config2.projects.values().collect();
+
+    let script_results = projects
+      .par_iter()
+      .map(|p| {
+        let shell = project_shell(&config2.settings);
+        let project_logger = logger.new(o!("project" => p.name.clone()));
+        let path = &config2.actual_path_to_project(p, &project_logger);
+        info!(project_logger, "Entering");
+        spawn_maybe(&shell, cmd, &path, &p.name, random_colour(), &project_logger)
+    }).collect::<Vec<Result<()>>>();
+
+    // map with projects and filter if result == 0
+    let filtered_projects: Vec<&Project> = script_results.into_iter()
+                  .zip(projects.into_iter())
+                  .filter(|(x, _)| x.is_ok() )
+                  .map(|(_,p)| p)
+                  .collect::<Vec<&Project>>();
+
+    for project in filtered_projects.iter() {
+      config = tag::add_tag_project(Ok(config), project.name.clone(), tag_name.to_string(), logger)?;
+    }
+    config::write_config(config, logger)
+  } else {
+    Err(ErrorKind::UserError(format!("Unknown tag {}", tag_name)).into())
+  }
 }
 
 fn update_project_remotes(project: &Project, path: &PathBuf, project_logger: &Logger, ff_merge: bool) -> Result<()> {
