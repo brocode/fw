@@ -43,6 +43,21 @@ pub fn create_tag(
 pub fn delete_tag(maybe_config: Result<Config>, tag_name: &str, logger: &Logger) -> Result<()> {
   let mut config: Config = maybe_config?;
   let mut tags: BTreeMap<String, Tag> = config.settings.tags.unwrap_or_else(BTreeMap::new);
+
+  // remove tags from projects
+  for (project_name, _value) in config.projects.clone().iter() {
+     if let Some(mut project) = config.projects.get(&project_name.to_string()).cloned() {
+       info!(logger, "Remove tag from project"; "tag" => &tag_name, "project" => &project_name);
+       let mut new_tags: BTreeSet<String> = project.tags.clone().unwrap_or_else(BTreeSet::new);
+       if new_tags.remove(tag_name) {
+         project.tags = Some(new_tags);
+         config.projects.insert(project_name.to_string(), project);
+       }
+     } else {
+       return Err(ErrorKind::InternalError(format!("Unknown project {}", project_name)).into());
+     }
+  }
+
   info!(logger, "Delete tag"; "tag" => tag_name);
   if tags.remove(tag_name).is_some() {
     config.settings.tags = Some(tags);
@@ -50,6 +65,7 @@ pub fn delete_tag(maybe_config: Result<Config>, tag_name: &str, logger: &Logger)
   } else {
     Ok(())
   }
+
 }
 
 fn list_all_tags(config: Config) -> Result<()> {
@@ -63,14 +79,19 @@ fn list_all_tags(config: Config) -> Result<()> {
 
 pub fn add_tag(maybe_config: Result<Config>, project_name: String, tag_name: String, logger: &Logger) -> Result<()> {
   let mut config: Config = maybe_config?;
-
   if let Some(mut project) = config.projects.get(&project_name).cloned() {
     info!(logger, "Add tag to project"; "tag" => &tag_name, "project" => &project_name);
-    let mut new_tags: BTreeSet<String> = project.tags.clone().unwrap_or_else(BTreeSet::new);
-    new_tags.insert(tag_name);
-    project.tags = Some(new_tags);
-    config.projects.insert(project_name, project);
-    config::write_config(config, logger)
+    let mut tags: BTreeMap<String, Tag> = config.settings.tags.clone().unwrap_or_else(BTreeMap::new);
+    if tags.contains_key(&tag_name) {
+        let mut new_tags: BTreeSet<String> = project.tags.clone().unwrap_or_else(BTreeSet::new);
+        new_tags.insert(tag_name);
+        project.tags = Some(new_tags);
+        config.projects.insert(project_name, project);
+        config::write_config(config, logger)
+    } else {
+        Err(ErrorKind::UserError(format!("Unknown tag {}", tag_name)).into())
+    }
+
   } else {
     Err(ErrorKind::UserError(format!("Unknown project {}", project_name)).into())
   }
