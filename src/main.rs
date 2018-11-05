@@ -1,7 +1,5 @@
-#[macro_use]
 extern crate clap;
 
-#[macro_use]
 extern crate slog;
 extern crate slog_async;
 extern crate slog_term;
@@ -10,7 +8,6 @@ extern crate slog_term;
 extern crate serde_derive;
 extern crate serde_json;
 
-#[macro_use]
 extern crate error_chain;
 
 extern crate dirs;
@@ -34,7 +31,6 @@ extern crate crossbeam;
 extern crate indicatif;
 
 #[cfg(test)]
-#[macro_use]
 extern crate maplit;
 
 extern crate regex;
@@ -44,11 +40,12 @@ extern crate spectral;
 
 extern crate openssl_probe;
 
-use clap::{App, AppSettings, Arg, SubCommand};
+use clap::{App, AppSettings, Arg, SubCommand, crate_version};
 use errors::*;
 use slog::{Drain, Level, LevelFilter, Logger};
 use std::str::FromStr;
 use std::time::SystemTime;
+use slog::{debug, crit, o};
 
 fn logger_from_verbosity(verbosity: u64, quiet: bool) -> Logger {
   let log_level: Level = match verbosity {

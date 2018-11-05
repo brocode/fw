@@ -22,6 +22,7 @@ use std::path::PathBuf;
 use std::process::{Child, Command, Stdio};
 use std::sync::Arc;
 use std::thread;
+use slog::{warn, info, debug, error, o};
 
 pub static COLOURS: [Colour; 14] = [
   Colour::Green,

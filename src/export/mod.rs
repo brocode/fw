@@ -73,6 +73,7 @@ mod tests {
   use config::*;
   use spectral::prelude::*;
   use std::collections::BTreeMap;
+  use maplit::btreeset;
 
   #[test]
   fn test_workon_override_from_project() {

@@ -8,6 +8,7 @@ use std::fs::{remove_dir_all, File};
 use std::io::BufReader;
 use std::io::Read;
 use std::path::{Path, PathBuf};
+use slog::{warn, info, trace, debug, o};
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Settings {
@@ -324,6 +325,7 @@ pub fn expand_path(path: PathBuf) -> PathBuf {
 mod tests {
   use super::*;
   use spectral::prelude::*;
+  use maplit::btreeset;
 
   #[test]
   fn test_repo_name_from_url() {

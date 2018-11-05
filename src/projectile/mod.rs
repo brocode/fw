@@ -7,6 +7,7 @@ use std::fs;
 use std::io;
 use std::io::Write;
 use std::path::PathBuf;
+use slog::{debug};
 
 pub fn projectile(maybe_config: Result<Config>, logger: &Logger) -> Result<()> {
   let config: Config = maybe_config?;
@@ -54,6 +55,7 @@ mod tests {
   use super::*;
   use spectral::prelude::*;
   use std::path::Path;
+  use slog::{o};
 
   #[test]
   fn test_persists_projectile_config() {

@@ -4,6 +4,7 @@ use config::Tag;
 use errors::*;
 use slog::Logger;
 use std::collections::{BTreeMap, BTreeSet};
+use slog::{info, debug};
 
 pub fn list_tags(maybe_config: Result<Config>, maybe_project_name: Option<String>, logger: &Logger) -> Result<()> {
   let config: Config = maybe_config?;
