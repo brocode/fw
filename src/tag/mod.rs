@@ -42,7 +42,6 @@ pub fn create_tag(
 
 pub fn delete_tag(maybe_config: Result<Config>, tag_name: &str, logger: &Logger) -> Result<()> {
   let mut config: Config = maybe_config?;
-  let mut config2 : Config = config.clone();
   let mut tags: BTreeMap<String, Tag> = config.settings.tags.unwrap_or_else(BTreeMap::new);
 
   // remove tags from projects
@@ -61,8 +60,8 @@ pub fn delete_tag(maybe_config: Result<Config>, tag_name: &str, logger: &Logger)
 
   info!(logger, "Delete tag"; "tag" => tag_name);
   if tags.remove(tag_name).is_some() {
-    config2.settings.tags = Some(tags);
-    config::write_config(config2, logger)
+    config.settings.tags = Some(tags);
+    config::write_config(config, logger)
   } else {
     Ok(())
   }
