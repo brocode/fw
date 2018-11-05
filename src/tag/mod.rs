@@ -81,24 +81,15 @@ pub fn add_tag(maybe_config: Result<Config>, project_name: String, tag_name: Str
   let mut config: Config = maybe_config?;
   if let Some(mut project) = config.projects.get(&project_name).cloned() {
     info!(logger, "Add tag to project"; "tag" => &tag_name, "project" => &project_name);
-<<<<<<< HEAD
     let mut tags: BTreeMap<String, Tag> = config.settings.tags.clone().unwrap_or_else(BTreeMap::new);
     if tags.contains_key(&tag_name) {
         let mut new_tags: BTreeSet<String> = project.tags.clone().unwrap_or_else(BTreeSet::new);
-=======
-    let mut new_tags: BTreeSet<String> = project.tags.clone().unwrap_or_else(BTreeSet::new);
-    if new_tags.contains(&tag_name) {
->>>>>>> [chore] cleanup delete tag, error message to add_tag when tagname unknown
         new_tags.insert(tag_name);
         project.tags = Some(new_tags);
         config.projects.insert(project_name, project);
         config::write_config(config, logger)
     } else {
-<<<<<<< HEAD
         Err(ErrorKind::UserError(format!("Unknown tag {}", tag_name)).into())
-=======
-            Err(ErrorKind::UserError(format!("Unknown tag {}", tag_name)).into())
->>>>>>> [chore] cleanup delete tag, error message to add_tag when tagname unknown
     }
 
   } else {
