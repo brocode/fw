@@ -260,6 +260,17 @@ fn print_zsh_setup(use_fzf: bool) -> Result<()> {
   Ok(())
 }
 
+
+fn parse_number(input:String, num:i32) -> std::result::Result<(), String> {
+  let i = input.parse::<i32>().map_err(|_e| format!("Expected a number. Was '{}'.", input))?;
+  if i > 0 && i <= num {
+    Ok(())
+  } else {
+    Err(format!("Number must be between 1 and {}. Was {}.", num, input))
+  }
+}
+
+
 fn app<'a>() -> App<'a, 'a> {
   App::new("fw")
     .version(crate_version!())
@@ -292,14 +303,7 @@ For further information please have a look at our README https://github.com/broc
             .short("p")
             .number_of_values(1)
             .default_value("4")
-            .validator(|input| {
-              let i = input.parse::<i32>().map_err(|_e| format!("Expected a number. Was '{}'.", input))?;
-              if i > 0 && i < 11 {
-                Ok(())
-              } else {
-                Err(format!("Number must be between 1 and 10. Was {}.", input))
-              }
-            })
+            .validator(|input| parse_number(input, 10))
             .help("Sets the count of worker")
             .takes_value(true),
         ),
@@ -368,14 +372,7 @@ For further information please have a look at our README https://github.com/broc
             .short("p")
             .help("Parallelism to use (default is set by rayon but probably equal to the number of cores)")
             .required(false)
-            .validator(|input| {
-              let i = input.parse::<i32>().map_err(|_e| format!("Expected a number. Was '{}'.", input))?;
-              if i > 0 && i < 21 {
-                Ok(())
-              } else {
-                Err(format!("Number must be between 1 and 20. Was {}.", input))
-              }
-            })
+            .validator(|input| parse_number(input, 20))
             .takes_value(true),
         ).arg(
           Arg::with_name("tag")
@@ -471,14 +468,7 @@ For further information please have a look at our README https://github.com/broc
                 .short("p")
                 .help("Parallelism to use (default is set by rayon but probably equal to the number of cores)")
                 .required(false)
-                .validator(|input| {
-                  let i = input.parse::<i32>().map_err(|_e| format!("Expected a number. Was '{}'.", input))?;
-                  if i > 0 && i < 21 {
-                    Ok(())
-                  } else {
-                    Err(format!("Number must be between 1 and 20. Was {}.", input))
-                  }
-                })
+                .validator(|input| parse_number(input, 20))
                 .takes_value(true),
             ),
         ).subcommand(
