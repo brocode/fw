@@ -2,13 +2,13 @@ use dirs;
 use errors::*;
 use serde_json;
 use slog::Logger;
+use slog::{debug, info, o, trace, warn};
 use std::collections::{BTreeMap, BTreeSet};
 use std::env;
 use std::fs::{remove_dir_all, File};
 use std::io::BufReader;
 use std::io::Read;
 use std::path::{Path, PathBuf};
-use slog::{warn, info, trace, debug, o};
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Settings {
@@ -324,8 +324,8 @@ pub fn expand_path(path: PathBuf) -> PathBuf {
 #[cfg(test)]
 mod tests {
   use super::*;
-  use spectral::prelude::*;
   use maplit::btreeset;
+  use spectral::prelude::*;
 
   #[test]
   fn test_repo_name_from_url() {

@@ -1,10 +1,8 @@
-use std::collections::BTreeMap;
-use config::Tag;
 use ansi_term::Colour;
 use atty;
 use config;
+use config::Tag;
 use config::{Config, Project, Settings};
-use tag;
 use crossbeam::queue::MsQueue;
 use errors::*;
 use git2;
@@ -17,7 +15,9 @@ use rayon;
 use rayon::prelude::*;
 use regex::Regex;
 use slog::Logger;
+use slog::{debug, error, info, o, warn};
 use std;
+use std::collections::BTreeMap;
 use std::collections::BTreeSet;
 use std::env;
 use std::io::{BufRead, BufReader};
@@ -26,7 +26,7 @@ use std::path::PathBuf;
 use std::process::{Child, Command, Stdio};
 use std::sync::Arc;
 use std::thread;
-use slog::{warn, info, debug, error, o};
+use tag;
 
 pub static COLOURS: [Colour; 14] = [
   Colour::Green,
@@ -170,14 +170,14 @@ pub fn project_shell(project_settings: &Settings) -> Vec<String> {
 }
 
 pub fn init_threads(parallel_raw: &Option<String>, logger: &Logger) -> Result<()> {
-    if let Some(ref raw_num) = *parallel_raw {
-      let num_threads = raw_num.parse::<usize>()?;
-      rayon::ThreadPoolBuilder::new().num_threads(num_threads).build_global().expect(
-        "Tried to initialize rayon more than once (this is a software bug on fw side, please file an issue at https://github.com/brocode/fw/issues/new )",
-      );
-      debug!(logger, "Rayon rolling with thread pool of size {}", raw_num)
-    }
-    Ok(())
+  if let Some(ref raw_num) = *parallel_raw {
+    let num_threads = raw_num.parse::<usize>()?;
+    rayon::ThreadPoolBuilder::new().num_threads(num_threads).build_global().expect(
+      "Tried to initialize rayon more than once (this is a software bug on fw side, please file an issue at https://github.com/brocode/fw/issues/new )",
+    );
+    debug!(logger, "Rayon rolling with thread pool of size {}", raw_num)
+  }
+  Ok(())
 }
 
 pub fn foreach(maybe_config: Result<Config>, cmd: &str, tags: &BTreeSet<String>, logger: &Logger, parallel_raw: &Option<String>) -> Result<()> {
@@ -199,12 +199,11 @@ pub fn foreach(maybe_config: Result<Config>, cmd: &str, tags: &BTreeSet<String>,
   script_results.into_iter().fold(Ok(()), |accu, maybe_error| accu.and(maybe_error))
 }
 
-pub fn autotag(maybe_config: Result<Config>, cmd: &str, tag_name:&str, logger: &Logger, parallel_raw: &Option<String>) -> Result<()> {
+pub fn autotag(maybe_config: Result<Config>, cmd: &str, tag_name: &str, logger: &Logger, parallel_raw: &Option<String>) -> Result<()> {
   let mut config = maybe_config?;
 
   let tags: BTreeMap<String, Tag> = config.settings.tags.clone().unwrap_or_else(BTreeMap::new);
   if tags.contains_key(tag_name) {
-
     init_threads(parallel_raw, logger)?;
 
     let config2 = &config.clone();
@@ -218,14 +217,15 @@ pub fn autotag(maybe_config: Result<Config>, cmd: &str, tag_name:&str, logger: &
         let path = &config2.actual_path_to_project(p, &project_logger);
         info!(project_logger, "Entering");
         spawn_maybe(&shell, cmd, &path, &p.name, random_colour(), &project_logger)
-    }).collect::<Vec<Result<()>>>();
+      }).collect::<Vec<Result<()>>>();
 
     // map with projects and filter if result == 0
-    let filtered_projects: Vec<&Project> = script_results.into_iter()
-                  .zip(projects.into_iter())
-                  .filter(|(x, _)| x.is_ok() )
-                  .map(|(_,p)| p)
-                  .collect::<Vec<&Project>>();
+    let filtered_projects: Vec<&Project> = script_results
+      .into_iter()
+      .zip(projects.into_iter())
+      .filter(|(x, _)| x.is_ok())
+      .map(|(_, p)| p)
+      .collect::<Vec<&Project>>();
 
     for project in filtered_projects.iter() {
       config = tag::add_tag_project(Ok(config), project.name.clone(), tag_name.to_string(), logger)?;

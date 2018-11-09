@@ -71,9 +71,9 @@ fn tag_to_shell_commands(tag_name: &str, config: &Config) -> Result<String> {
 mod tests {
   use super::*;
   use config::*;
+  use maplit::btreeset;
   use spectral::prelude::*;
   use std::collections::BTreeMap;
-  use maplit::btreeset;
 
   #[test]
   fn test_workon_override_from_project() {

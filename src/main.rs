@@ -40,12 +40,12 @@ extern crate spectral;
 
 extern crate openssl_probe;
 
-use clap::{App, AppSettings, Arg, SubCommand, crate_version};
+use clap::{crate_version, App, AppSettings, Arg, SubCommand};
 use errors::*;
+use slog::{crit, debug, o};
 use slog::{Drain, Level, LevelFilter, Logger};
 use std::str::FromStr;
 use std::time::SystemTime;
-use slog::{debug, crit, o};
 
 fn logger_from_verbosity(verbosity: u64, quiet: bool) -> Logger {
   let log_level: Level = match verbosity {
@@ -234,15 +234,13 @@ fn execute_tag_subcommand(maybe_config: Result<config::Config>, tag_command_name
         .map(|p| p.expect("invalid tag priority value, must be an u8"));
       tag::create_tag(maybe_config, tag_name, after_workon, after_clone, priority, tag_workspace, logger)
     }
-    "autotag" => {
-      sync::autotag(
-        maybe_config,
-        tag_matches.value_of("CMD").expect("argument required by clap.rs"),
-        &tag_matches.value_of("tag-name").map(str::to_string).expect("argument enforced by clap.rs"),
-        &logger,
-        &tag_matches.value_of("parallel").map(|p| p.to_owned())
-      )
-    }
+    "autotag" => sync::autotag(
+      maybe_config,
+      tag_matches.value_of("CMD").expect("argument required by clap.rs"),
+      &tag_matches.value_of("tag-name").map(str::to_string).expect("argument enforced by clap.rs"),
+      &logger,
+      &tag_matches.value_of("parallel").map(|p| p.to_owned()),
+    ),
     _ => Err(ErrorKind::InternalError("Command not implemented".to_string()).into()),
   }
 }
@@ -260,8 +258,7 @@ fn print_zsh_setup(use_fzf: bool) -> Result<()> {
   Ok(())
 }
 
-
-fn validate_number(input:String, max:i32) -> std::result::Result<(), String> {
+fn validate_number(input: String, max: i32) -> std::result::Result<(), String> {
   let i = input.parse::<i32>().map_err(|_e| format!("Expected a number. Was '{}'.", input))?;
   if i > 0 && i <= max {
     Ok(())
@@ -269,7 +266,6 @@ fn validate_number(input:String, max:i32) -> std::result::Result<(), String> {
     Err(format!("Number must be between 1 and {}. Was {}.", max, input))
   }
 }
-
 
 fn app<'a>() -> App<'a, 'a> {
   App::new("fw")

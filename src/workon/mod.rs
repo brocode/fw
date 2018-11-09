@@ -4,10 +4,10 @@ use config;
 use config::Project;
 use errors::*;
 use serde_json;
+use slog::debug;
 use slog::Logger;
 use std::env;
 use sync;
-use slog::{debug};
 
 pub fn ls(maybe_config: Result<config::Config>) -> Result<()> {
   let config = maybe_config?;

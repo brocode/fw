@@ -2,12 +2,12 @@ use config::Config;
 use dirs;
 use errors::*;
 use regex::Regex;
+use slog::debug;
 use slog::Logger;
 use std::fs;
 use std::io;
 use std::io::Write;
 use std::path::PathBuf;
-use slog::{debug};
 
 pub fn projectile(maybe_config: Result<Config>, logger: &Logger) -> Result<()> {
   let config: Config = maybe_config?;
@@ -53,9 +53,9 @@ fn replace_path_with_tilde(path: &str, path_to_replace: PathBuf) -> Result<Strin
 #[cfg(test)]
 mod tests {
   use super::*;
+  use slog::o;
   use spectral::prelude::*;
   use std::path::Path;
-  use slog::{o};
 
   #[test]
   fn test_persists_projectile_config() {
