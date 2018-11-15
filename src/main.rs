@@ -298,7 +298,7 @@ For further information please have a look at our README https://github.com/broc
             .long("parallelism")
             .short("p")
             .number_of_values(1)
-            .default_value("4")
+            .default_value("8")
             .validator(|input| validate_number(input, 10))
             .help("Sets the count of worker")
             .takes_value(true),
