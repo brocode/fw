@@ -45,6 +45,8 @@ _fw() {
             sync)
               _arguments '*:option:(--no-ff-merge)';
             ;;
+            org-import)
+              _arguments '*:option:(--include-archived)';
             print-path)
               __fw_projects;
             ;;
