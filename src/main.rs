@@ -132,6 +132,7 @@ fn _main() -> i32 {
     "org-import" => setup::org_import(
       config,
       subcommand_matches.value_of("ORG_NAME").expect("argument required by clap.rs"),
+      subcommand_matches.is_present("include-archived"),
       &subcommand_logger,
     ),
     "gen-workon" => workon::gen(
@@ -322,7 +323,14 @@ For further information please have a look at our README https://github.com/broc
     ).subcommand(
       SubCommand::with_name("org-import")
         .about("Import all repositories from github org into fw")
-        .arg(Arg::with_name("ORG_NAME").value_name("ORG_NAME").index(1).required(true)),
+        .arg(
+          Arg::with_name("include-archived")
+            .value_name("include-archived")
+            .long("include-archived")
+            .short("a")
+            .takes_value(false)
+            .required(false),
+        ).arg(Arg::with_name("ORG_NAME").value_name("ORG_NAME").index(1).required(true)),
     ).subcommand(
       SubCommand::with_name("add")
         .about("Add project to config")
