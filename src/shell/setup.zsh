@@ -47,6 +47,7 @@ _fw() {
             ;;
             org-import)
               _arguments '*:option:(--include-archived)';
+            ;;
             print-path)
               __fw_projects;
             ;;
