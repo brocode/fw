@@ -57,7 +57,7 @@ fn determine_projects(path: PathBuf, logger: &Logger) -> Result<BTreeMap<String,
   Ok(projects)
 }
 
-pub fn org_import(maybe_config: Result<Config>, org_name: &str, logger: &Logger) -> Result<()> {
+pub fn org_import(maybe_config: Result<Config>, org_name: &str, include_archived: bool, logger: &Logger) -> Result<()> {
   let mut current_config = maybe_config?;
   let token = current_config.settings.github_token.clone().chain_err(|| {
     ErrorKind::UserError(format!(
@@ -67,7 +67,7 @@ pub fn org_import(maybe_config: Result<Config>, org_name: &str, logger: &Logger)
   })?;
   let mut api = github::github_api(token)?;
   let mut current_projects = current_config.projects.clone();
-  let org_repository_names: Vec<String> = api.list_repositories(org_name)?;
+  let org_repository_names: Vec<String> = api.list_repositories(org_name, include_archived)?;
   let new_projects = {
     let after_clone = current_config.settings.default_after_clone.clone();
     let after_workon = current_config.settings.default_after_workon.clone();
