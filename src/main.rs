@@ -105,7 +105,6 @@ fn _main() -> i32 {
       let override_path: Option<String> = subcommand_matches.value_of("override-path").map(str::to_string);
       config::add_entry(config, name, url, after_workon, after_clone, override_path, &subcommand_logger)
     }
-
     "remove" => config::remove_entry(
       config,
       subcommand_matches.value_of("NAME").expect("argument required by clap.rs"),
@@ -155,7 +154,15 @@ fn _main() -> i32 {
       subcommand_matches.value_of("PROJECT_NAME").expect("argument required by clap.rs"),
       &subcommand_logger,
     ),
-    "export" => export::export_project(config, subcommand_matches.value_of("PROJECT_NAME").expect("argument required by clap.rs")),
+    "export-project" => export::export_project(config, subcommand_matches.value_of("PROJECT_NAME").expect("argument required by clap.rs")),
+    "export-by-tag" => {
+      let tag_name: &str = subcommand_matches.value_of("tag_name").expect("argument required by clap.rs");
+      export::export_tagged_projects(config, tag_name)
+    }
+    "export-tag" => {
+      let tag_name: &str = subcommand_matches.value_of("tag_name").expect("argument required by clap.rs");
+      export::export_tag(config, tag_name)
+    }
     "foreach" => sync::foreach(
       config,
       subcommand_matches.value_of("CMD").expect("argument required by clap.rs"),
@@ -259,7 +266,7 @@ fn print_zsh_setup(use_fzf: bool) -> Result<()> {
   Ok(())
 }
 
-fn validate_number(input: String, max: i32) -> std::result::Result<(), String> {
+fn validate_number(input: &str, max: i32) -> std::result::Result<(), String> {
   let i = input.parse::<i32>().map_err(|_e| format!("Expected a number. Was '{}'.", input))?;
   if i > 0 && i <= max {
     Ok(())
@@ -300,7 +307,7 @@ For further information please have a look at our README https://github.com/broc
             .short("p")
             .number_of_values(1)
             .default_value("8")
-            .validator(|input| validate_number(input, 10))
+            .validator(|input| validate_number(&input, 10))
             .help("Sets the count of worker")
             .takes_value(true),
         ),
@@ -376,7 +383,7 @@ For further information please have a look at our README https://github.com/broc
             .short("p")
             .help("Parallelism to use (default is set by rayon but probably equal to the number of cores)")
             .required(false)
-            .validator(|input| validate_number(input, 20))
+            .validator(|input| validate_number(&input, 20))
             .takes_value(true),
         ).arg(
           Arg::with_name("tag")
@@ -388,9 +395,17 @@ For further information please have a look at our README https://github.com/broc
             .multiple(true),
         ),
     ).subcommand(
-      SubCommand::with_name("export")
+      SubCommand::with_name("export-project")
         .about("Exports project as fw shell script")
         .arg(Arg::with_name("PROJECT_NAME").value_name("PROJECT_NAME").index(1).required(true)),
+    ).subcommand(
+      SubCommand::with_name("export-by-tag")
+        .about("Exports all projects with tag as fw shell script")
+        .arg(Arg::with_name("tag_name").value_name("tag_name").required(true)),
+    ).subcommand(
+      SubCommand::with_name("export-tag")
+        .about("Exports tag")
+        .arg(Arg::with_name("tag_name").value_name("tag_name").required(true)),
     ).subcommand(
       SubCommand::with_name("print-path")
         .about("Print project path on stdout")
@@ -472,7 +487,7 @@ For further information please have a look at our README https://github.com/broc
                 .short("p")
                 .help("Parallelism to use (default is set by rayon but probably equal to the number of cores)")
                 .required(false)
-                .validator(|input| validate_number(input, 20))
+                .validator(|input| validate_number(&input, 20))
                 .takes_value(true),
             ),
         ).subcommand(
