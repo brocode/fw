@@ -91,13 +91,13 @@ impl GithubApi {
         serde_json::from_value(data_json).chain_err(|| ErrorKind::InternalError("Failed to parse github response".to_string()))?;
 
       let repositories: Vec<Repository> = response.data.organization.repositories.nodes;
-      let repository_names: Vec<String> = repositories
+      let repo_names: Vec<String> = repositories
         .into_iter()
         .filter(|r| include_archived || !r.is_archived)
         .map(|r| r.name)
         .collect();
       Ok(PageResult {
-        repository_names: repository_names,
+        repository_names: repo_names,
         next_cursor: if response.data.organization.repositories.page_info.has_next_page {
           Some(response.data.organization.repositories.page_info.end_cursor)
         } else {

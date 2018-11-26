@@ -7,37 +7,69 @@ pub fn export_project(maybe_config: Result<Config>, name: &str) -> Result<()> {
     .projects
     .get(name)
     .chain_err(|| ErrorKind::UserError(format!("project {} not found", name)))?;
-  println!("{}", project_to_shell_commands(&config, project)?);
+  println!("{}", projects_to_shell_commands(&config, &[project])?);
   Ok(())
 }
 
-fn project_to_shell_commands(config: &Config, project: &Project) -> Result<String> {
+pub fn export_tagged_projects(maybe_config: Result<Config>, tag_name:&str) -> Result<()> {
+  let config = maybe_config?;
+  let mut projects: Vec<&Project> = Vec::new();
+
+  for (_project_name, project) in config.projects.iter() {
+    if let Some(ref project_tags) = project.tags {
+      if project_tags.contains(tag_name) {
+        projects.push(&project);
+      }
+    }
+  }
+
+  println!("{}", projects_to_shell_commands(&config, &projects)?);
+
+  Ok(())
+}
+
+pub fn export_tag(maybe_config: Result<Config>, tag_name:&str) -> Result<()> {
+  let config = maybe_config?;
+  println!("{}", tag_to_shell_commands(tag_name, &config)?);
+  Ok(())
+}
+
+
+fn projects_to_shell_commands(config: &Config, projects: &[&Project]) -> Result<String> {
+
   fn push_update(commands: &mut Vec<String>, parameter_name: &str, maybe_value: &Option<String>, project_name: &str) {
     if let Some(ref value) = *maybe_value {
-      commands.push(format!("fw update {} --{} \"{}\"", project_name, parameter_name, value))
+      commands.push(format!("fw update {} --{} '{}'", project_name, parameter_name, value))
     }
   }
 
-  let mut shell_commands: Vec<String> = Vec::new();
-  shell_commands.push("# fw export".to_owned());
+  let mut project_commands: Vec<String> = Vec::new();
+  let mut tag_commands: Vec<String> = Vec::new();
+  tag_commands.push("# fw export projects".to_owned());
 
-  shell_commands.push(format!("fw add {} {}", project.git, project.name));
-  push_update(&mut shell_commands, "override-path", &project.override_path, &project.name);
-  push_update(&mut shell_commands, "after-workon", &project.after_workon, &project.name);
-  push_update(&mut shell_commands, "after-clone", &project.after_clone, &project.name);
+  for project in projects {
+    project_commands.push(format!("fw add {} {}", project.git, project.name));
+    push_update(&mut project_commands, "override-path", &project.override_path, &project.name);
+    push_update(&mut project_commands, "after-workon", &project.after_workon, &project.name);
+    push_update(&mut project_commands, "after-clone", &project.after_clone, &project.name);
 
-  if let Some(ref tags) = project.tags {
-    for tag in tags {
-      match tag_to_shell_commands(tag, config) {
-        Ok(commands) => shell_commands.push(commands),
-        Err(e) => shell_commands.push(format!("# Error exporting tag: {}", e.description())),
+    if let Some(ref tags) = project.tags {
+      for tag in tags {
+        match tag_to_shell_commands(tag, config) {
+          Ok(commands) => tag_commands.push(commands),
+          Err(e) => tag_commands.push(format!("# Error exporting tag: {}", e.description())),
+        }
+        project_commands.push(format!("fw tag tag-project {} {}", project.name, tag));
       }
-      shell_commands.push(format!("fw tag tag-project {} {}", project.name, tag));
     }
   }
 
-  Ok(shell_commands.join("\n") + "\n")
+  tag_commands.dedup();
+  tag_commands.append(&mut project_commands);
+
+  Ok(tag_commands.join("\n") + "\n")
 }
+
 
 fn tag_to_shell_commands(tag_name: &str, config: &Config) -> Result<String> {
   if let Some(ref tags) = config.settings.tags {
@@ -78,21 +110,22 @@ mod tests {
   #[test]
   fn test_workon_override_from_project() {
     let config = a_config();
-    let exported_command = project_to_shell_commands(&config, config.projects.get("test1").unwrap()).expect("Should work");
+    let exported_command = projects_to_shell_commands(&config, &[config.projects.get("test1").unwrap()]).expect("Should work");
     assert_that(&exported_command).is_equal_to(
-      "# fw export
-fw add git@github.com:codingberlin/why-i-suck.git why-i-suck
-fw update why-i-suck --override-path \"/home/bauer/docs/why-i-suck\"
-fw update why-i-suck --after-workon \"echo 2\"
-fw update why-i-suck --after-clone \"echo 1\"
+      "# fw export projects
 fw tag add tag1 --after-workon=\"workon1\" --after-clone=\"clone1\" --priority=\"10\"
-fw tag tag-project why-i-suck tag1
 fw tag add tag2 --after-workon=\"workon2\" --after-clone=\"clone2\" --priority=\"10\"
-fw tag tag-project why-i-suck tag2
 # Error exporting tag: Unknown tag unknown_tag
+fw add git@github.com:codingberlin/why-i-suck.git why-i-suck
+fw update why-i-suck --override-path \'/home/bauer/docs/why-i-suck\'
+fw update why-i-suck --after-workon \'echo 2\'
+fw update why-i-suck --after-clone \'echo 1\'
+fw tag tag-project why-i-suck tag1
+fw tag tag-project why-i-suck tag2
 fw tag tag-project why-i-suck unknown_tag
 ".to_owned(),
     );
+
   }
 
   fn a_config() -> Config {

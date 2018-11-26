@@ -114,6 +114,7 @@ pub fn add_tag_project(maybe_config: Result<Config>, project_name: String, tag_n
   }
 }
 
+
 pub fn remove_tag(maybe_config: Result<Config>, project_name: String, tag_name: &str, logger: &Logger) -> Result<()> {
   let mut config: Config = maybe_config?;
 

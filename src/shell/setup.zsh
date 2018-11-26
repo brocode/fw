@@ -34,7 +34,9 @@ _fw() {
             'inspect:Inspect project'
             'update:Update project settings'
             'tag:Manipulate tags'
-            'export:Exports a project as shell commands'
+            'export-project:Exports a project as shell commands'
+            'export-by-tag:Exports all project with a given tag'
+            'export-tag:Exports a tag'
             'print-path:Print project path to stdout'
             'org-import:Import all repositories from a github org'
           );
@@ -60,8 +62,14 @@ _fw() {
             remove)
               __fw_projects;
             ;;
-            export)
+            export-project)
               __fw_projects;
+            ;;
+            export-by-tag)
+              __fw_tags;
+            ;;
+            export-tag)
+              __fw_tags;
             ;;
             tag)
               actions=(
@@ -70,6 +78,7 @@ _fw() {
                 'ls:Lists tags'
                 'tag-project:Add a tag to a project'
                 'untag-project:Remove a tag from a project'
+                'autotag:Execute command for every tagged project'
               );
               _describe action actions && ret=0;
             ;;

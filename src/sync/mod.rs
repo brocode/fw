@@ -356,7 +356,7 @@ pub fn synchronize(maybe_config: Result<Config>, no_progress_bar: bool, only_new
   });
 
   let job_results: Arc<MsQueue<Result<()>>> = Arc::new(MsQueue::new());
-  let progress_bars = (1..worker + 1).map(|i| {
+  let progress_bars = (1..=worker).map(|i| {
     let pb = m.add(ProgressBar::new(projects_count));
     pb.set_style(spinner_style.clone());
     pb.set_prefix(&format!("[{}/{}]", i, worker));
