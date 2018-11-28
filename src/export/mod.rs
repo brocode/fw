@@ -77,18 +77,18 @@ fn tag_to_shell_commands(tag_name: &str, config: &Config) -> Result<String> {
       let after_workon = tag
         .after_workon
         .clone()
-        .map(|a| format!(" --after-workon=\"{}\"", a))
+        .map(|a| format!(" --after-workon=\'{}\'", a))
         .unwrap_or_else(|| "".to_string());
       let after_clone = tag
         .after_clone
         .clone()
-        .map(|a| format!(" --after-clone=\"{}\"", a))
+        .map(|a| format!(" --after-clone=\'{}\'", a))
         .unwrap_or_else(|| "".to_string());
-      let priority = tag.priority.map(|p| format!(" --priority=\"{}\"", p)).unwrap_or_else(|| "".to_string());
+      let priority = tag.priority.map(|p| format!(" --priority=\'{}\'", p)).unwrap_or_else(|| "".to_string());
       let workspace = tag
         .workspace
         .clone()
-        .map(|p| format!(" --workspace=\"{}\"", p))
+        .map(|p| format!(" --workspace=\'{}\'", p))
         .unwrap_or_else(|| "".to_string());
       Ok(format!("fw tag add {}{}{}{}{}", tag_name, after_workon, after_clone, priority, workspace))
     } else {
@@ -113,8 +113,8 @@ mod tests {
     let exported_command = projects_to_shell_commands(&config, &[config.projects.get("test1").unwrap()]).expect("Should work");
     assert_that(&exported_command).is_equal_to(
       "# fw export projects
-fw tag add tag1 --after-workon=\"workon1\" --after-clone=\"clone1\" --priority=\"10\"
-fw tag add tag2 --after-workon=\"workon2\" --after-clone=\"clone2\" --priority=\"10\"
+fw tag add tag1 --after-workon=\'workon1\' --after-clone=\'clone1\' --priority=\'10\'
+fw tag add tag2 --after-workon=\'workon2\' --after-clone=\'clone2\' --priority=\'10\'
 # Error exporting tag: Unknown tag unknown_tag
 fw add git@github.com:codingberlin/why-i-suck.git why-i-suck
 fw update why-i-suck --override-path \'/home/bauer/docs/why-i-suck\'
