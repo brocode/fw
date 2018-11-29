@@ -39,7 +39,10 @@ fn projects_to_shell_commands(config: &Config, projects: &[&Project]) -> Result<
 
   fn push_update(commands: &mut Vec<String>, parameter_name: &str, maybe_value: &Option<String>, project_name: &str) {
     if let Some(ref value) = *maybe_value {
-      commands.push(format!("fw update {} --{} '{}'", project_name, parameter_name, value))
+      // println!("{}", value.clone());
+      let mut value_string = format!("{}", value);
+      value_string = value_string.replace("'", "\\'");
+      commands.push(format!("fw update {} --{} '{}'", project_name, parameter_name, value_string))
     }
   }
 
@@ -64,7 +67,9 @@ fn projects_to_shell_commands(config: &Config, projects: &[&Project]) -> Result<
     }
   }
 
+  tag_commands.sort_unstable();
   tag_commands.dedup();
+
   tag_commands.append(&mut project_commands);
 
   Ok(tag_commands.join("\n") + "\n")
@@ -112,13 +117,13 @@ mod tests {
     let config = a_config();
     let exported_command = projects_to_shell_commands(&config, &[config.projects.get("test1").unwrap()]).expect("Should work");
     assert_that(&exported_command).is_equal_to(
-      "# fw export projects
+      "# Error exporting tag: Unknown tag unknown_tag
+# fw export projects
 fw tag add tag1 --after-workon=\'workon1\' --after-clone=\'clone1\' --priority=\'10\'
 fw tag add tag2 --after-workon=\'workon2\' --after-clone=\'clone2\' --priority=\'10\'
-# Error exporting tag: Unknown tag unknown_tag
 fw add git@github.com:codingberlin/why-i-suck.git why-i-suck
 fw update why-i-suck --override-path \'/home/bauer/docs/why-i-suck\'
-fw update why-i-suck --after-workon \'echo 2\'
+fw update why-i-suck --after-workon \'echo test\\\'s\'
 fw update why-i-suck --after-clone \'echo 1\'
 fw tag tag-project why-i-suck tag1
 fw tag tag-project why-i-suck tag2
@@ -134,7 +139,7 @@ fw tag tag-project why-i-suck unknown_tag
       git: "git@github.com:codingberlin/why-i-suck.git".to_owned(),
       tags: Some(btreeset!["tag1".to_owned(), "tag2".to_owned(), "unknown_tag".to_owned(),]),
       after_clone: Some("echo 1".to_owned()),
-      after_workon: Some("echo 2".to_owned()),
+      after_workon: Some("echo test's".to_owned()),
       override_path: Some("/home/bauer/docs/why-i-suck".to_string()),
       bare: None,
     };
