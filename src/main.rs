@@ -1,44 +1,16 @@
 extern crate clap;
 
-extern crate slog;
-extern crate slog_async;
-extern crate slog_term;
 
 #[macro_use]
 extern crate serde_derive;
-extern crate serde_json;
-
-extern crate error_chain;
-
-extern crate dirs;
-
-extern crate github_gql;
-
-extern crate git2;
-
-extern crate rayon;
-
-extern crate core;
-
-extern crate atty;
-
-extern crate ansi_term;
-
-extern crate rand;
-
-extern crate crossbeam;
-
-extern crate indicatif;
 
 #[cfg(test)]
 extern crate maplit;
 
-extern crate regex;
 
 #[cfg(test)]
 extern crate spectral;
 
-extern crate openssl_probe;
 
 use crate::errors::*;
 use clap::{crate_version, App, AppSettings, Arg, SubCommand};
