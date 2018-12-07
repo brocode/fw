@@ -83,7 +83,8 @@ impl GithubApi {
         ErrorKind::RuntimeError(format!(
           "GitHub repository query failed for {}, got status {} with json {:?}",
           org, status, json
-        )).into(),
+        ))
+        .into(),
       )
     } else {
       let data_json = json.chain_err(|| ErrorKind::InternalError("organization repository list has no json".to_string()))?;

@@ -1,5 +1,5 @@
-use dirs;
 use crate::errors::*;
+use dirs;
 use serde_json;
 use slog::Logger;
 use slog::{debug, info, o, trace, warn};
@@ -57,7 +57,8 @@ impl Project {
         ErrorKind::UserError(format!(
           "Misconfigured project {}: resolved path {:?} is relative which is not allowed",
           &self.name, &path
-        )).into(),
+        ))
+        .into(),
       )
     }
   }
@@ -151,7 +152,8 @@ conscious choice and set the value."#;
           Some(actual_tag) => resolver(actual_tag)
             .clone()
             .map(|val| (val, self.tag_priority_or_fallback(t, actual_tag, logger))),
-        }).collect();
+        })
+        .collect();
       trace!(logger, "before sort"; "tags" => format!("{:?}", resolved_with_priority));
       resolved_with_priority.sort_by_key(|resolved_and_priority| resolved_and_priority.1);
       trace!(logger, "after sort"; "tags" => format!("{:?}", resolved_with_priority));

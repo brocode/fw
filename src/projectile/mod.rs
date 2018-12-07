@@ -1,6 +1,6 @@
 use crate::config::Config;
-use dirs;
 use crate::errors::*;
+use dirs;
 use regex::Regex;
 use slog::debug;
 use slog::Logger;

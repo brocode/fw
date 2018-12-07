@@ -1,13 +1,13 @@
 use crate::config;
 use crate::config::{Config, Project, Settings};
 use crate::errors::*;
+use crate::ws::github;
 use git2::Repository;
 use slog::Logger;
 use slog::{debug, info, o, warn};
 use std::collections::BTreeMap;
 use std::fs;
 use std::path::{Path, PathBuf};
-use crate::ws::github;
 
 pub fn setup(workspace_dir: &str, logger: &Logger) -> Result<()> {
   let setup_logger = logger.new(o!("workspace" => workspace_dir.to_owned()));
@@ -26,7 +26,8 @@ pub fn setup(workspace_dir: &str, logger: &Logger) -> Result<()> {
       } else {
         Err(ErrorKind::UserError(format!("Workspace path {} needs to be absolute", workspace_dir)).into())
       }
-    }).and_then(|path| determine_projects(path, logger))
+    })
+    .and_then(|path| determine_projects(path, logger))
     .and_then(|projects| write_config(projects, logger, workspace_dir))
 }
 

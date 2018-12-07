@@ -124,7 +124,8 @@ fw update why-i-suck --after-clone \'echo 1\'
 fw tag tag-project why-i-suck tag1
 fw tag tag-project why-i-suck tag2
 fw tag tag-project why-i-suck unknown_tag
-".to_owned(),
+"
+      .to_owned(),
     );
   }
 
