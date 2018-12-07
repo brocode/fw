@@ -1,4 +1,4 @@
-use errors::*;
+use crate::errors::*;
 use github_gql::client::Github;
 use github_gql::query::Query;
 use serde_json::Value;

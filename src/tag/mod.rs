@@ -1,7 +1,7 @@
-use config;
-use config::Config;
-use config::Tag;
-use errors::*;
+use crate::config;
+use crate::config::Config;
+use crate::config::Tag;
+use crate::errors::*;
 use slog::Logger;
 use slog::{debug, info};
 use std::collections::{BTreeMap, BTreeSet};
@@ -80,7 +80,7 @@ pub fn add_tag(maybe_config: Result<Config>, project_name: String, tag_name: Str
   let mut config: Config = maybe_config?;
   if let Some(mut project) = config.projects.get(&project_name).cloned() {
     info!(logger, "Add tag to project"; "tag" => &tag_name, "project" => &project_name);
-    let mut tags: BTreeMap<String, Tag> = config.settings.tags.clone().unwrap_or_else(BTreeMap::new);
+    let tags: BTreeMap<String, Tag> = config.settings.tags.clone().unwrap_or_else(BTreeMap::new);
     if tags.contains_key(&tag_name) {
       let mut new_tags: BTreeSet<String> = project.tags.clone().unwrap_or_else(BTreeSet::new);
       new_tags.insert(tag_name);
@@ -99,7 +99,7 @@ pub fn add_tag_project(maybe_config: Result<Config>, project_name: String, tag_n
   let mut config: Config = maybe_config?;
   if let Some(mut project) = config.projects.get(&project_name).cloned() {
     info!(logger, "Add tag to project"; "tag" => &tag_name, "project" => &project_name);
-    let mut tags: BTreeMap<String, Tag> = config.settings.tags.clone().unwrap_or_else(BTreeMap::new);
+    let tags: BTreeMap<String, Tag> = config.settings.tags.clone().unwrap_or_else(BTreeMap::new);
     if tags.contains_key(&tag_name) {
       let mut new_tags: BTreeSet<String> = project.tags.clone().unwrap_or_else(BTreeSet::new);
       new_tags.insert(tag_name);

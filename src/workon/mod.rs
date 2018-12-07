@@ -1,13 +1,13 @@
 use ansi_term::Colour;
 use ansi_term::Style;
-use config;
-use config::Project;
-use errors::*;
+use crate::config;
+use crate::config::Project;
+use crate::errors::*;
 use serde_json;
 use slog::debug;
 use slog::Logger;
 use std::env;
-use sync;
+use crate::sync;
 
 pub fn ls(maybe_config: Result<config::Config>) -> Result<()> {
   let config = maybe_config?;

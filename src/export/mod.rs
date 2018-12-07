@@ -1,5 +1,5 @@
-use config::{Config, Project};
-use errors::*;
+use crate::config::{Config, Project};
+use crate::errors::*;
 
 pub fn export_project(maybe_config: Result<Config>, name: &str) -> Result<()> {
   let config = maybe_config?;
@@ -103,7 +103,7 @@ fn tag_to_shell_commands(tag_name: &str, config: &Config) -> Result<String> {
 #[cfg(test)]
 mod tests {
   use super::*;
-  use config::*;
+  use crate::config::*;
   use maplit::btreeset;
   use spectral::prelude::*;
   use std::collections::BTreeMap;

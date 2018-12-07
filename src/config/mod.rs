@@ -1,5 +1,5 @@
 use dirs;
-use errors::*;
+use crate::errors::*;
 use serde_json;
 use slog::Logger;
 use slog::{debug, info, o, trace, warn};

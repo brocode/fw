@@ -1,10 +1,10 @@
 use ansi_term::Colour;
 use atty;
-use config;
-use config::Tag;
-use config::{Config, Project, Settings};
+use crate::config;
+use crate::config::Tag;
+use crate::config::{Config, Project, Settings};
 use crossbeam::queue::MsQueue;
-use errors::*;
+use crate::errors::*;
 use git2;
 use git2::build::RepoBuilder;
 use git2::{AutotagOption, Branch, Direction, FetchOptions, MergeAnalysis, RemoteCallbacks, Repository};
@@ -26,7 +26,7 @@ use std::path::PathBuf;
 use std::process::{Child, Command, Stdio};
 use std::sync::Arc;
 use std::thread;
-use tag;
+use crate::tag;
 
 pub static COLOURS: [Colour; 14] = [
   Colour::Green,

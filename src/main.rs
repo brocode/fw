@@ -41,7 +41,7 @@ extern crate spectral;
 extern crate openssl_probe;
 
 use clap::{crate_version, App, AppSettings, Arg, SubCommand};
-use errors::*;
+use crate::errors::*;
 use slog::{crit, debug, o};
 use slog::{Drain, Level, LevelFilter, Logger};
 use std::str::FromStr;

@@ -8,6 +8,7 @@ categories = ["command-line-utilities"]
 repository = "https://github.com/brocode/fw"
 readme = "README.org"
 keywords = ["workspace", "productivity", "cli", "automation", "developer-tools" ]
+edition = "2018"
 
 [dependencies]
 clap = "2.29"
