@@ -30,7 +30,6 @@ crossbeam = "0.5"
 indicatif = "0.9"
 openssl-probe = "0.1"
 github-gql-rs = "0.0.1"
-error-chain = "0.12.0"
 
 
 # This is needed to make sure that Cargo statically links against

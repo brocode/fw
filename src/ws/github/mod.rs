@@ -1,9 +1,9 @@
-use crate::errors::*;
+use crate::errors::AppError;
 use github_gql::client::Github;
 use github_gql::query::Query;
 use serde_json::Value;
 
-pub fn github_api(token: String) -> Result<GithubApi> {
+pub fn github_api(token: String) -> Result<GithubApi, AppError> {
   let client = Github::new(token)?;
 
   Ok(GithubApi { client })
@@ -56,7 +56,7 @@ struct PageInfo {
 }
 
 impl GithubApi {
-  pub fn list_repositories(&mut self, org: &str, include_archived: bool) -> Result<Vec<String>> {
+  pub fn list_repositories(&mut self, org: &str, include_archived: bool) -> Result<Vec<String>, AppError> {
     let initial_page = self.page_repositories(org, None, include_archived)?;
     let mut initial_names = initial_page.repository_names;
 
@@ -69,7 +69,7 @@ impl GithubApi {
 
     Ok(initial_names)
   }
-  fn page_repositories(&mut self, org: &str, after: Option<String>, include_archived: bool) -> Result<PageResult> {
+  fn page_repositories(&mut self, org: &str, after: Option<String>, include_archived: bool) -> Result<PageResult, AppError> {
     let after_refinement = after.map(|a| format!(", after:\\\"{}\\\"", a)).unwrap_or_else(|| "".to_owned());
     let (_, status, json) = self.client.query::<Value>(&Query::new_raw(
       "query {organization(login: \\\"".to_owned()
@@ -80,23 +80,21 @@ impl GithubApi {
     ))?;
     if !status.is_success() {
       Err(
-        ErrorKind::RuntimeError(format!(
+        AppError::RuntimeError(format!(
           "GitHub repository query failed for {}, got status {} with json {:?}",
           org, status, json
-        ))
-        .into(),
-      )
+        )))
     } else {
-      let data_json = json.chain_err(|| ErrorKind::InternalError("organization repository list has no json".to_string()))?;
-      let response: OrganizationQueryResponse =
-        serde_json::from_value(data_json).chain_err(|| ErrorKind::InternalError("Failed to parse github response".to_string()))?;
+      let data_json = json.ok_or(AppError::InternalError("organization repository list has no json"))?;
 
+      let response: OrganizationQueryResponse = serde_json::from_value(data_json)?;
       let repositories: Vec<Repository> = response.data.organization.repositories.nodes;
       let repo_names: Vec<String> = repositories
         .into_iter()
         .filter(|r| include_archived || !r.is_archived)
         .map(|r| r.name)
         .collect();
+
       Ok(PageResult {
         repository_names: repo_names,
         next_cursor: if response.data.organization.repositories.page_info.has_next_page {
@@ -105,6 +103,14 @@ impl GithubApi {
           None
         },
       })
+
+
+
+      // let name = "asdadad";
+      // Ok(PageResult {
+      //   repository_names: vec![name.to_owned()],
+      //   next_cursor: None
+      // })
     }
   }
 }

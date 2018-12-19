@@ -12,7 +12,7 @@ extern crate maplit;
 extern crate spectral;
 
 
-use crate::errors::*;
+use crate::errors::AppError;
 use clap::{crate_version, App, AppSettings, Arg, SubCommand};
 use slog::{crit, debug, o};
 use slog::{Drain, Level, LevelFilter, Logger};
@@ -53,7 +53,7 @@ fn _main() -> i32 {
   let subcommand_logger = logger.new(o!("command" => subcommand_name.clone()));
 
   let now = SystemTime::now();
-  let result: Result<String> = match subcommand_name.as_ref() {
+  let result: Result<String, AppError> = match subcommand_name.as_ref() {
     "sync" => {
       let worker = subcommand_matches
         .value_of("parallelism")
@@ -152,9 +152,9 @@ fn _main() -> i32 {
       execute_tag_subcommand(config, &subsubcommand_name, &subsubcommand_matches, &subcommand_logger)
     }
     "ls" => workon::ls(config),
-    _ => Err(ErrorKind::InternalError("Command not implemented".to_string()).into()),
+    _ => Err(AppError::InternalError("Command not implemented")),
   }
-  .and_then(|_| now.elapsed().map_err(|e| e.into()))
+  .and_then(|_| now.elapsed().map_err(AppError::ClockError))
   .map(|duration| format!("{}sec", duration.as_secs()));
 
   match result {
@@ -162,29 +162,18 @@ fn _main() -> i32 {
       debug!(subcommand_logger, "Done"; "time" => time);
       0
     }
-    Err(e) => {
-      use std::io::Write;
-      let stderr = &mut ::std::io::stderr();
-      let errmsg = "Error writing to stderr";
-
-      writeln!(stderr, "error: {}", e).unwrap_or_else(|_| panic!(errmsg));
-
-      for e in e.iter().skip(1) {
-        writeln!(stderr, "caused by: {}", e).unwrap_or_else(|_| panic!(errmsg));
-      }
-
-      // The backtrace is not always generated. Try to run this example
-      // with `RUST_BACKTRACE=1`.
-      if let Some(backtrace) = e.backtrace() {
-        writeln!(stderr, "backtrace: {:?}", backtrace).unwrap_or_else(|_| panic!(errmsg));
-      }
-      crit!(subcommand_logger, "Error running command"; "error" => format!("{:?}", e));
+    Err(error) => {
+      crit!(subcommand_logger, "Error running command"; "error" => format!("{:?}", error));
       1
     }
   }
 }
 
-fn execute_tag_subcommand(maybe_config: Result<config::Config>, tag_command_name: &str, tag_matches: &clap::ArgMatches, logger: &Logger) -> Result<()> {
+fn execute_tag_subcommand(
+  maybe_config: Result<config::Config, AppError>,
+  tag_command_name: &str,
+  tag_matches: &clap::ArgMatches, logger: &Logger
+) -> Result<(), AppError> {
   match tag_command_name {
     "ls" => {
       let maybe_project_name: Option<String> = tag_matches.value_of("PROJECT_NAME").map(str::to_string);
@@ -222,11 +211,11 @@ fn execute_tag_subcommand(maybe_config: Result<config::Config>, tag_command_name
       &logger,
       &tag_matches.value_of("parallel").map(|p| p.to_owned()),
     ),
-    _ => Err(ErrorKind::InternalError("Command not implemented".to_string()).into()),
+    _ => Result::Err(AppError::InternalError("Command not implemented")),
   }
 }
 
-fn print_zsh_setup(use_fzf: bool) -> Result<()> {
+fn print_zsh_setup(use_fzf: bool) -> Result<(), AppError> {
   let fw_completion = include_str!("shell/setup.zsh");
   let basic_workon = include_str!("shell/workon.zsh");
   let fzf_workon = include_str!("shell/workon-fzf.zsh");

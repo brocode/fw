@@ -1,17 +1,18 @@
 use crate::config::{Config, Project};
-use crate::errors::*;
+use crate::errors::AppError;
+use std::error::Error;
 
-pub fn export_project(maybe_config: Result<Config>, name: &str) -> Result<()> {
+pub fn export_project(maybe_config: Result<Config, AppError>, name: &str) -> Result<(), AppError> {
   let config = maybe_config?;
   let project: &Project = config
     .projects
     .get(name)
-    .chain_err(|| ErrorKind::UserError(format!("project {} not found", name)))?;
+    .ok_or_else(|| AppError::UserError(format!("project {} not found", name)))?;
   println!("{}", projects_to_shell_commands(&config, &[project])?);
   Ok(())
 }
 
-pub fn export_tagged_projects(maybe_config: Result<Config>, tag_name: &str) -> Result<()> {
+pub fn export_tagged_projects(maybe_config: Result<Config, AppError>, tag_name: &str) -> Result<(), AppError> {
   let config = maybe_config?;
   let mut projects: Vec<&Project> = Vec::new();
 
@@ -28,13 +29,13 @@ pub fn export_tagged_projects(maybe_config: Result<Config>, tag_name: &str) -> R
   Ok(())
 }
 
-pub fn export_tag(maybe_config: Result<Config>, tag_name: &str) -> Result<()> {
+pub fn export_tag(maybe_config: Result<Config, AppError>, tag_name: &str) -> Result<(), AppError> {
   let config = maybe_config?;
   println!("{}", tag_to_shell_commands(tag_name, &config)?);
   Ok(())
 }
 
-fn projects_to_shell_commands(config: &Config, projects: &[&Project]) -> Result<String> {
+fn projects_to_shell_commands(config: &Config, projects: &[&Project]) -> Result<String, AppError> {
   fn push_update(commands: &mut Vec<String>, parameter_name: &str, maybe_value: &Option<String>, project_name: &str) {
     if let Some(ref value) = *maybe_value {
       let mut value_string = value.to_string();
@@ -72,7 +73,8 @@ fn projects_to_shell_commands(config: &Config, projects: &[&Project]) -> Result<
   Ok(tag_commands.join("\n") + "\n")
 }
 
-fn tag_to_shell_commands(tag_name: &str, config: &Config) -> Result<String> {
+
+fn tag_to_shell_commands(tag_name: &str, config: &Config) -> Result<String, AppError> {
   if let Some(ref tags) = config.settings.tags {
     if let Some(tag) = tags.get(tag_name) {
       let after_workon = tag
@@ -93,10 +95,10 @@ fn tag_to_shell_commands(tag_name: &str, config: &Config) -> Result<String> {
         .unwrap_or_else(|| "".to_string());
       Ok(format!("fw tag add {}{}{}{}{}", tag_name, after_workon, after_clone, priority, workspace))
     } else {
-      Err(ErrorKind::UserError(format!("Unknown tag {}", tag_name)).into())
+      Result::Err(AppError::UserError(format!("Unknown tag {}", tag_name)))
     }
   } else {
-    Err(ErrorKind::UserError("No tags configured".to_string()).into())
+    Result::Err(AppError::UserError("No tags configured".to_string()))
   }
 }
 
