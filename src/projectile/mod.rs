@@ -1,5 +1,5 @@
 use crate::config::Config;
-use crate::errors::*;
+use crate::errors::AppError;
 use dirs;
 use regex::Regex;
 use slog::debug;
@@ -9,7 +9,7 @@ use std::io;
 use std::io::Write;
 use std::path::PathBuf;
 
-pub fn projectile(maybe_config: Result<Config>, logger: &Logger) -> Result<()> {
+pub fn projectile(maybe_config: Result<Config, AppError>, logger: &Logger) -> Result<(), AppError> {
   let config: Config = maybe_config?;
   let projects_paths: Vec<PathBuf> = config
     .clone()
@@ -17,7 +17,7 @@ pub fn projectile(maybe_config: Result<Config>, logger: &Logger) -> Result<()> {
     .into_iter()
     .map(|(_, p)| config.actual_path_to_project(&p, logger))
     .collect();
-  let home_dir: PathBuf = dirs::home_dir().chain_err(|| ErrorKind::UserError("$HOME not set".to_owned()))?;
+  let home_dir: PathBuf = dirs::home_dir().ok_or_else(|| AppError::UserError("$HOME not set".to_owned()))?;
   let mut projectile_bookmarks: PathBuf = home_dir.clone();
   projectile_bookmarks.push(".emacs.d");
   projectile_bookmarks.push("projectile-bookmarks.eld");
@@ -25,7 +25,7 @@ pub fn projectile(maybe_config: Result<Config>, logger: &Logger) -> Result<()> {
   persist(logger, &home_dir, writer, projects_paths)
 }
 
-fn persist<W>(logger: &Logger, home_dir: &PathBuf, writer: W, paths: Vec<PathBuf>) -> Result<()>
+fn persist<W>(logger: &Logger, home_dir: &PathBuf, writer: W, paths: Vec<PathBuf>) -> Result<(), AppError>
 where
   W: io::Write,
 {
@@ -42,7 +42,7 @@ where
   Ok(())
 }
 
-fn replace_path_with_tilde(path: &str, path_to_replace: PathBuf) -> Result<String> {
+fn replace_path_with_tilde(path: &str, path_to_replace: PathBuf) -> Result<String, AppError> {
   let replace_string = path_to_replace.into_os_string().into_string().expect("path should be a valid string");
   let mut pattern: String = "^".to_string();
   pattern.push_str(&replace_string);
