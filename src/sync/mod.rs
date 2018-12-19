@@ -1,7 +1,7 @@
 use crate::config;
 use crate::config::Tag;
 use crate::config::{Config, Project, Settings};
-use crate::errors::*;
+use crate::errors::AppError;
 use crate::tag;
 use ansi_term::Colour;
 use atty;
@@ -81,7 +81,7 @@ fn builder(git_user: &str) -> RepoBuilder {
   repo_builder
 }
 
-fn forward_process_output_to_stdout<T: std::io::Read>(read: T, prefix: &str, colour: Colour, atty: bool, mark_err: bool) -> Result<()> {
+fn forward_process_output_to_stdout<T: std::io::Read>(read: T, prefix: &str, colour: Colour, atty: bool, mark_err: bool) -> Result<(),AppError> {
   let mut buf = BufReader::new(read);
   loop {
     let mut line = String::new();
@@ -108,10 +108,10 @@ fn forward_process_output_to_stdout<T: std::io::Read>(read: T, prefix: &str, col
   Ok(())
 }
 
-pub fn spawn_maybe(shell: &[String], cmd: &str, workdir: &PathBuf, project_name: &str, colour: Colour, logger: &Logger) -> Result<()> {
+pub fn spawn_maybe(shell: &[String], cmd: &str, workdir: &PathBuf, project_name: &str, colour: Colour, logger: &Logger) -> Result<(),AppError> {
   let program: &str = shell
     .first()
-    .chain_err(|| ErrorKind::UserError("shell entry in project settings must have at least one element".to_owned()))?;
+    .ok_or_else(|| AppError::UserError("shell entry in project settings must have at least one element".to_owned()))?;
   let rest: &[String] = shell.split_at(1).1;
   let mut result: Child = Command::new(program)
     .args(rest)
@@ -146,7 +146,7 @@ pub fn spawn_maybe(shell: &[String], cmd: &str, workdir: &PathBuf, project_name:
   let status = result.wait()?;
   if status.code().unwrap_or(0) > 0 {
     error!(logger, "cmd failed");
-    Err(ErrorKind::UserError("External command failed.".to_owned()).into())
+    Err(AppError::UserError("External command failed.".to_owned()))
   } else {
     info!(logger, "cmd finished");
     Ok(())
@@ -169,7 +169,7 @@ pub fn project_shell(project_settings: &Settings) -> Vec<String> {
   project_settings.shell.clone().unwrap_or_else(|| vec!["sh".to_owned(), "-c".to_owned()])
 }
 
-pub fn init_threads(parallel_raw: &Option<String>, logger: &Logger) -> Result<()> {
+pub fn init_threads(parallel_raw: &Option<String>, logger: &Logger) -> Result<(), AppError> {
   if let Some(ref raw_num) = *parallel_raw {
     let num_threads = raw_num.parse::<usize>()?;
     rayon::ThreadPoolBuilder::new().num_threads(num_threads).build_global().expect(
@@ -180,7 +180,13 @@ pub fn init_threads(parallel_raw: &Option<String>, logger: &Logger) -> Result<()
   Ok(())
 }
 
-pub fn foreach(maybe_config: Result<Config>, cmd: &str, tags: &BTreeSet<String>, logger: &Logger, parallel_raw: &Option<String>) -> Result<()> {
+pub fn foreach(
+  maybe_config: Result<Config, AppError>,
+  cmd: &str,
+  tags: &BTreeSet<String>,
+  logger: &Logger,
+  parallel_raw: &Option<String>,
+) -> Result<(), AppError> {
   let config = maybe_config?;
   init_threads(parallel_raw, logger)?;
 
@@ -195,12 +201,12 @@ pub fn foreach(maybe_config: Result<Config>, cmd: &str, tags: &BTreeSet<String>,
       info!(project_logger, "Entering");
       spawn_maybe(&shell, cmd, &path, &p.name, random_colour(), &project_logger)
     })
-    .collect::<Vec<Result<()>>>();
+    .collect::<Vec<Result<(), AppError>>>();
 
   script_results.into_iter().fold(Ok(()), |accu, maybe_error| accu.and(maybe_error))
 }
 
-pub fn autotag(maybe_config: Result<Config>, cmd: &str, tag_name: &str, logger: &Logger, parallel_raw: &Option<String>) -> Result<()> {
+pub fn autotag(maybe_config: Result<Config, AppError>, cmd: &str, tag_name: &str, logger: &Logger, parallel_raw: &Option<String>) -> Result<(), AppError> {
   let mut config = maybe_config?;
 
   let tags: BTreeMap<String, Tag> = config.settings.tags.clone().unwrap_or_else(BTreeMap::new);
@@ -219,7 +225,7 @@ pub fn autotag(maybe_config: Result<Config>, cmd: &str, tag_name: &str, logger: 
         info!(project_logger, "Entering");
         spawn_maybe(&shell, cmd, &path, &p.name, random_colour(), &project_logger)
       })
-      .collect::<Vec<Result<()>>>();
+      .collect::<Vec<Result<(), AppError>>>();
 
     // map with projects and filter if result == 0
     let filtered_projects: Vec<&Project> = script_results
@@ -234,15 +240,15 @@ pub fn autotag(maybe_config: Result<Config>, cmd: &str, tag_name: &str, logger: 
     }
     config::write_config(config, logger)
   } else {
-    Err(ErrorKind::UserError(format!("Unknown tag {}", tag_name)).into())
+    Err(AppError::UserError(format!("Unknown tag {}", tag_name)))
   }
 }
 
-fn update_project_remotes(project: &Project, path: &PathBuf, project_logger: &Logger, ff_merge: bool) -> Result<()> {
+fn update_project_remotes(project: &Project, path: &PathBuf, project_logger: &Logger, ff_merge: bool) -> Result<(), AppError> {
   debug!(project_logger, "Update project remotes");
   let local: Repository = Repository::open(path).map_err(|error| {
     warn!(project_logger, "Error opening local repo"; "error" => format!("{}", error));
-    error
+    AppError::GitError(error)
   })?;
   let remote = "origin";
   let mut remote = local.find_remote(remote).or_else(|_| local.remote_anonymous(remote))?;
@@ -250,12 +256,12 @@ fn update_project_remotes(project: &Project, path: &PathBuf, project_logger: &Lo
   let remote_callbacks = agent_callbacks(&git_user);
   remote.connect_auth(Direction::Fetch, Some(remote_callbacks), None).map_err(|error| {
     warn!(project_logger, "Error connecting remote"; "error" => format!("{}", error), "project" => &project.name);
-    error
+    AppError::GitError(error)
   })?;
   let mut options = agent_fetch_options(&git_user);
   remote.download(&[], Some(&mut options)).map_err(|error| {
     warn!(project_logger, "Error downloading for remote"; "error" => format!("{}", error), "project" => &project.name);
-    error
+    AppError::GitError(error)
   })?;
   remote.disconnect();
   remote.update_tips(None, true, AutotagOption::Unspecified, None)?;
@@ -269,7 +275,7 @@ fn update_project_remotes(project: &Project, path: &PathBuf, project_logger: &Lo
   Ok(())
 }
 
-fn fast_forward_merge(local: &Repository, project_logger: &Logger) -> Result<()> {
+fn fast_forward_merge(local: &Repository, project_logger: &Logger) -> Result<(), AppError> {
   let head_ref = local.head()?;
   if head_ref.is_branch() {
     let branch = Branch::wrap(head_ref);
@@ -291,7 +297,7 @@ fn fast_forward_merge(local: &Repository, project_logger: &Logger) -> Result<()>
   Ok(())
 }
 
-fn clone_project(config: &Config, project: &Project, path: &PathBuf, project_logger: &Logger) -> Result<()> {
+fn clone_project(config: &Config, project: &Project, path: &PathBuf, project_logger: &Logger) -> Result<(), AppError> {
   let shell = project_shell(&config.settings);
   let git_user = username_from_git_url(&project.git);
   let mut repo_builder = builder(&git_user);
@@ -301,21 +307,26 @@ fn clone_project(config: &Config, project: &Project, path: &PathBuf, project_log
     .clone(project.git.as_str(), path)
     .map_err(|error| {
       warn!(project_logger, "Error cloning repo"; "error" => format!("{}", error));
-      error.into()
+      AppError::GitError(error)
     })
     .and_then(|_| {
       let after_clone = config.resolve_after_clone(project_logger, project);
       if !after_clone.is_empty() {
         debug!(project_logger, "Handling post hooks"; "after_clone" => format!("{:?}", after_clone));
         spawn_maybe(&shell, &after_clone.join(" && "), path, &project.name, random_colour(), project_logger)
-          .chain_err(|| ErrorKind::UserError("Post-clone hook failed (nonzero exit code).".to_string()))
+          .map_err(|error| {
+            AppError::UserError(format!(
+              "Post-clone hook failed (nonzero exit code). Cause: {:?}",
+              error
+            ))
+        })
       } else {
         Ok(())
       }
     })
 }
 
-fn sync_project(config: &Config, project: &Project, logger: &Logger, only_new: bool, ff_merge: bool) -> Result<()> {
+fn sync_project(config: &Config, project: &Project, logger: &Logger, only_new: bool, ff_merge: bool) -> Result<(), AppError> {
   let path = config.actual_path_to_project(project, logger);
   let exists = path.exists();
   let project_logger = logger.new(o!(
@@ -333,7 +344,13 @@ fn sync_project(config: &Config, project: &Project, logger: &Logger, only_new: b
     clone_project(config, project, &path, &project_logger)
   }
 }
-pub fn synchronize(maybe_config: Result<Config>, no_progress_bar: bool, only_new: bool, ff_merge: bool, worker: i32, logger: &Logger) -> Result<()> {
+
+pub fn synchronize(
+  maybe_config: Result<Config, AppError>,
+  no_progress_bar: bool, only_new: bool,
+  ff_merge: bool, worker: i32,
+  logger: &Logger
+) -> Result<(), AppError> {
   eprintln!("Synchronizing everything");
   if !ssh_agent_running() {
     warn!(logger, "SSH Agent not running. Process may hang.")
@@ -358,7 +375,7 @@ pub fn synchronize(maybe_config: Result<Config>, no_progress_bar: bool, only_new
     ProgressDrawTarget::stderr()
   });
 
-  let job_results: Arc<MsQueue<Result<()>>> = Arc::new(MsQueue::new());
+  let job_results: Arc<MsQueue<Result<(), AppError>>> = Arc::new(MsQueue::new());
   let progress_bars = (1..=worker).map(|i| {
     let pb = m.add(ProgressBar::new(projects_count));
     pb.set_style(spinner_style.clone());
@@ -374,7 +391,7 @@ pub fn synchronize(maybe_config: Result<Config>, no_progress_bar: bool, only_new
     let job_logger = logger.clone();
     let job_result_queue = Arc::clone(&job_results);
     thread::spawn(move || {
-      let mut job_result: Result<()> = Ok(());
+      let mut job_result: Result<(), AppError> = Result::Ok(());
       loop {
         if let Some(project) = job_q.try_pop() {
           pb.set_message(&project.name);
@@ -390,7 +407,7 @@ pub fn synchronize(maybe_config: Result<Config>, no_progress_bar: bool, only_new
   }
   m.join_and_clear().unwrap();
 
-  let mut synchronize_result: Result<()> = Ok(());
+  let mut synchronize_result: Result<(), AppError> = Result::Ok(());
   while let Some(result) = job_results.try_pop() {
     synchronize_result = synchronize_result.and(result);
   }

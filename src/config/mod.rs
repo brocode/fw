@@ -1,4 +1,4 @@
-use crate::errors::*;
+use crate::errors::AppError;
 use dirs;
 use serde_json;
 use slog::Logger;
@@ -47,24 +47,21 @@ pub struct Config {
 }
 
 impl Project {
-  fn check_sanity(&self, config: &Config, logger: &Logger) -> Result<()> {
+  fn check_sanity(&self, config: &Config, logger: &Logger) -> Result<(), AppError> {
     let sanity_logger = logger.new(o!("task" => "check_sanity"));
     let path = config.actual_path_to_project(self, &sanity_logger);
     if path.is_absolute() {
       Ok(())
     } else {
-      Err(
-        ErrorKind::UserError(format!(
-          "Misconfigured project {}: resolved path {:?} is relative which is not allowed",
-          &self.name, &path
-        ))
-        .into(),
-      )
+      Err(AppError::UserError(format!(
+        "Misconfigured project {}: resolved path {:?} is relative which is not allowed",
+        &self.name, &path
+      )))
     }
   }
 }
 
-fn fw_path() -> Result<PathBuf> {
+fn fw_path() -> Result<PathBuf, AppError> {
   let raw_path = match env::var("FW_CONFIG_PATH") {
     Ok(path) => Ok(PathBuf::from(path)),
     Err(_) => Ok(PathBuf::from("~/.fw.json")),
@@ -103,7 +100,7 @@ impl Config {
     commands
   }
 
-  fn check_sanity(self, logger: &Logger) -> Result<Config> {
+  fn check_sanity(self, logger: &Logger) -> Result<Config, AppError> {
     for project in self.projects.values() {
       project.check_sanity(&self, logger)?
     }
@@ -162,32 +159,32 @@ conscious choice and set the value."#;
   }
 }
 
-fn read_config<R>(reader: Result<R>, logger: &Logger) -> Result<Config>
+fn read_config<R>(reader: Result<R, AppError>, logger: &Logger) -> Result<Config, AppError>
 where
   R: Read,
 {
   reader
-    .and_then(|r| serde_json::de::from_reader(r).map_err(|e| e.into()))
+    .and_then(|r| serde_json::de::from_reader(r).map_err(AppError::BadJson))
     .and_then(|c: Config| c.check_sanity(logger))
 }
 
-fn open_config() -> Result<File> {
+fn open_config() -> Result<File, AppError> {
   let config_file_path = fw_path()?;
   let path = config_file_path
     .to_str()
-    .chain_err(|| ErrorKind::UserError("$HOME is not valid utf8".to_owned()));
-  path.and_then(|path| File::open(path).map_err(|e| e.into()))
+    .ok_or_else(|| AppError::UserError("$HOME is not valid utf8".to_owned()));
+  path.and_then(|path| File::open(path).map_err(AppError::IO))
 }
 
-pub fn get_config(logger: &Logger) -> Result<Config> {
+pub fn get_config(logger: &Logger) -> Result<Config, AppError> {
   let config_file = open_config();
   let reader = config_file.map(BufReader::new);
   read_config(reader, logger)
 }
 
-fn repo_name_from_url(url: &str) -> Result<&str> {
+fn repo_name_from_url(url: &str) -> Result<&str, AppError> {
   let last_fragment = url.rsplit('/').next().ok_or_else(|| {
-    ErrorKind::UserError(format!(
+    AppError::UserError(format!(
       "Given URL {} does not have path fragments so cannot determine project name. Please give \
        one.",
       url
@@ -203,21 +200,24 @@ fn repo_name_from_url(url: &str) -> Result<&str> {
 }
 
 pub fn add_entry(
-  maybe_config: Result<Config>,
+  maybe_config: Result<Config,AppError>,
   maybe_name: Option<&str>,
   url: &str,
   after_workon: Option<String>,
   after_clone: Option<String>,
   override_path: Option<String>,
   logger: &Logger,
-) -> Result<()> {
+) -> Result<(), AppError> {
   let name = maybe_name
-    .ok_or_else(|| ErrorKind::UserError(format!("No project name specified for {}", url)))
+    .ok_or_else(|| AppError::UserError(format!("No project name specified for {}", url)))
     .or_else(|_| repo_name_from_url(url))?;
   let mut config: Config = maybe_config?;
   info!(logger, "Prepare new project entry"; "name" => name, "url" => url);
   if config.projects.contains_key(name) {
-    Err(ErrorKind::UserError(format!("Project key {} already exists, not gonna overwrite it for you", name)).into())
+        Err(AppError::UserError(format!(
+      "Project key {} already exists, not gonna overwrite it for you",
+      name
+    )))
   } else {
     let default_after_clone = config.settings.default_after_clone.clone();
     let default_after_workon = config.settings.default_after_clone.clone();
@@ -239,13 +239,16 @@ pub fn add_entry(
   }
 }
 
-pub fn remove_entry(maybe_config: Result<Config>, project_name: &str, purge_directory: bool, logger: &Logger) -> Result<()> {
+pub fn remove_entry(maybe_config: Result<Config, AppError>, project_name: &str, purge_directory: bool, logger: &Logger) -> Result<(), AppError> {
   let mut config: Config = maybe_config?;
 
   info!(logger, "Prepare remove project entry"; "name" => project_name);
 
   if !config.projects.contains_key(project_name) {
-    Err(ErrorKind::UserError(format!("Project key {} does not exist in config", project_name)).into())
+    Err(AppError::UserError(format!(
+      "Project key {} does not exist in config",
+      project_name
+    )))
   } else if let Some(project) = config.projects.get(&project_name.to_owned()).cloned() {
     config.projects.remove(&project_name.to_owned());
 
@@ -260,25 +263,28 @@ pub fn remove_entry(maybe_config: Result<Config>, project_name: &str, purge_dire
     }
     write_config(config, logger)
   } else {
-    Err(ErrorKind::UserError(format!("Unknown project {}", project_name)).into())
+    Err(AppError::UserError(format!(
+      "Unknown project {}",
+      project_name
+    )))
   }
 }
 
 pub fn update_entry(
-  maybe_config: Result<Config>,
+  maybe_config: Result<Config, AppError>,
   name: &str,
   git: Option<String>,
   after_workon: Option<String>,
   after_clone: Option<String>,
   override_path: Option<String>,
   logger: &Logger,
-) -> Result<()> {
+) -> Result<(), AppError> {
   let mut config: Config = maybe_config?;
   info!(logger, "Update project entry"; "name" => name);
   if name.starts_with("http") || name.starts_with("git@") {
-    Err(ErrorKind::UserError(format!("{} looks like a repo URL and not like a project name, please fix", name)).into())
+    Err(AppError::UserError(format!("{} looks like a repo URL and not like a project name, please fix", name)))
   } else if !config.projects.contains_key(name) {
-    Err(ErrorKind::UserError(format!("Project key {} does not exists. Can not update.", name)).into())
+    Err(AppError::UserError(format!("Project key {} does not exists. Can not update.", name)))
   } else {
     let old_project_config: Project = config.projects.get(name).expect("Already checked in the if above").clone();
     config.projects.insert(
@@ -298,12 +304,12 @@ pub fn update_entry(
   }
 }
 
-pub fn write_config(config: Config, logger: &Logger) -> Result<()> {
+pub fn write_config(config: Config, logger: &Logger) -> Result<(), AppError> {
   let config_path = fw_path()?;
   info!(logger, "Writing config"; "path" => format!("{:?}", config_path));
   config.check_sanity(logger).and_then(|c| {
     let mut buffer = File::create(config_path)?;
-    serde_json::ser::to_writer_pretty(&mut buffer, &c).map_err(|e| e.into())
+    serde_json::ser::to_writer_pretty(&mut buffer, &c).map_err(AppError::BadJson)
   })
 }
 

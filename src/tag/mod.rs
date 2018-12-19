@@ -1,12 +1,12 @@
 use crate::config;
 use crate::config::Config;
 use crate::config::Tag;
-use crate::errors::*;
+use crate::errors::AppError;
 use slog::Logger;
 use slog::{debug, info};
 use std::collections::{BTreeMap, BTreeSet};
 
-pub fn list_tags(maybe_config: Result<Config>, maybe_project_name: Option<String>, logger: &Logger) -> Result<()> {
+pub fn list_tags(maybe_config: Result<Config, AppError>, maybe_project_name: Option<String>, logger: &Logger) -> Result<(), AppError> {
   let config: Config = maybe_config?;
   if let Some(project_name) = maybe_project_name {
     debug!(logger, "Listing tags for project"; "project" => &project_name);
@@ -18,14 +18,14 @@ pub fn list_tags(maybe_config: Result<Config>, maybe_project_name: Option<String
 }
 
 pub fn create_tag(
-  maybe_config: Result<Config>,
+  maybe_config: Result<Config, AppError>,
   tag_name: String,
   after_workon: Option<String>,
   after_clone: Option<String>,
   priority: Option<u8>,
   tag_workspace: Option<String>,
   logger: &Logger,
-) -> Result<()> {
+) -> Result<(), AppError> {
   let mut config: Config = maybe_config?;
   let mut tags: BTreeMap<String, Tag> = config.settings.tags.unwrap_or_else(BTreeMap::new);
   info!(logger, "Create tag");
@@ -40,7 +40,7 @@ pub fn create_tag(
   config::write_config(config, logger)
 }
 
-pub fn delete_tag(maybe_config: Result<Config>, tag_name: &str, logger: &Logger) -> Result<()> {
+pub fn delete_tag(maybe_config: Result<Config, AppError>, tag_name: &str, logger: &Logger) -> Result<(), AppError> {
   let mut config: Config = maybe_config?;
   let mut tags: BTreeMap<String, Tag> = config.settings.tags.unwrap_or_else(BTreeMap::new);
 
@@ -54,7 +54,7 @@ pub fn delete_tag(maybe_config: Result<Config>, tag_name: &str, logger: &Logger)
         config.projects.insert(project_name.to_string(), project);
       }
     } else {
-      return Err(ErrorKind::InternalError(format!("Unknown project {}", project_name)).into());
+      return Err(AppError::UserError(format!("Unknown project {}", project_name)));
     }
   }
 
@@ -67,7 +67,7 @@ pub fn delete_tag(maybe_config: Result<Config>, tag_name: &str, logger: &Logger)
   }
 }
 
-fn list_all_tags(config: Config) -> Result<()> {
+fn list_all_tags(config: Config) -> Result<(), AppError> {
   if let Some(tags) = config.settings.tags {
     for tag_name in tags.keys() {
       println!("{}", tag_name);
@@ -76,7 +76,7 @@ fn list_all_tags(config: Config) -> Result<()> {
   Ok(())
 }
 
-pub fn add_tag(maybe_config: Result<Config>, project_name: String, tag_name: String, logger: &Logger) -> Result<()> {
+pub fn add_tag(maybe_config: Result<Config, AppError>, project_name: String, tag_name: String, logger: &Logger) -> Result<(), AppError> {
   let mut config: Config = maybe_config?;
   if let Some(mut project) = config.projects.get(&project_name).cloned() {
     info!(logger, "Add tag to project"; "tag" => &tag_name, "project" => &project_name);
@@ -88,14 +88,14 @@ pub fn add_tag(maybe_config: Result<Config>, project_name: String, tag_name: Str
       config.projects.insert(project_name, project);
       config::write_config(config, logger)
     } else {
-      Err(ErrorKind::UserError(format!("Unknown tag {}", tag_name)).into())
+      Err(AppError::UserError(format!("Unknown tag {}", tag_name)))
     }
   } else {
-    Err(ErrorKind::UserError(format!("Unknown project {}", project_name)).into())
+    Err(AppError::UserError(format!("Unknown project {}", project_name)))
   }
 }
 
-pub fn add_tag_project(maybe_config: Result<Config>, project_name: String, tag_name: String, logger: &Logger) -> Result<Config> {
+pub fn add_tag_project(maybe_config: Result<Config, AppError>, project_name: String, tag_name: String, logger: &Logger) -> Result<Config, AppError> {
   let mut config: Config = maybe_config?;
   if let Some(mut project) = config.projects.get(&project_name).cloned() {
     info!(logger, "Add tag to project"; "tag" => &tag_name, "project" => &project_name);
@@ -107,14 +107,15 @@ pub fn add_tag_project(maybe_config: Result<Config>, project_name: String, tag_n
       config.projects.insert(project_name, project);
       Ok(config)
     } else {
-      Err(ErrorKind::UserError(format!("Unknown tag {}", tag_name)).into())
+      Err(AppError::UserError(format!("Unknown tag {}", tag_name)))
     }
   } else {
-    Err(ErrorKind::UserError(format!("Unknown project {}", project_name)).into())
+    Err(AppError::UserError(format!("Unknown project {}", project_name)))
   }
 }
 
-pub fn remove_tag(maybe_config: Result<Config>, project_name: String, tag_name: &str, logger: &Logger) -> Result<()> {
+
+pub fn remove_tag(maybe_config: Result<Config, AppError>, project_name: String, tag_name: &str, logger: &Logger) -> Result<(), AppError> {
   let mut config: Config = maybe_config?;
 
   if let Some(mut project) = config.projects.get(&project_name).cloned() {
@@ -128,11 +129,11 @@ pub fn remove_tag(maybe_config: Result<Config>, project_name: String, tag_name: 
       Ok(())
     }
   } else {
-    return Err(ErrorKind::UserError(format!("Unknown project {}", project_name)).into());
+    return Err(AppError::UserError(format!("Unknown project {}", project_name)));
   }
 }
 
-fn list_project_tags(config: &Config, project_name: &str) -> Result<()> {
+fn list_project_tags(config: &Config, project_name: &str) -> Result<(), AppError> {
   if let Some(project) = config.projects.get(project_name) {
     if let Some(tags) = project.clone().tags {
       for tag_name in tags {
@@ -141,6 +142,6 @@ fn list_project_tags(config: &Config, project_name: &str) -> Result<()> {
     }
     Ok(())
   } else {
-    Err(ErrorKind::UserError(format!("Unknown project {}", project_name)).into())
+    Err(AppError::UserError(format!("Unknown project {}", project_name)))
   }
 }
