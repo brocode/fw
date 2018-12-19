@@ -1,4 +1,4 @@
-use errors::*;
+use crate::errors::*;
 use github_gql::client::Github;
 use github_gql::query::Query;
 use serde_json::Value;
@@ -83,7 +83,8 @@ impl GithubApi {
         ErrorKind::RuntimeError(format!(
           "GitHub repository query failed for {}, got status {} with json {:?}",
           org, status, json
-        )).into(),
+        ))
+        .into(),
       )
     } else {
       let data_json = json.chain_err(|| ErrorKind::InternalError("organization repository list has no json".to_string()))?;

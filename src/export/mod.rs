@@ -1,5 +1,5 @@
-use config::{Config, Project};
-use errors::*;
+use crate::config::{Config, Project};
+use crate::errors::*;
 
 pub fn export_project(maybe_config: Result<Config>, name: &str) -> Result<()> {
   let config = maybe_config?;
@@ -11,7 +11,11 @@ pub fn export_project(maybe_config: Result<Config>, name: &str) -> Result<()> {
   Ok(())
 }
 
+<<<<<<< HEAD
 pub fn export_tagged_projects(maybe_config: Result<Config>, tag_name:&str) -> Result<()> {
+=======
+pub fn export_tagged_projects(maybe_config: Result<Config>, tag_name: &str) -> Result<()> {
+>>>>>>> 0366b3e0f9db23ea3f404fe120dcac88a05ce7c6
   let config = maybe_config?;
   let mut projects: Vec<&Project> = Vec::new();
 
@@ -28,18 +32,28 @@ pub fn export_tagged_projects(maybe_config: Result<Config>, tag_name:&str) -> Re
   Ok(())
 }
 
+<<<<<<< HEAD
 pub fn export_tag(maybe_config: Result<Config>, tag_name:&str) -> Result<()> {
+=======
+pub fn export_tag(maybe_config: Result<Config>, tag_name: &str) -> Result<()> {
+>>>>>>> 0366b3e0f9db23ea3f404fe120dcac88a05ce7c6
   let config = maybe_config?;
   println!("{}", tag_to_shell_commands(tag_name, &config)?);
   Ok(())
 }
 
+<<<<<<< HEAD
 
 fn projects_to_shell_commands(config: &Config, projects: &[&Project]) -> Result<String> {
 
   fn push_update(commands: &mut Vec<String>, parameter_name: &str, maybe_value: &Option<String>, project_name: &str) {
     if let Some(ref value) = *maybe_value {
       // println!("{}", value.clone());
+=======
+fn projects_to_shell_commands(config: &Config, projects: &[&Project]) -> Result<String> {
+  fn push_update(commands: &mut Vec<String>, parameter_name: &str, maybe_value: &Option<String>, project_name: &str) {
+    if let Some(ref value) = *maybe_value {
+>>>>>>> 0366b3e0f9db23ea3f404fe120dcac88a05ce7c6
       let mut value_string = value.to_string();
       value_string = value_string.replace("'", "'\\''");
       commands.push(format!("fw update {} --{} '{}'", project_name, parameter_name, value_string))
@@ -107,7 +121,7 @@ fn tag_to_shell_commands(tag_name: &str, config: &Config) -> Result<String> {
 #[cfg(test)]
 mod tests {
   use super::*;
-  use config::*;
+  use crate::config::*;
   use maplit::btreeset;
   use spectral::prelude::*;
   use std::collections::BTreeMap;
@@ -128,7 +142,8 @@ fw update why-i-suck --after-clone \'echo 1\'
 fw tag tag-project why-i-suck tag1
 fw tag tag-project why-i-suck tag2
 fw tag tag-project why-i-suck unknown_tag
-".to_owned(),
+"
+      .to_owned(),
     );
 
   }

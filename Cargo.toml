@@ -1,6 +1,6 @@
 [package]
 name = "fw"
-version = "1.15.1-alpha.0"
+version = "1.16.1-alpha.0"
 authors = ["brocode <bros@brocode.sh>"]
 description = "faster workspace management"
 license = "WTFPL"
@@ -8,6 +8,7 @@ categories = ["command-line-utilities"]
 repository = "https://github.com/brocode/fw"
 readme = "README.org"
 keywords = ["workspace", "productivity", "cli", "automation", "developer-tools" ]
+edition = "2018"
 
 [dependencies]
 clap = "2.29"

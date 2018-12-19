@@ -1,13 +1,13 @@
+use crate::config;
+use crate::config::Project;
+use crate::errors::*;
+use crate::sync;
 use ansi_term::Colour;
 use ansi_term::Style;
-use config;
-use config::Project;
-use errors::*;
 use serde_json;
 use slog::debug;
 use slog::Logger;
 use std::env;
-use sync;
 
 pub fn ls(maybe_config: Result<config::Config>) -> Result<()> {
   let config = maybe_config?;
@@ -53,7 +53,8 @@ pub fn inspect(name: &str, maybe_config: Result<config::Config>, json: bool, log
     .map(|t| {
       let project_tags: Vec<String> = t.into_iter().collect();
       project_tags.join(", ")
-    }).unwrap_or_else(|| "None".to_owned());
+    })
+    .unwrap_or_else(|| "None".to_owned());
   println!("{:<20}: {}", "Tags", tags);
   let git = project.git.clone();
   println!("{:<20}: {}", "Git", git);

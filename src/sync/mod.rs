@@ -1,10 +1,11 @@
+use crate::config;
+use crate::config::Tag;
+use crate::config::{Config, Project, Settings};
+use crate::errors::*;
+use crate::tag;
 use ansi_term::Colour;
 use atty;
-use config;
-use config::Tag;
-use config::{Config, Project, Settings};
 use crossbeam::queue::MsQueue;
-use errors::*;
 use git2;
 use git2::build::RepoBuilder;
 use git2::{AutotagOption, Branch, Direction, FetchOptions, MergeAnalysis, RemoteCallbacks, Repository};
@@ -26,7 +27,6 @@ use std::path::PathBuf;
 use std::process::{Child, Command, Stdio};
 use std::sync::Arc;
 use std::thread;
-use tag;
 
 pub static COLOURS: [Colour; 14] = [
   Colour::Green,
@@ -194,7 +194,8 @@ pub fn foreach(maybe_config: Result<Config>, cmd: &str, tags: &BTreeSet<String>,
       let path = config.actual_path_to_project(p, &project_logger);
       info!(project_logger, "Entering");
       spawn_maybe(&shell, cmd, &path, &p.name, random_colour(), &project_logger)
-    }).collect::<Vec<Result<()>>>();
+    })
+    .collect::<Vec<Result<()>>>();
 
   script_results.into_iter().fold(Ok(()), |accu, maybe_error| accu.and(maybe_error))
 }
@@ -217,7 +218,8 @@ pub fn autotag(maybe_config: Result<Config>, cmd: &str, tag_name: &str, logger: 
         let path = &config2.actual_path_to_project(p, &project_logger);
         info!(project_logger, "Entering");
         spawn_maybe(&shell, cmd, &path, &p.name, random_colour(), &project_logger)
-      }).collect::<Vec<Result<()>>>();
+      })
+      .collect::<Vec<Result<()>>>();
 
     // map with projects and filter if result == 0
     let filtered_projects: Vec<&Project> = script_results
@@ -300,7 +302,8 @@ fn clone_project(config: &Config, project: &Project, path: &PathBuf, project_log
     .map_err(|error| {
       warn!(project_logger, "Error cloning repo"; "error" => format!("{}", error));
       error.into()
-    }).and_then(|_| {
+    })
+    .and_then(|_| {
       let after_clone = config.resolve_after_clone(project_logger, project);
       if !after_clone.is_empty() {
         debug!(project_logger, "Handling post hooks"; "after_clone" => format!("{:?}", after_clone));
@@ -316,10 +319,10 @@ fn sync_project(config: &Config, project: &Project, logger: &Logger, only_new: b
   let path = config.actual_path_to_project(project, logger);
   let exists = path.exists();
   let project_logger = logger.new(o!(
-        "git" => project.git.clone(),
-        "exists" => exists,
-        "path" => format!("{:?}", path),
-      ));
+    "git" => project.git.clone(),
+    "exists" => exists,
+    "path" => format!("{:?}", path),
+  ));
   if exists {
     if only_new {
       Ok(())
