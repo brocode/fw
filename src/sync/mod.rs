@@ -81,7 +81,7 @@ fn builder(git_user: &str) -> RepoBuilder {
   repo_builder
 }
 
-fn forward_process_output_to_stdout<T: std::io::Read>(read: T, prefix: &str, colour: Colour, atty: bool, mark_err: bool) -> Result<(),AppError> {
+fn forward_process_output_to_stdout<T: std::io::Read>(read: T, prefix: &str, colour: Colour, atty: bool, mark_err: bool) -> Result<(), AppError> {
   let mut buf = BufReader::new(read);
   loop {
     let mut line = String::new();
@@ -108,7 +108,7 @@ fn forward_process_output_to_stdout<T: std::io::Read>(read: T, prefix: &str, col
   Ok(())
 }
 
-pub fn spawn_maybe(shell: &[String], cmd: &str, workdir: &PathBuf, project_name: &str, colour: Colour, logger: &Logger) -> Result<(),AppError> {
+pub fn spawn_maybe(shell: &[String], cmd: &str, workdir: &PathBuf, project_name: &str, colour: Colour, logger: &Logger) -> Result<(), AppError> {
   let program: &str = shell
     .first()
     .ok_or_else(|| AppError::UserError("shell entry in project settings must have at least one element".to_owned()))?;
@@ -314,12 +314,7 @@ fn clone_project(config: &Config, project: &Project, path: &PathBuf, project_log
       if !after_clone.is_empty() {
         debug!(project_logger, "Handling post hooks"; "after_clone" => format!("{:?}", after_clone));
         spawn_maybe(&shell, &after_clone.join(" && "), path, &project.name, random_colour(), project_logger)
-          .map_err(|error| {
-            AppError::UserError(format!(
-              "Post-clone hook failed (nonzero exit code). Cause: {:?}",
-              error
-            ))
-        })
+          .map_err(|error| AppError::UserError(format!("Post-clone hook failed (nonzero exit code). Cause: {:?}", error)))
       } else {
         Ok(())
       }
@@ -347,9 +342,11 @@ fn sync_project(config: &Config, project: &Project, logger: &Logger, only_new: b
 
 pub fn synchronize(
   maybe_config: Result<Config, AppError>,
-  no_progress_bar: bool, only_new: bool,
-  ff_merge: bool, worker: i32,
-  logger: &Logger
+  no_progress_bar: bool,
+  only_new: bool,
+  ff_merge: bool,
+  worker: i32,
+  logger: &Logger,
 ) -> Result<(), AppError> {
   eprintln!("Synchronizing everything");
   if !ssh_agent_running() {

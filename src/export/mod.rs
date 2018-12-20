@@ -73,7 +73,6 @@ fn projects_to_shell_commands(config: &Config, projects: &[&Project]) -> Result<
   Ok(tag_commands.join("\n") + "\n")
 }
 
-
 fn tag_to_shell_commands(tag_name: &str, config: &Config) -> Result<String, AppError> {
   if let Some(ref tags) = config.settings.tags {
     if let Some(tag) = tags.get(tag_name) {

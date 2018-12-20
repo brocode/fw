@@ -1,16 +1,13 @@
 extern crate clap;
 
-
 #[macro_use]
 extern crate serde_derive;
 
 #[cfg(test)]
 extern crate maplit;
 
-
 #[cfg(test)]
 extern crate spectral;
-
 
 use crate::errors::AppError;
 use clap::{crate_version, App, AppSettings, Arg, SubCommand};
@@ -172,7 +169,8 @@ fn _main() -> i32 {
 fn execute_tag_subcommand(
   maybe_config: Result<config::Config, AppError>,
   tag_command_name: &str,
-  tag_matches: &clap::ArgMatches, logger: &Logger
+  tag_matches: &clap::ArgMatches,
+  logger: &Logger,
 ) -> Result<(), AppError> {
   match tag_command_name {
     "ls" => {

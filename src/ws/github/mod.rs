@@ -79,11 +79,10 @@ impl GithubApi {
         + ") {nodes {name, isArchived} pageInfo {endCursor hasNextPage}}}}",
     ))?;
     if !status.is_success() {
-      Err(
-        AppError::RuntimeError(format!(
-          "GitHub repository query failed for {}, got status {} with json {:?}",
-          org, status, json
-        )))
+      Err(AppError::RuntimeError(format!(
+        "GitHub repository query failed for {}, got status {} with json {:?}",
+        org, status, json
+      )))
     } else {
       let data_json = json.ok_or(AppError::InternalError("organization repository list has no json"))?;
 

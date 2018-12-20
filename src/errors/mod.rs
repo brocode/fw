@@ -1,4 +1,3 @@
-
 use core;
 use git2;
 use github_gql;

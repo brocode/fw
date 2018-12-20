@@ -200,7 +200,7 @@ fn repo_name_from_url(url: &str) -> Result<&str, AppError> {
 }
 
 pub fn add_entry(
-  maybe_config: Result<Config,AppError>,
+  maybe_config: Result<Config, AppError>,
   maybe_name: Option<&str>,
   url: &str,
   after_workon: Option<String>,
@@ -214,7 +214,7 @@ pub fn add_entry(
   let mut config: Config = maybe_config?;
   info!(logger, "Prepare new project entry"; "name" => name, "url" => url);
   if config.projects.contains_key(name) {
-        Err(AppError::UserError(format!(
+    Err(AppError::UserError(format!(
       "Project key {} already exists, not gonna overwrite it for you",
       name
     )))
@@ -245,10 +245,7 @@ pub fn remove_entry(maybe_config: Result<Config, AppError>, project_name: &str, 
   info!(logger, "Prepare remove project entry"; "name" => project_name);
 
   if !config.projects.contains_key(project_name) {
-    Err(AppError::UserError(format!(
-      "Project key {} does not exist in config",
-      project_name
-    )))
+    Err(AppError::UserError(format!("Project key {} does not exist in config", project_name)))
   } else if let Some(project) = config.projects.get(&project_name.to_owned()).cloned() {
     config.projects.remove(&project_name.to_owned());
 
@@ -263,10 +260,7 @@ pub fn remove_entry(maybe_config: Result<Config, AppError>, project_name: &str, 
     }
     write_config(config, logger)
   } else {
-    Err(AppError::UserError(format!(
-      "Unknown project {}",
-      project_name
-    )))
+    Err(AppError::UserError(format!("Unknown project {}", project_name)))
   }
 }
 
@@ -282,7 +276,10 @@ pub fn update_entry(
   let mut config: Config = maybe_config?;
   info!(logger, "Update project entry"; "name" => name);
   if name.starts_with("http") || name.starts_with("git@") {
-    Err(AppError::UserError(format!("{} looks like a repo URL and not like a project name, please fix", name)))
+    Err(AppError::UserError(format!(
+      "{} looks like a repo URL and not like a project name, please fix",
+      name
+    )))
   } else if !config.projects.contains_key(name) {
     Err(AppError::UserError(format!("Project key {} does not exists. Can not update.", name)))
   } else {
