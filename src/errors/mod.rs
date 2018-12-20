@@ -21,6 +21,16 @@ pub enum AppError {
   GithubApiError(github_gql::errors::Error),
 }
 
+macro_rules! app_error_from {
+  ($error: ty, $app_error: ident) => {
+    impl From<$error> for AppError {
+      fn from(err: $error) -> AppError {
+        AppError::$app_error(err)
+      }
+    }
+  };
+}
+
 impl AppError {
   pub fn require<T>(option: Option<T>, app_error: AppError) -> Result<T, AppError> {
     if let Some(value) = option {
@@ -80,32 +90,8 @@ impl From<core::num::ParseIntError> for AppError {
   }
 }
 
-impl From<github_gql::errors::Error> for AppError {
-  fn from(err: github_gql::errors::Error) -> AppError {
-    AppError::GithubApiError(err)
-  }
-}
-
-impl From<git2::Error> for AppError {
-  fn from(err: git2::Error) -> AppError {
-    AppError::GitError(err)
-  }
-}
-
-impl From<io::Error> for AppError {
-  fn from(err: io::Error) -> AppError {
-    AppError::IO(err)
-  }
-}
-
-impl From<serde_json::Error> for AppError {
-  fn from(err: serde_json::Error) -> AppError {
-    AppError::BadJson(err)
-  }
-}
-
-impl From<regex::Error> for AppError {
-  fn from(err: regex::Error) -> AppError {
-    AppError::Regex(err)
-  }
-}
+app_error_from!(github_gql::errors::Error, GithubApiError);
+app_error_from!(git2::Error, GitError);
+app_error_from!(io::Error, IO);
+app_error_from!(serde_json::Error, BadJson);
+app_error_from!(regex::Error, Regex);
