@@ -103,14 +103,6 @@ impl GithubApi {
           None
         },
       })
-
-
-
-      // let name = "asdadad";
-      // Ok(PageResult {
-      //   repository_names: vec![name.to_owned()],
-      //   next_cursor: None
-      // })
     }
   }
 }
