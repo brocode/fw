@@ -59,6 +59,61 @@ fn determine_projects(path: PathBuf, logger: &Logger) -> Result<BTreeMap<String,
   Ok(projects)
 }
 
+pub fn gitlab_import(maybe_config: Result<Config, AppError>, logger: &Logger) -> Result<(), AppError> {
+  let mut current_config = maybe_config?;
+
+  let gitlab_config = current_config.settings.gitlab.clone().ok_or_else(|| {
+    AppError::UserError(
+      r#"Can't call Gitlab API, because no gitlab settings ("gitlab": { "token": "some-token", "url": "some-url" }) specified in the configuration."#
+        .to_string(),
+    )
+  })?;
+
+  let gitlab_client = gitlab::Gitlab::new(gitlab_config.host, gitlab_config.token)?;
+
+  // owned repos and your organizations repositories
+  let owned_projects = gitlab_client.owned_projects()?;
+
+  let names_and_urls: Vec<(String, String)> = owned_projects
+    .iter()
+    .map(|repo| (repo.name.to_owned(), repo.ssh_url_to_repo.to_owned()))
+    .collect();
+
+  let new_projects = {
+    let after_clone = current_config.settings.default_after_clone.clone();
+    let after_workon = current_config.settings.default_after_workon.clone();
+    let tags = current_config.settings.default_tags.clone();
+
+    names_and_urls.into_iter().map(move |name_and_url| Project {
+      name: name_and_url.0,
+      git: name_and_url.1,
+      after_clone: after_clone.clone(),
+      after_workon: after_workon.clone(),
+      override_path: None,
+      tags: tags.clone(),
+      bare: None,
+    })
+  };
+
+  let mut current_projects = current_config.projects.clone();
+
+  for new_project in new_projects {
+    if current_projects.contains_key(&new_project.name) {
+      warn!(
+        logger,
+          "Skipping new project from Gitlab import because it already exists in the current fw config"; "project_name" => &new_project.name);
+    } else {
+      info!(logger, "Adding new project"; "project_name" => &new_project.name);
+      current_projects.insert(new_project.name.clone(), new_project);
+    }
+  }
+
+  current_config.projects = current_projects;
+  config::write_config(current_config, logger)?;
+
+  Ok(())
+}
+
 pub fn org_import(maybe_config: Result<Config, AppError>, org_name: &str, include_archived: bool, logger: &Logger) -> Result<(), AppError> {
   let mut current_config = maybe_config?;
   let token = current_config.settings.github_token.clone().ok_or_else(|| {
@@ -148,6 +203,7 @@ fn write_config(projects: BTreeMap<String, Project>, logger: &Logger, workspace_
       shell: None,
       tags: Some(BTreeMap::new()),
       github_token: None,
+      gitlab: None,
     },
   };
   debug!(logger, "Finished"; "projects" => format!("{:?}", config.projects.len()));
