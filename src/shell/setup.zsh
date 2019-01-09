@@ -39,6 +39,7 @@ _fw() {
             'export-tag:Exports a tag'
             'print-path:Print project path to stdout'
             'org-import:Import all repositories from a github org'
+            'gitlab-import:Import all owned repositories / your organizations repositories from gitlab'
           );
           _describe action actions && ret=0;
         ;;

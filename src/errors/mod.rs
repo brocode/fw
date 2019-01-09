@@ -19,6 +19,7 @@ pub enum AppError {
   GitError(git2::Error),
   Regex(regex::Error),
   GithubApiError(github_gql::errors::Error),
+  GitlabApiError(gitlab::Error),
 }
 
 macro_rules! app_error_from {
@@ -53,6 +54,7 @@ impl fmt::Display for AppError {
       AppError::GitError(ref err) => write!(f, "Git error: {}", err),
       AppError::Regex(ref err) => write!(f, "Regex error: {}", err),
       AppError::GithubApiError(ref err) => write!(f, "GitHub API error: {}", err),
+      AppError::GitlabApiError(ref err) => write!(f, "Gitlab API error: {}", err),
     }
   }
 }
@@ -68,6 +70,7 @@ impl Error for AppError {
       AppError::GitError(ref err) => err.description(),
       AppError::Regex(ref err) => err.description(),
       AppError::GithubApiError(ref err) => err.description(),
+      AppError::GitlabApiError(ref err) => err.description(),
     }
   }
 
@@ -80,6 +83,7 @@ impl Error for AppError {
       AppError::GitError(ref err) => Some(err),
       AppError::Regex(ref err) => Some(err),
       AppError::GithubApiError(ref err) => Some(err),
+      AppError::GitlabApiError(ref err) => Some(err),
     }
   }
 }
@@ -95,3 +99,4 @@ app_error_from!(git2::Error, GitError);
 app_error_from!(io::Error, IO);
 app_error_from!(serde_json::Error, BadJson);
 app_error_from!(regex::Error, Regex);
+app_error_from!(gitlab::Error, GitlabApiError);

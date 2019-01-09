@@ -103,6 +103,7 @@ fn _main() -> i32 {
       subcommand_matches.is_present("include-archived"),
       &subcommand_logger,
     ),
+    "gitlab-import" => setup::gitlab_import(config, &subcommand_logger),
     "gen-workon" => workon::gen(
       subcommand_matches.value_of("PROJECT_NAME").expect("argument required by clap.rs"),
       config,
@@ -308,6 +309,7 @@ For further information please have a look at our README https://github.com/broc
         )
         .arg(Arg::with_name("ORG_NAME").value_name("ORG_NAME").index(1).required(true)),
     )
+    .subcommand(SubCommand::with_name("gitlab-import").about("Import all owned repositories / your organizations repositories from gitlab into fw"))
     .subcommand(
       SubCommand::with_name("add")
         .about("Add project to config")
