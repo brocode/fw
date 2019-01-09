@@ -99,7 +99,7 @@ pub fn gitlab_import(maybe_config: Result<Config, AppError>, logger: &Logger) ->
 
   for new_project in new_projects {
     if current_projects.contains_key(&new_project.name) {
-      warn!(
+      info!(
         logger,
           "Skipping new project from Gitlab import because it already exists in the current fw config"; "project_name" => &new_project.name);
     } else {
@@ -142,7 +142,7 @@ pub fn org_import(maybe_config: Result<Config, AppError>, org_name: &str, includ
   };
   for new_project in new_projects {
     if current_projects.contains_key(&new_project.name) {
-      warn!(
+      info!(
         logger,
           "Skipping new project from org import because it already exists in the current fw config"; "project_name" => &new_project.name);
     } else {
