@@ -122,7 +122,7 @@ pub fn org_import(maybe_config: Result<Config, AppError>, org_name: &str, includ
       org_name
     ))
   })?;
-  let mut api = github::github_api(token)?;
+  let mut api = github::github_api(&token)?;
   let mut current_projects = current_config.projects.clone();
   let org_repository_names: Vec<String> = api.list_repositories(org_name, include_archived)?;
   let new_projects = {

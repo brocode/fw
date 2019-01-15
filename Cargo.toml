@@ -29,8 +29,11 @@ spectral = "0.6"
 crossbeam = "0.5"
 indicatif = "0.9"
 openssl-probe = "0.1"
-github-gql-rs = "0.0.1"
 gitlab = "0.1104.0"
+hyper = "0.12"
+hyper-rustls = "0.15"
+tokio-core = "0.1"
+futures = "0.1"
 
 # This is needed to make sure that Cargo statically links against
 # `libssl`. This should happen automatically, but it doesn't.
