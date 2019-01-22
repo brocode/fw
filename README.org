@@ -4,7 +4,7 @@
   [[https://travis-ci.org/brocode/fw][file:https://travis-ci.org/brocode/fw.svg?branch=master]]
   [[https://crates.io/crates/fw][file:https://img.shields.io/crates/v/fw.svg]]
 
-  [[https://asciinema.org/a/134985][https://asciinema.org/a/134985.png]]
+  [[https://asciinema.org/a/222856][https://asciinema.org/a/222856.png]]
 
 ** Why fw?
    With ~fw~ you have a JSON file describing your workspace.
