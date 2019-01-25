@@ -91,6 +91,7 @@ pub fn gitlab_import(maybe_config: Result<Config, AppError>, logger: &Logger) ->
       after_workon: after_workon.clone(),
       override_path: None,
       tags: tags.clone(),
+      additional_remotes: None,
       bare: None,
     })
   };
@@ -137,6 +138,7 @@ pub fn org_import(maybe_config: Result<Config, AppError>, org_name: &str, includ
       after_workon: after_workon.clone(),
       override_path: None,
       tags: tags.clone(),
+      additional_remotes: None,
       bare: None,
     })
   };
@@ -187,6 +189,7 @@ fn load_project(path_to_repo: PathBuf, name: &str, logger: &Logger) -> Result<Pr
     after_clone: None,
     after_workon: None,
     override_path: None,
+    additional_remotes: None, // TODO: use remotes
     tags: None,
     bare: None,
   })

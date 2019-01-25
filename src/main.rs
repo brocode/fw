@@ -66,6 +66,17 @@ fn _main() -> i32 {
         &subcommand_logger,
       )
     }
+    "add-remote" => {
+      let name: &str = subcommand_matches.value_of("NAME").expect("argument required by clap.rs");
+      let remote_name: &str = subcommand_matches.value_of("REMOTE_NAME").expect("argument required by clap.rs");
+      let url: &str = subcommand_matches.value_of("URL").expect("argument required by clap.rs");
+      config::add_remote(config, name, remote_name.to_string(), url.to_string(), &subcommand_logger)
+    }
+    "remove-remote" => {
+      let name: &str = subcommand_matches.value_of("NAME").expect("argument required by clap.rs");
+      let remote_name: &str = subcommand_matches.value_of("REMOTE_NAME").expect("argument required by clap.rs");
+      config::remove_remote(config, name, remote_name.to_string(), &subcommand_logger)
+    }
     "add" => {
       let name: Option<&str> = subcommand_matches.value_of("NAME");
       let url: &str = subcommand_matches.value_of("URL").expect("argument required by clap.rs");
@@ -310,6 +321,19 @@ For further information please have a look at our README https://github.com/broc
         .arg(Arg::with_name("ORG_NAME").value_name("ORG_NAME").index(1).required(true)),
     )
     .subcommand(SubCommand::with_name("gitlab-import").about("Import all owned repositories / your organizations repositories from gitlab into fw"))
+    .subcommand(
+      SubCommand::with_name("add-remote")
+        .about("Add remote to project")
+        .arg(Arg::with_name("NAME").value_name("NAME").index(1).required(true))
+        .arg(Arg::with_name("REMOTE_NAME").value_name("REMOTE_NAME").index(2).required(true))
+        .arg(Arg::with_name("URL").value_name("URL").index(3).required(true)),
+    )
+    .subcommand(
+      SubCommand::with_name("remove-remote")
+        .about("Removes remote from project (Only in the fw configuration. An existing remote will not be deleted by a sync)")
+        .arg(Arg::with_name("NAME").value_name("NAME").index(1).required(true))
+        .arg(Arg::with_name("REMOTE_NAME").value_name("REMOTE_NAME").index(2).required(true)),
+    )
     .subcommand(
       SubCommand::with_name("add")
         .about("Add project to config")

@@ -37,12 +37,19 @@ pub struct Tag {
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct Remote {
+  pub name: String,
+  pub git: String,
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Project {
   pub name: String,
   pub git: String,
   pub after_clone: Option<String>,
   pub after_workon: Option<String>,
   pub override_path: Option<String>,
+  pub additional_remotes: Option<Vec<Remote>>,
   pub tags: Option<BTreeSet<String>>,
   pub bare: Option<bool>,
 }
@@ -239,6 +246,7 @@ pub fn add_entry(
         override_path,
         tags: config.settings.default_tags.clone(),
         bare: None,
+        additional_remotes: None,
       },
     );
     info!(logger, "Updated config"; "config" => format!("{:?}", config));
@@ -271,6 +279,44 @@ pub fn remove_entry(maybe_config: Result<Config, AppError>, project_name: &str, 
   }
 }
 
+pub fn remove_remote(maybe_config: Result<Config, AppError>, name: &str, remote_name: String, logger: &Logger) -> Result<(), AppError> {
+  let mut config: Config = maybe_config?;
+  if !config.projects.contains_key(name) {
+    return Err(AppError::UserError(format!("Project key {} does not exists. Can not update.", name)));
+  }
+  let mut project_config: Project = config.projects.get(name).expect("Already checked in the if above").clone();
+  let additional_remotes = project_config.additional_remotes.unwrap_or_default();
+  let additional_remotes = additional_remotes.into_iter().filter(|r| r.name != remote_name).collect();
+  project_config.additional_remotes = Some(additional_remotes);
+
+  config.projects.insert(name.to_owned(), project_config);
+
+  debug!(logger, "Updated config"; "config" => format!("{:?}", config));
+  write_config(config, logger)
+}
+
+pub fn add_remote(maybe_config: Result<Config, AppError>, name: &str, remote_name: String, git: String, logger: &Logger) -> Result<(), AppError> {
+  let mut config: Config = maybe_config?;
+  if !config.projects.contains_key(name) {
+    return Err(AppError::UserError(format!("Project key {} does not exists. Can not update.", name)));
+  }
+  let mut project_config: Project = config.projects.get(name).expect("Already checked in the if above").clone();
+  let mut additional_remotes = project_config.additional_remotes.unwrap_or_default();
+  if additional_remotes.iter().any(|r| r.name == remote_name) {
+    return Err(AppError::UserError(format!(
+      "Remote {} for project {} does already exist. Can not add.",
+      remote_name, name
+    )));
+  }
+  additional_remotes.push(Remote { name: remote_name, git });
+  project_config.additional_remotes = Some(additional_remotes);
+
+  config.projects.insert(name.to_owned(), project_config);
+
+  debug!(logger, "Updated config"; "config" => format!("{:?}", config));
+  write_config(config, logger)
+}
+
 pub fn update_entry(
   maybe_config: Result<Config, AppError>,
   name: &str,
@@ -301,6 +347,7 @@ pub fn update_entry(
         override_path: override_path.or(old_project_config.override_path),
         tags: None,
         bare: None,
+        additional_remotes: None,
       },
     );
     debug!(logger, "Updated config"; "config" => format!("{:?}", config));
@@ -447,6 +494,7 @@ mod tests {
       after_clone: None,
       after_workon: None,
       override_path: None,
+      additional_remotes: None,
       bare: None,
     };
     let project2 = Project {
@@ -456,6 +504,7 @@ mod tests {
       after_clone: None,
       after_workon: None,
       override_path: None,
+      additional_remotes: None,
       bare: None,
     };
     let project3 = Project {
@@ -465,6 +514,7 @@ mod tests {
       after_clone: Some("clone override in project".to_owned()),
       after_workon: Some("workon override in project".to_owned()),
       override_path: None,
+      additional_remotes: None,
       bare: None,
     };
     let project4 = Project {
@@ -474,6 +524,7 @@ mod tests {
       after_clone: None,
       after_workon: None,
       override_path: None,
+      additional_remotes: None,
       bare: None,
     };
     let project5 = Project {
@@ -483,6 +534,7 @@ mod tests {
       after_clone: None,
       after_workon: None,
       override_path: None,
+      additional_remotes: None,
       bare: None,
     };
     let tag1 = Tag {

@@ -56,6 +56,15 @@ pub fn inspect(name: &str, maybe_config: Result<config::Config, AppError>, json:
     })
     .unwrap_or_else(|| "None".to_owned());
   println!("{:<20}: {}", "Tags", tags);
+  let additional_remotes = project
+    .additional_remotes
+    .clone()
+    .map(|t| {
+      let project_tags: Vec<String> = t.into_iter().map(|r| format!("{} - {}", r.name, r.git)).collect();
+      project_tags.join(", ")
+    })
+    .unwrap_or_else(|| "None".to_owned());
+  println!("{:<20}: {}", "Additional remotes", additional_remotes);
   let git = project.git.clone();
   println!("{:<20}: {}", "Git", git);
   Ok(())

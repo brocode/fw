@@ -63,6 +63,11 @@ fn projects_to_shell_commands(config: &Config, projects: &[&Project]) -> Result<
         project_commands.push(format!("fw tag tag-project {} {}", project.name, tag));
       }
     }
+    if let Some(ref additional_remotes) = project.additional_remotes {
+      for remote in additional_remotes {
+        project_commands.push(format!("fw add-remote {} {} {}", project.name, remote.name, remote.git));
+      }
+    }
   }
 
   tag_commands.sort_unstable();
@@ -138,6 +143,7 @@ fw tag tag-project why-i-suck unknown_tag
       after_clone: Some("echo 1".to_owned()),
       after_workon: Some("echo test's".to_owned()),
       override_path: Some("/home/bauer/docs/why-i-suck".to_string()),
+      additional_remotes: None,
       bare: None,
     };
     let tag1 = Tag {

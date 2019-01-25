@@ -8,7 +8,7 @@ use atty;
 use crossbeam::queue::MsQueue;
 use git2;
 use git2::build::RepoBuilder;
-use git2::{AutotagOption, Branch, Direction, FetchOptions, MergeAnalysis, RemoteCallbacks, Repository};
+use git2::{AutotagOption, Branch, Direction, FetchOptions, MergeAnalysis, Remote, RemoteCallbacks, Repository};
 use indicatif::{MultiProgress, ProgressBar, ProgressDrawTarget, ProgressStyle};
 use rand;
 use rand::Rng;
@@ -244,14 +244,18 @@ pub fn autotag(maybe_config: Result<Config, AppError>, cmd: &str, tag_name: &str
   }
 }
 
-fn update_project_remotes(project: &Project, path: &PathBuf, project_logger: &Logger, ff_merge: bool) -> Result<(), AppError> {
-  debug!(project_logger, "Update project remotes");
-  let local: Repository = Repository::open(path).map_err(|error| {
-    warn!(project_logger, "Error opening local repo"; "error" => format!("{}", error));
-    AppError::GitError(error)
-  })?;
-  let remote = "origin";
-  let mut remote = local.find_remote(remote).or_else(|_| local.remote_anonymous(remote))?;
+fn init_additional_remotes(project: &Project, repository: Repository, project_logger: &Logger) -> Result<(), AppError> {
+  if let Some(additional_remotes) = &project.additional_remotes {
+    for remote in additional_remotes {
+      let mut git_remote = repository.remote(&remote.name, &remote.git)?;
+      update_remote(project, &mut git_remote, project_logger)?;
+      debug!(project_logger, "Added remote"; "remote" => remote.name.to_string())
+    }
+  }
+  Ok(())
+}
+
+fn update_remote(project: &Project, remote: &mut Remote, project_logger: &Logger) -> Result<(), AppError> {
   let git_user = username_from_git_url(&project.git);
   let remote_callbacks = agent_callbacks(&git_user);
   remote.connect_auth(Direction::Fetch, Some(remote_callbacks), None).map_err(|error| {
@@ -265,6 +269,36 @@ fn update_project_remotes(project: &Project, path: &PathBuf, project_logger: &Lo
   })?;
   remote.disconnect();
   remote.update_tips(None, true, AutotagOption::Unspecified, None)?;
+  Ok(())
+}
+
+fn update_project_remotes(project: &Project, path: &PathBuf, project_logger: &Logger, ff_merge: bool) -> Result<(), AppError> {
+  debug!(project_logger, "Update project remotes");
+  let local: Repository = Repository::open(path).map_err(|error| {
+    warn!(project_logger, "Error opening local repo"; "error" => format!("{}", error));
+    AppError::GitError(error)
+  })?;
+  for desired_remote in project.additional_remotes.clone().unwrap_or_default().into_iter().chain(
+    vec![crate::config::Remote {
+      name: "origin".to_string(),
+      git: project.git.to_owned(),
+    }]
+    .into_iter(),
+  ) {
+    let remote = local
+      .find_remote(&desired_remote.name)
+      .or_else(|_| local.remote(&desired_remote.name, &desired_remote.git))?;
+
+    let mut remote = match remote.url() {
+      Some(url) if url == desired_remote.git => remote,
+      _ => {
+        local.remote_set_url(&desired_remote.name, &desired_remote.git)?;
+        local.find_remote(&desired_remote.name)?
+      }
+    };
+
+    update_remote(project, &mut remote, project_logger)?;
+  }
 
   if ff_merge {
     if let Err(error) = fast_forward_merge(&local, project_logger) {
@@ -309,6 +343,7 @@ fn clone_project(config: &Config, project: &Project, path: &PathBuf, project_log
       warn!(project_logger, "Error cloning repo"; "error" => format!("{}", error));
       AppError::GitError(error)
     })
+    .and_then(|repo| init_additional_remotes(project, repo, project_logger))
     .and_then(|_| {
       let after_clone = config.resolve_after_clone(project_logger, project);
       if !after_clone.is_empty() {

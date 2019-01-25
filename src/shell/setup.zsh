@@ -27,6 +27,8 @@ _fw() {
             'setup:Setup config from existing workspace'
             'import:Import existing git folder to fw'
             'add:Add project to workspace'
+            'add-remote:Add remote to project'
+            'remove-remote:Removes remote from project'
             'remove:Remove project from workspace'
             'foreach:Run script on each project'
             'projectile:Create projectile bookmarks'
@@ -50,6 +52,12 @@ _fw() {
             ;;
             org-import)
               _arguments '*:option:(--include-archived)';
+            ;;
+            add-remote)
+              __fw_projects;
+            ;;
+            remove-remote)
+              __fw_projects;
             ;;
             print-path)
               __fw_projects;
