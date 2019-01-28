@@ -9,7 +9,7 @@ if [ "$TRAVIS" = true ]; then
     chmod -R 777 .
 fi
 
-docker run -e LIBZ_SYS_STATIC=1 --rm -it -v "$(pwd)":/home/rust/src ekidd/rust-musl-builder:1.31.1 cargo build --release
+docker run -e LIBZ_SYS_STATIC=1 --rm -it -v "$(pwd)":/home/rust/src ekidd/rust-musl-builder:1.32.0 cargo build --release
 
 target_dir="target/x86_64-unknown-linux-musl/release"
 
