@@ -15,6 +15,7 @@ use rand::Rng;
 use rayon;
 use rayon::prelude::*;
 use regex::Regex;
+use slog::Drain;
 use slog::Logger;
 use slog::{debug, error, info, o, warn};
 use std;
@@ -387,6 +388,7 @@ pub fn synchronize(
   if !ssh_agent_running() {
     warn!(logger, "SSH Agent not running. Process may hang.")
   }
+  let no_progress_bar = no_progress_bar || logger.is_debug_enabled();
   let config = Arc::new(maybe_config?);
 
   let projects: Vec<Project> = config.projects.values().map(|p| p.to_owned()).collect();

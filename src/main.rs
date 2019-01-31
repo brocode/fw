@@ -262,7 +262,13 @@ For further information please have a look at our README https://github.com/broc
     .subcommand(
       SubCommand::with_name("sync")
         .about("Sync workspace. Clones projects or updates remotes for existing projects.")
-        .arg(Arg::with_name("no-progress-bar").long("no-progress-bar").short("q").takes_value(false))
+        .arg(
+          Arg::with_name("no-progress-bar")
+            .long("no-progress-bar")
+            .short("q")
+            .help("Progress bars are automatically disabled with -vv")
+            .takes_value(false),
+        )
         .arg(
           Arg::with_name("no-fast-forward-merge")
             .long("no-ff-merge")
