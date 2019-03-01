@@ -3,15 +3,16 @@ use crate::config::Tag;
 use crate::config::{Config, Project, Settings};
 use crate::errors::AppError;
 use crate::tag;
+
+use rand::seq::SliceRandom;
 use ansi_term::Colour;
 use atty;
-use crossbeam::queue::MsQueue;
+use crossbeam::queue::SegQueue;
 use git2;
 use git2::build::RepoBuilder;
 use git2::{AutotagOption, Branch, Direction, FetchOptions, MergeAnalysis, Remote, RemoteCallbacks, Repository};
 use indicatif::{MultiProgress, ProgressBar, ProgressDrawTarget, ProgressStyle};
 use rand;
-use rand::Rng;
 use rayon;
 use rayon::prelude::*;
 use regex::Regex;
@@ -156,7 +157,7 @@ pub fn spawn_maybe(shell: &[String], cmd: &str, workdir: &PathBuf, project_name:
 
 fn random_colour() -> Colour {
   let mut rng = rand::thread_rng();
-  rng.choose(&COLOURS).map(|c| c.to_owned()).unwrap_or(Colour::Black)
+  COLOURS.choose(&mut rng).map(|c| c.to_owned()).unwrap_or(Colour::Black)
 }
 fn is_stdout_a_tty() -> bool {
   atty::is(atty::Stream::Stdout)
@@ -392,7 +393,7 @@ pub fn synchronize(
   let config = Arc::new(maybe_config?);
 
   let projects: Vec<Project> = config.projects.values().map(|p| p.to_owned()).collect();
-  let q: Arc<MsQueue<Project>> = Arc::new(MsQueue::new());
+  let q: Arc<SegQueue<Project>> = Arc::new(SegQueue::new());
   let projects_count = projects.len() as u64;
   for project in projects {
     q.push(project);
@@ -409,7 +410,7 @@ pub fn synchronize(
     ProgressDrawTarget::stderr()
   });
 
-  let job_results: Arc<MsQueue<Result<(), AppError>>> = Arc::new(MsQueue::new());
+  let job_results: Arc<SegQueue<Result<(), AppError>>> = Arc::new(SegQueue::new());
   let progress_bars = (1..=worker).map(|i| {
     let pb = m.add(ProgressBar::new(projects_count));
     pb.set_style(spinner_style.clone());
@@ -427,7 +428,7 @@ pub fn synchronize(
     thread::spawn(move || {
       let mut job_result: Result<(), AppError> = Result::Ok(());
       loop {
-        if let Some(project) = job_q.try_pop() {
+        if let Ok(project) = job_q.pop() {
           pb.set_message(&project.name);
           let sync_result = sync_project(&job_config, &project, &job_logger, only_new, ff_merge);
           job_result = job_result.and(sync_result);
@@ -442,7 +443,7 @@ pub fn synchronize(
   m.join_and_clear().unwrap();
 
   let mut synchronize_result: Result<(), AppError> = Result::Ok(());
-  while let Some(result) = job_results.try_pop() {
+  while let Ok(result) = job_results.pop() {
     synchronize_result = synchronize_result.and(result);
   }
   synchronize_result
