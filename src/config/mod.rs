@@ -359,6 +359,7 @@ pub fn write_config(config: Config, logger: &Logger) -> Result<(), AppError> {
   let config_path = fw_path()?;
   info!(logger, "Writing config"; "path" => format!("{:?}", config_path));
   config.check_sanity(logger).and_then(|c| {
+    std::fs::create_dir_all(config_path.parent().expect("Failed to get parent of config path"))?;
     let mut buffer = File::create(config_path)?;
     serde_json::ser::to_writer_pretty(&mut buffer, &c).map_err(AppError::BadJson)
   })
