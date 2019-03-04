@@ -152,6 +152,7 @@ fn _main() -> i32 {
       &subcommand_matches.value_of("parallel").map(|p| p.to_owned()),
     ),
     "print-zsh-setup" => print_zsh_setup(subcommand_matches.is_present("with-fzf")),
+    "print-bash-setup" => print_bash_setup(subcommand_matches.is_present("with-fzf")),
     "tag" => {
       let subsubcommand_name: String = subcommand_matches.subcommand_name().expect("subcommand matches enforced by clap.rs").to_owned();
       let subsubcommand_matches: clap::ArgMatches = subcommand_matches
@@ -238,6 +239,19 @@ fn print_zsh_setup(use_fzf: bool) -> Result<(), AppError> {
   Ok(())
 }
 
+fn print_bash_setup(use_fzf: bool) -> Result<(), AppError> {
+  let fw_completion = include_str!("shell/setup.bash");
+  let basic_workon = include_str!("shell/workon.bash");
+  let fzf_workon = include_str!("shell/workon-fzf.bash");
+  println!("{}", fw_completion);
+  if use_fzf {
+    println!("{}", fzf_workon);
+  } else {
+    println!("{}", basic_workon);
+  }
+  Ok(())
+}
+
 fn validate_number(input: &str, max: i32) -> std::result::Result<(), String> {
   let i = input.parse::<i32>().map_err(|_e| format!("Expected a number. Was '{}'.", input))?;
   if i > 0 && i <= max {
@@ -296,6 +310,11 @@ For further information please have a look at our README https://github.com/broc
     .subcommand(
       SubCommand::with_name("print-zsh-setup")
         .about("Prints zsh completion code.")
+        .arg(Arg::with_name("with-fzf").long("with-fzf").short("-f").help("Integrate with fzf")),
+    )
+    .subcommand(
+      SubCommand::with_name("print-bash-setup")
+        .about("Prints bash completion code.")
         .arg(Arg::with_name("with-fzf").long("with-fzf").short("-f").help("Integrate with fzf")),
     )
     .subcommand(
