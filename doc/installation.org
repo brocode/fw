@@ -10,6 +10,8 @@
    
    If you're lucky enough to be an arch linux user: [[https://aur.archlinux.org/packages/fw/][AUR]]
 
+   If you are running on Windows then you will have some issue compiling openssl. Please refer to compiling with rust-openssl [[https://github.com/sfackler/rust-openssl/blob/5948898e54882c0bedd12d87569eb4dbee5bbca7/README.md#windows-msvc][here]]
+
 ** With fzf
    Another thing that will make you much more productive is to use the ~zsh~ completions (if you're not using the ~zsh~ I guess
    you would get a bigger productivity boost by switching to ~zsh~ first).
