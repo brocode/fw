@@ -24,11 +24,13 @@ use std::collections::BTreeMap;
 use std::collections::BTreeSet;
 use std::env;
 use std::io::{BufRead, BufReader};
-use std::os::unix::fs::FileTypeExt;
 use std::path::PathBuf;
 use std::process::{Child, Command, Stdio};
 use std::sync::Arc;
 use std::thread;
+
+#[cfg(unix)]
+use std::os::unix::fs::FileTypeExt;
 
 pub static COLOURS: [Colour; 14] = [
   Colour::Green,
@@ -451,9 +453,19 @@ pub fn synchronize(
 
 fn ssh_agent_running() -> bool {
   match std::env::var("SSH_AUTH_SOCK") {
-    Ok(auth_socket) => std::fs::metadata(auth_socket).map(|m| m.file_type().is_socket()).unwrap_or(false),
+    Ok(auth_socket) => is_socket(&auth_socket),
     Err(_) => false,
   }
+}
+
+#[cfg(unix)]
+fn is_socket(path: &String) -> bool {
+  std::fs::metadata(path).map(|m| m.file_type().is_socket()).unwrap_or(false)
+}
+
+#[cfg(not(unix))]
+fn is_socket(_: &String) -> bool {
+  false
 }
 
 #[cfg(test)]
