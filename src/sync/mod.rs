@@ -4,7 +4,6 @@ use crate::config::{Config, Project, Settings};
 use crate::errors::AppError;
 use crate::tag;
 
-use rand::seq::SliceRandom;
 use ansi_term::Colour;
 use atty;
 use crossbeam::queue::SegQueue;
@@ -13,6 +12,7 @@ use git2::build::RepoBuilder;
 use git2::{AutotagOption, Branch, Direction, FetchOptions, MergeAnalysis, Remote, RemoteCallbacks, Repository};
 use indicatif::{MultiProgress, ProgressBar, ProgressDrawTarget, ProgressStyle};
 use rand;
+use rand::seq::SliceRandom;
 use rayon;
 use rayon::prelude::*;
 use regex::Regex;
