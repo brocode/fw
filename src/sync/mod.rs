@@ -459,12 +459,12 @@ fn ssh_agent_running() -> bool {
 }
 
 #[cfg(unix)]
-fn is_socket(path: &String) -> bool {
+fn is_socket(path: &str) -> bool {
   std::fs::metadata(path).map(|m| m.file_type().is_socket()).unwrap_or(false)
 }
 
 #[cfg(not(unix))]
-fn is_socket(_: &String) -> bool {
+fn is_socket(_: &str) -> bool {
   false
 }
 
