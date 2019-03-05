@@ -1,5 +1,3 @@
-command -v fw >/dev/null 2>&1 &&
-
 __fw_commands()
 {
     local cmds=(
