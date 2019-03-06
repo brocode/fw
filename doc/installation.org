@@ -13,33 +13,47 @@
    If you are running on Windows then you will have some issue compiling openssl. Please refer to compiling with rust-openssl [[https://github.com/sfackler/rust-openssl/blob/5948898e54882c0bedd12d87569eb4dbee5bbca7/README.md#windows-msvc][here]]
 
 ** With fzf
-   Another thing that will make you much more productive is to use the ~zsh~ completions (if you're not using the ~zsh~ I guess
-   you would get a bigger productivity boost by switching to ~zsh~ first).
-
    Since we integrate with [[https://github.com/junegunn/fzf][fzf]] it is recommended to use that for the best possible experience (~workon~ and ~nworkon~ will be helm-style fuzzy finders).
    Make sure ~fzf~ is installed and then add this to your ~zsh~ configuration:
 
-   #+BEGIN_SRC shell-script
-   if [[ -x "$(command -v fw)" ]];
-   then
-     if [[ -x "$(command -v fzf)" ]];
-     then
-       eval $(fw print-zsh-setup -f 2>/dev/null);
-     else
-       eval $(fw print-zsh-setup 2>/dev/null);
-     fi;
-   fi;
-   #+END_SRC
+   Zsh
+    #+BEGIN_SRC shell-script
+    if [[ -x "$(command -v fw)" ]]; then
+      if [[ -x "$(command -v fzf)" ]]; then
+        eval $(fw print-zsh-setup -f 2>/dev/null);
+      else
+        eval $(fw print-zsh-setup 2>/dev/null);
+      fi;
+    fi;
+    #+END_SRC
+
+  Bash
+    #+BEGIN_SRC shell-script
+    if [[ -x "$(command -v fw )]]; then
+      if [[ -x "$(command -v fzf ) ]]; then
+        eval "$(fw print-bash-setup -f 2/dev/null)"
+      else
+        eval "$(fw print-bash-setup 2/dev/null)"
+      fi
+    fi
+    #+END_SRC
+
 
 ** Without fzf
    If you don't want ~fzf~ integration:
 
-   #+BEGIN_SRC shell-script
-   if [[ -x "$(command -v fw)" ]];
-   then
-     eval $(fw print-zsh-setup 2>/dev/null);
-   fi;
-   #+END_SRC
+  Zsh
+    #+BEGIN_SRC shell-script
+    if [[ -x "$(command -v fw)" ]]; then
+      eval $(fw print-zsh-setup 2>/dev/null);
+    fi;
+    #+END_SRC
+
+  Bash
+    #+BEGIN_SRC shell-script
+    [[ -x "$(command -v fw )]] && eval "$(fw print-bash-setup)"
+    #+END_SRC
+
 
    In this case ~workon~ and ~nworkon~ will require an argument (the project) and will provide simple prefix-based autocompletion.
    You should really use the ~fzf~ integration instead it's much better!
