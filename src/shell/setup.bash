@@ -11,7 +11,7 @@ _fw()
     # looking for the command
     local nwords=${#COMP_WORDS[@]}
     local cmd_i cmd dd_i
-    for (( cmd_i=1; cmd_i<$COMP_WORDS; cmd_i++ )); do
+    for (( cmd_i=1; cmd_i<$nwords; cmd_i++ )); do
 		if [[ ! "${COMP_WORDS[$cmd_i]}" =~ ^[+-] ]]; then
 			cmd="${COMP_WORDS[$cmd_i]}"
 			break
