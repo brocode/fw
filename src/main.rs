@@ -245,7 +245,6 @@ fn print_bash_setup(use_fzf: bool) -> Result<(), AppError> {
   let fzf = include_str!("shell/workon-fzf.bash");
 
   println!("{}", setup);
-  app().gen_completions_to("fw", clap::Shell::Bash, &mut std::io::stdout());
   if use_fzf {
     println!("{}", fzf);
   } else {
