@@ -2,6 +2,155 @@ command -v fw >/dev/null 2>&1 &&
 
 __fw_complete()
 {
+    #
+    # This is taken from bash-completion https://github.com/scop/bash-completion
+    #
+    _get_comp_words_by_ref()
+    {
+        _upvar()
+        {
+            if unset -v "$1"; then
+                if (( $# == 2 )); then
+                    eval $1=\"\$2\"
+                else
+                    eval $1=\(\"\${@:2}\"\)
+                fi
+            fi
+        }
+
+        _upvars()
+        {
+            if ! (( $# )); then
+                echo "${FUNCNAME[0]}: usage: ${FUNCNAME[0]} [-v varname"\
+                    "value] | [-aN varname [value ...]] ..." 1>&2
+                return 2
+            fi
+            while (( $# )); do
+                case $1 in
+                    -a*)
+                        [[ ${1#-a} ]] || { echo "bash: ${FUNCNAME[0]}: \`$1': missing"\
+                            "number specifier" 1>&2; return 1; }
+                        printf %d "${1#-a}" &> /dev/null || { echo "bash:"\
+                            "${FUNCNAME[0]}: \`$1': invalid number specifier" 1>&2
+                            return 1; }
+                        [[ "$2" ]] && unset -v "$2" && eval $2=\(\"\${@:3:${1#-a}}\"\) &&
+                        shift $((${1#-a} + 2)) || { echo "bash: ${FUNCNAME[0]}:"\
+                            "\`$1${2+ }$2': missing argument(s)" 1>&2; return 1; }
+                        ;;
+                    -v)
+                        [[ "$2" ]] && unset -v "$2" && eval $2=\"\$3\" &&
+                        shift 3 || { echo "bash: ${FUNCNAME[0]}: $1: missing"\
+                        "argument(s)" 1>&2; return 1; }
+                        ;;
+                    *)
+                        echo "bash: ${FUNCNAME[0]}: $1: invalid option" 1>&2
+                        return 1 ;;
+                esac
+            done
+        }
+
+        __reassemble_comp_words_by_ref()
+        {
+            local exclude i j line ref
+            if [[ $1 ]]; then
+                exclude="${1//[^$COMP_WORDBREAKS]}"
+            fi
+
+            printf -v "$3" %s "$COMP_CWORD"
+            if [[ $exclude ]]; then
+                line=$COMP_LINE
+                for (( i=0, j=0; i < ${#COMP_WORDS[@]}; i++, j++)); do
+                    while [[ $i -gt 0 && ${COMP_WORDS[$i]} == +([$exclude]) ]]; do
+                        [[ $line != [[:blank:]]* ]] && (( j >= 2 )) && ((j--))
+                        ref="$2[$j]"
+                        printf -v "$ref" %s "${!ref}${COMP_WORDS[i]}"
+                        [[ $i == $COMP_CWORD ]] && printf -v "$3" %s "$j"
+                        line=${line#*"${COMP_WORDS[$i]}"}
+                        [[ $line == [[:blank:]]* ]] && ((j++))
+                        (( $i < ${#COMP_WORDS[@]} - 1)) && ((i++)) || break 2
+                    done
+                    ref="$2[$j]"
+                    printf -v "$ref" %s "${!ref}${COMP_WORDS[i]}"
+                    line=${line#*"${COMP_WORDS[i]}"}
+                    [[ $i == $COMP_CWORD ]] && printf -v "$3" %s "$j"
+                done
+                [[ $i == $COMP_CWORD ]] && printf -v "$3" %s "$j"
+            else
+                for i in ${!COMP_WORDS[@]}; do
+                    printf -v "$2[i]" %s "${COMP_WORDS[i]}"
+                done
+            fi
+        } 
+
+        __get_cword_at_cursor_by_ref()
+        {
+            local cword words=()
+            __reassemble_comp_words_by_ref "$1" words cword
+
+            local i cur index=$COMP_POINT lead=${COMP_LINE:0:$COMP_POINT}
+            if [[ $index -gt 0 && ( $lead && ${lead//[[:space:]]} ) ]]; then
+                cur=$COMP_LINE
+                for (( i = 0; i <= cword; ++i )); do
+                    while [[
+                        ${#cur} -ge ${#words[i]} &&
+                        "${cur:0:${#words[i]}}" != "${words[i]}"
+                    ]]; do
+                        cur="${cur:1}"
+                        [[ $index -gt 0 ]] && ((index--))
+                    done
+
+                    if [[ $i -lt $cword ]]; then
+                        local old_size=${#cur}
+                        cur="${cur#"${words[i]}"}"
+                        local new_size=${#cur}
+                        index=$(( index - old_size + new_size ))
+                    fi
+                done
+                [[ $cur && ! ${cur//[[:space:]]} ]] && cur=
+                [[ $index -lt 0 ]] && index=0
+            fi
+
+            local "$2" "$3" "$4" && _upvars -a${#words[@]} $2 "${words[@]}" \
+                -v $3 "$cword" -v $4 "${cur:0:$index}"
+        }
+
+        local exclude flag i OPTIND=1
+        local cur cword words=()
+        local upargs=() upvars=() vcur vcword vprev vwords
+
+        while getopts "c:i:n:p:w:" flag "$@"; do
+            case $flag in
+                c) vcur=$OPTARG ;;
+                i) vcword=$OPTARG ;;
+                n) exclude=$OPTARG ;;
+                p) vprev=$OPTARG ;;
+                w) vwords=$OPTARG ;;
+            esac
+        done
+        while [[ $# -ge $OPTIND ]]; do
+            case ${!OPTIND} in
+                cur)   vcur=cur ;;
+                prev)  vprev=prev ;;
+                cword) vcword=cword ;;
+                words) vwords=words ;;
+                *) echo "bash: $FUNCNAME(): \`${!OPTIND}': unknown argument" \
+                    1>&2; return 1
+            esac
+            let "OPTIND += 1"
+        done
+
+        __get_cword_at_cursor_by_ref "$exclude" words cword cur
+
+        [[ $vcur   ]] && { upvars+=("$vcur"  ); upargs+=(-v $vcur   "$cur"  ); }
+        [[ $vcword ]] && { upvars+=("$vcword"); upargs+=(-v $vcword "$cword"); }
+        [[ $vprev && $cword -ge 1 ]] && { upvars+=("$vprev" ); upargs+=(-v $vprev
+            "${words[cword - 1]}"); }
+        [[ $vwords ]] && { upvars+=("$vwords"); upargs+=(-a${#words[@]} $vwords
+            "${words[@]}"); }
+
+        (( ${#upvars[@]} )) && local "${upvars[@]}" && _upvars "${upargs[@]}"
+    }
+
     __fw_comp()
     {
         local cur_="${3-$cur}"
@@ -222,8 +371,6 @@ __fw_complete()
 
         __fw_comp "$(__fw_projects)"
     }
-
-    # ---------------------------------------------------------------------------------------------------
 
     __fw_main()
     {
