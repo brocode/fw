@@ -80,7 +80,7 @@ __fw_complete()
                     printf -v "$2[i]" %s "${COMP_WORDS[i]}"
                 done
             fi
-        } 
+        }
 
         __get_cword_at_cursor_by_ref()
         {
@@ -210,7 +210,7 @@ __fw_complete()
         done < <(fw -q tag ls)
         echo ${tags[@]}
     }
-    
+
     __find_on_cmdline() {
         local word subcommand c=1
         while [ $c -lt $cword ]; do
@@ -248,7 +248,7 @@ __fw_complete()
     }
 
     _fw_foreach () {
-        case "$prev" in 
+        case "$prev" in
             --tag|-t) __fw_comp "$(__fw_tags)" ; return ;;
         esac
 
