@@ -9,7 +9,7 @@ use atty;
 use crossbeam::queue::SegQueue;
 use git2;
 use git2::build::RepoBuilder;
-use git2::{AutotagOption, Branch, Direction, FetchOptions, MergeAnalysis, Remote, RemoteCallbacks, Repository};
+use git2::{AutotagOption, Branch, Direction, FetchOptions, MergeAnalysis, ProxyOptions, Remote, RemoteCallbacks, Repository};
 use indicatif::{MultiProgress, ProgressBar, ProgressDrawTarget, ProgressStyle};
 use rand;
 use rand::seq::SliceRandom;
@@ -72,8 +72,11 @@ fn agent_callbacks(git_user: &str) -> git2::RemoteCallbacks {
 
 fn agent_fetch_options(git_user: &str) -> git2::FetchOptions {
   let remote_callbacks = agent_callbacks(git_user);
+  let mut proxy_options = ProxyOptions::new();
+  proxy_options.auto();
   let mut fetch_options = FetchOptions::new();
   fetch_options.remote_callbacks(remote_callbacks);
+  fetch_options.proxy_options(proxy_options);
 
   fetch_options
 }
@@ -262,10 +265,14 @@ fn init_additional_remotes(project: &Project, repository: Repository, project_lo
 fn update_remote(project: &Project, remote: &mut Remote, project_logger: &Logger) -> Result<(), AppError> {
   let git_user = username_from_git_url(&project.git);
   let remote_callbacks = agent_callbacks(&git_user);
-  remote.connect_auth(Direction::Fetch, Some(remote_callbacks), None).map_err(|error| {
-    warn!(project_logger, "Error connecting remote"; "error" => format!("{}", error), "project" => &project.name);
-    AppError::GitError(error)
-  })?;
+  let mut proxy_options = ProxyOptions::new();
+  proxy_options.auto();
+  remote
+    .connect_auth(Direction::Fetch, Some(remote_callbacks), Some(proxy_options))
+    .map_err(|error| {
+      warn!(project_logger, "Error connecting remote"; "error" => format!("{}", error), "project" => &project.name);
+      AppError::GitError(error)
+    })?;
   let mut options = agent_fetch_options(&git_user);
   remote.download(&[], Some(&mut options)).map_err(|error| {
     warn!(project_logger, "Error downloading for remote"; "error" => format!("{}", error), "project" => &project.name);
