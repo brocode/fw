@@ -470,7 +470,7 @@ dependencies = [
 
 [[package]]
 name = "fw"
-version = "1.20.0"
+version = "1.20.1-alpha.0"
 dependencies = [
  "ansi_term 0.11.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "atty 0.2.11 (registry+https://github.com/rust-lang/crates.io-index)",
