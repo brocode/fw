@@ -345,9 +345,9 @@ pub fn update_entry(
         after_clone: after_clone.or(old_project_config.after_clone),
         after_workon: after_workon.or(old_project_config.after_workon),
         override_path: override_path.or(old_project_config.override_path),
-        tags: None,
-        bare: None,
-        additional_remotes: None,
+        tags: old_project_config.tags,
+        bare: old_project_config.bare,
+        additional_remotes: old_project_config.additional_remotes,
       },
     );
     debug!(logger, "Updated config"; "config" => format!("{:?}", config));
