@@ -318,7 +318,7 @@ __fw_complete()
 
     _fw_tag_add() {
         case "$cur" in
-            --*) __fw_comp "--after-clone --after-workon --override-path" ; return ;;
+            --*) __fw_comp "--after-clone --after-workon --workspace" ; return ;;
         esac
         __fw_comp "$(__fw_tags)"
     }
