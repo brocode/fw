@@ -12,7 +12,7 @@
    You can start working on any project quickly, even if it's not in your flat structured workspace (better than ~CDPATH~!).
    It also "sets up" your environment when you start working on a project (compile stuff, run ~make~, activate ~virtualenv~ or ~nvm~, fire up ~sbt~ shell, etc.)
 
-   [[doc/sample_config.json][Here's]] an example configuration that should be easy to grasp:
+   [[doc/sample_config.json][Here's]] an example configuration that should be easy to grasp. The default configuration location is =~/.fw.json=, and can be overridden by ~FW_CONFIG_PATH~.
 
    Per default projects are cloned into ~${settings.workspace}/${project.name}~ but you can override that by setting an ~override_path~ attribute as seen above.
 
