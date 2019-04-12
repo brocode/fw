@@ -110,6 +110,8 @@ pub fn write_new(config: &Config, logger: &Logger) -> Result<(), AppError> {
   Ok(())
 }
 
+//TODO currently default tag is missing.
+
 #[derive(Deserialize, Serialize, Debug, Clone)]
 pub struct NSettings {
   pub workspace: String,
