@@ -11,7 +11,7 @@ extern crate spectral;
 
 use crate::errors::AppError;
 use clap::{crate_version, App, AppSettings, Arg, SubCommand};
-use slog::{crit, debug, o};
+use slog::{crit, debug, info, o};
 use slog::{Drain, Level, LevelFilter, Logger};
 use std::str::FromStr;
 use std::time::SystemTime;
@@ -44,6 +44,12 @@ fn _main() -> i32 {
 
   let logger = logger_from_verbosity(matches.occurrences_of("v"), matches.is_present("q"));
   let config = config::get_config(&logger);
+
+  // write 2.0 for compat
+  if let Ok(ref c) = config {
+    nconfig::write_new(&c, &logger).expect("Failed to write v2.0 config");
+    info!(logger, "Wrote new config");
+  }
 
   let subcommand_name = matches.subcommand_name().expect("subcommand required by clap.rs").to_owned();
   let subcommand_matches = matches.subcommand_matches(&subcommand_name).expect("subcommand matches enforced by clap.rs");
@@ -578,6 +584,7 @@ For further information please have a look at our README https://github.com/broc
 mod config;
 mod errors;
 mod export;
+mod nconfig;
 mod projectile;
 mod setup;
 mod sync;

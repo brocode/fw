@@ -6,6 +6,7 @@ use std::error::Error;
 use std::fmt;
 use std::io;
 use std::time::SystemTimeError;
+use toml;
 
 #[derive(Debug)]
 pub enum AppError {
@@ -18,6 +19,7 @@ pub enum AppError {
   GitError(git2::Error),
   Regex(regex::Error),
   GitlabApiError(gitlab::Error),
+  TomlError(toml::ser::Error),
 }
 
 macro_rules! app_error_from {
@@ -52,6 +54,7 @@ impl fmt::Display for AppError {
       AppError::GitError(ref err) => write!(f, "Git error: {}", err),
       AppError::Regex(ref err) => write!(f, "Regex error: {}", err),
       AppError::GitlabApiError(ref err) => write!(f, "Gitlab API error: {}", err),
+      AppError::TomlError(ref err) => write!(f, "toml serialization error: {}", err),
     }
   }
 }
@@ -67,6 +70,7 @@ impl Error for AppError {
       AppError::GitError(ref err) => err.description(),
       AppError::Regex(ref err) => err.description(),
       AppError::GitlabApiError(ref err) => err.description(),
+      AppError::TomlError(ref err) => err.description(),
     }
   }
 
@@ -79,6 +83,7 @@ impl Error for AppError {
       AppError::GitError(ref err) => Some(err),
       AppError::Regex(ref err) => Some(err),
       AppError::GitlabApiError(ref err) => Some(err),
+      AppError::TomlError(ref err) => Some(err),
     }
   }
 }
@@ -94,3 +99,4 @@ app_error_from!(io::Error, IO);
 app_error_from!(serde_json::Error, BadJson);
 app_error_from!(regex::Error, Regex);
 app_error_from!(gitlab::Error, GitlabApiError);
+app_error_from!(toml::ser::Error, TomlError);
