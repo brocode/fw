@@ -49,9 +49,9 @@ pub struct Project {
   pub after_clone: Option<String>,
   pub after_workon: Option<String>,
   pub override_path: Option<String>,
-  pub additional_remotes: Option<Vec<Remote>>,
-  pub tags: Option<BTreeSet<String>>,
   pub bare: Option<bool>,
+  pub tags: Option<BTreeSet<String>>,
+  pub additional_remotes: Option<Vec<Remote>>,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
