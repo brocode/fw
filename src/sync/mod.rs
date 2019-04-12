@@ -20,6 +20,7 @@ use slog::Drain;
 use slog::Logger;
 use slog::{debug, error, info, o, warn};
 use std;
+use std::borrow::ToOwned;
 use std::collections::BTreeMap;
 use std::collections::BTreeSet;
 use std::env;
@@ -162,7 +163,7 @@ pub fn spawn_maybe(shell: &[String], cmd: &str, workdir: &PathBuf, project_name:
 
 fn random_colour() -> Colour {
   let mut rng = rand::thread_rng();
-  COLOURS.choose(&mut rng).map(|c| c.to_owned()).unwrap_or(Colour::Black)
+  COLOURS.choose(&mut rng).map(ToOwned::to_owned).unwrap_or(Colour::Black)
 }
 fn is_stdout_a_tty() -> bool {
   atty::is(atty::Stream::Stdout)
@@ -210,7 +211,7 @@ pub fn foreach(
     })
     .collect::<Vec<Result<(), AppError>>>();
 
-  script_results.into_iter().fold(Ok(()), |accu, maybe_error| accu.and(maybe_error))
+  script_results.into_iter().fold(Ok(()), Result::and)
 }
 
 pub fn autotag(maybe_config: Result<Config, AppError>, cmd: &str, tag_name: &str, logger: &Logger, parallel_raw: &Option<String>) -> Result<(), AppError> {
@@ -401,7 +402,7 @@ pub fn synchronize(
   let no_progress_bar = no_progress_bar || logger.is_debug_enabled();
   let config = Arc::new(maybe_config?);
 
-  let projects: Vec<Project> = config.projects.values().map(|p| p.to_owned()).collect();
+  let projects: Vec<Project> = config.projects.values().map(ToOwned::to_owned).collect();
   let q: Arc<SegQueue<Project>> = Arc::new(SegQueue::new());
   let projects_count = projects.len() as u64;
   for project in projects {

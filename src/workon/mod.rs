@@ -7,6 +7,7 @@ use ansi_term::Style;
 use serde_json;
 use slog::debug;
 use slog::Logger;
+use std::borrow::ToOwned;
 use std::env;
 
 pub fn ls(maybe_config: Result<config::Config, AppError>) -> Result<(), AppError> {
@@ -84,7 +85,7 @@ fn current_project(config: &config::Config, logger: &Logger) -> Result<Project, 
     .values()
     .find(|&p| config.actual_path_to_project(p, logger).to_string_lossy().eq(&current_dir));
   maybe_match
-    .map(|p| p.to_owned())
+    .map(ToOwned::to_owned)
     .ok_or_else(|| AppError::UserError(format!("No project matching expanded path {} found in config", current_dir)))
 }
 

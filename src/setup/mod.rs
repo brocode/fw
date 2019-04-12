@@ -7,6 +7,7 @@ use slog::Logger;
 use slog::{debug, info, o, warn};
 use std::collections::BTreeMap;
 use std::fs;
+use std::iter::Iterator;
 use std::path::{Path, PathBuf};
 
 pub fn setup(workspace_dir: &str, logger: &Logger) -> Result<(), AppError> {
@@ -34,7 +35,7 @@ pub fn setup(workspace_dir: &str, logger: &Logger) -> Result<(), AppError> {
 fn determine_projects(path: PathBuf, logger: &Logger) -> Result<BTreeMap<String, Project>, AppError> {
   let workspace_path = path.clone();
 
-  let project_entries: Vec<fs::DirEntry> = fs::read_dir(path).and_then(|base| base.collect()).map_err(AppError::IO)?;
+  let project_entries: Vec<fs::DirEntry> = fs::read_dir(path).and_then(Iterator::collect).map_err(AppError::IO)?;
 
   let mut projects: BTreeMap<String, Project> = BTreeMap::new();
   for entry in project_entries {
