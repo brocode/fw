@@ -11,6 +11,7 @@ keywords = ["workspace", "productivity", "cli", "automation", "developer-tools" 
 edition = "2018"
 
 [dependencies]
+walkdir = "2"
 clap = "2.29"
 dirs = "1.0"
 slog-term = "2"

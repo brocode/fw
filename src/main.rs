@@ -49,6 +49,9 @@ fn _main() -> i32 {
   if let Ok(ref c) = config {
     nconfig::write_new(&c, &logger).expect("Failed to write v2.0 config");
     info!(logger, "Wrote new config");
+    // TODO remove me, just for testing
+    let written_config = nconfig::read_config(&logger).expect("oh noes");
+    info!(logger, "Written config be like: {:?}", written_config);
   }
 
   let subcommand_name = matches.subcommand_name().expect("subcommand required by clap.rs").to_owned();

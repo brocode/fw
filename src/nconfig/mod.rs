@@ -1,19 +1,68 @@
-use crate::config::{expand_path, Config, GitlabSettings};
+use crate::config::{expand_path, Config, GitlabSettings, Project, Settings, Tag};
 use crate::errors::AppError;
 
 use dirs::config_dir;
 use slog::{debug, Logger};
+use std::collections::BTreeMap;
 use std::env;
-use std::fs::File;
+use std::fs::{read_to_string, File};
 use std::io::Write;
 use std::path::PathBuf;
 use toml;
+use walkdir::WalkDir;
 
 pub struct FwPaths {
   settings: PathBuf,
   base: PathBuf,
   projects: PathBuf,
   tags: PathBuf,
+}
+
+pub fn read_config(logger: &Logger) -> Result<Config, AppError> {
+  let paths = fw_path()?;
+
+  let settings_raw = read_to_string(&paths.settings)?;
+
+  let settings: NSettings = toml::from_str(&settings_raw)?;
+
+  debug!(logger, "read new settings ok");
+
+  let mut projects: BTreeMap<String, Project> = BTreeMap::new();
+  for maybe_project_file in WalkDir::new(&paths.projects).follow_links(true) {
+    let project_file = maybe_project_file?;
+    if project_file.metadata()?.is_file() {
+      let raw_project = read_to_string(project_file.path())?;
+      let project: Project = toml::from_str(&raw_project)?;
+      projects.insert(project.name.clone(), project);
+    }
+  }
+  debug!(logger, "read new projects ok");
+
+  let mut tags: BTreeMap<String, Tag> = BTreeMap::new();
+  for maybe_tag_file in WalkDir::new(&paths.tags).follow_links(true) {
+    let tag_file = maybe_tag_file?;
+    if tag_file.metadata()?.is_file() {
+      let raw_tag = read_to_string(tag_file.path())?;
+      let tag: Tag = toml::from_str(&raw_tag)?;
+      // TODO remove .toml from filename or altogether no .toml ending
+      let tag_name: Option<String> = tag_file.file_name().to_str().map(|t| t.to_owned());
+      tags.insert(tag_name.ok_or(AppError::InternalError(""))?, tag);
+    }
+  }
+
+  Ok(Config {
+    projects: projects,
+    settings: Settings {
+      tags: Some(tags),
+      workspace: settings.workspace,
+      shell: settings.shell,
+      default_after_workon: settings.default_after_workon,
+      default_after_clone: settings.default_after_clone,
+      default_tags: None, // TODO fixme no default tags yet
+      github_token: settings.github_token,
+      gitlab: settings.gitlab,
+    },
+  })
 }
 
 fn fw_path() -> Result<FwPaths, AppError> {
