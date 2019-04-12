@@ -4,6 +4,7 @@ use dirs;
 use regex::Regex;
 use slog::debug;
 use slog::Logger;
+use std::borrow::ToOwned;
 use std::fs;
 use std::io;
 use std::io::Write;
@@ -29,7 +30,7 @@ fn persist<W>(logger: &Logger, home_dir: &PathBuf, writer: W, paths: Vec<PathBuf
 where
   W: io::Write,
 {
-  let paths: Vec<String> = paths.into_iter().flat_map(|path_buf| path_buf.to_str().map(|p| p.to_owned())).collect();
+  let paths: Vec<String> = paths.into_iter().flat_map(|path_buf| path_buf.to_str().map(ToOwned::to_owned)).collect();
   let mut buffer = io::BufWriter::new(writer);
   buffer.write_all(b"(")?;
   for path in paths {

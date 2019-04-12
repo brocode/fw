@@ -149,7 +149,7 @@ fn _main() -> i32 {
       subcommand_matches.value_of("CMD").expect("argument required by clap.rs"),
       &subcommand_matches.values_of_lossy("tag").unwrap_or_default().into_iter().collect(),
       &subcommand_logger,
-      &subcommand_matches.value_of("parallel").map(|p| p.to_owned()),
+      &subcommand_matches.value_of("parallel").map(ToOwned::to_owned),
     ),
     "print-zsh-setup" => print_zsh_setup(subcommand_matches.is_present("with-fzf")),
     "print-bash-setup" => print_bash_setup(subcommand_matches.is_present("with-fzf")),
@@ -220,7 +220,7 @@ fn execute_tag_subcommand(
       tag_matches.value_of("CMD").expect("argument required by clap.rs"),
       &tag_matches.value_of("tag-name").map(str::to_string).expect("argument enforced by clap.rs"),
       &logger,
-      &tag_matches.value_of("parallel").map(|p| p.to_owned()),
+      &tag_matches.value_of("parallel").map(ToOwned::to_owned),
     ),
     _ => Result::Err(AppError::InternalError("Command not implemented")),
   }
