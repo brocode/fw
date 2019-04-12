@@ -11,6 +11,8 @@ use std::path::PathBuf;
 use toml;
 use walkdir::WalkDir;
 
+static CONF_MODE_HEADER: &str = "# -*- mode: Conf; -*-\n";
+
 pub struct FwPaths {
   settings: PathBuf,
   base: PathBuf,
@@ -44,7 +46,6 @@ pub fn read_config(logger: &Logger) -> Result<Config, AppError> {
     if tag_file.metadata()?.is_file() {
       let raw_tag = read_to_string(tag_file.path())?;
       let tag: Tag = toml::from_str(&raw_tag)?;
-      // TODO remove .toml from filename or altogether no .toml ending
       let tag_name: Option<String> = tag_file.file_name().to_str().map(|t| t.to_owned());
       tags.insert(tag_name.ok_or(AppError::InternalError(""))?, tag);
     }
@@ -112,9 +113,17 @@ fn write_tags(config: &Config, fw_paths: &FwPaths, logger: &Logger) -> Result<()
 
   for (name, tag) in config.settings.tags.clone().unwrap_or_default() {
     let mut tag_path = default_tags_path.clone();
-    tag_path.push(format!("{}.toml", name));
+    tag_path.push(&name);
     let mut buffer = File::create(&tag_path)?;
-    let serialized = toml::to_string_pretty(&tag)?;
+    let ntag = NTag {
+      after_clone: tag.after_clone.clone(),
+      after_workon: tag.after_workon.clone(),
+      priority: tag.priority.clone(),
+      workspace: tag.workspace.clone(),
+      default: Some(config.settings.default_tags.clone().unwrap_or_default().contains(&name)),
+    };
+    let serialized = toml::to_string_pretty(&ntag)?;
+    write!(buffer, "{}", CONF_MODE_HEADER)?;
     write!(buffer, "{}", serialized)?;
   }
 
@@ -129,9 +138,10 @@ fn write_projects(config: &Config, fw_paths: &FwPaths, logger: &Logger) -> Resul
 
   for project in config.projects.values() {
     let mut project_path = default_projects_path.clone();
-    project_path.push(format!("{}.toml", project.name));
+    project_path.push(&project.name);
     let mut buffer = File::create(&project_path)?;
     let serialized = toml::to_string_pretty(&project)?;
+    write!(buffer, "{}", CONF_MODE_HEADER)?;
     write!(buffer, "{}", serialized)?;
   }
 
@@ -159,8 +169,6 @@ pub fn write_new(config: &Config, logger: &Logger) -> Result<(), AppError> {
   Ok(())
 }
 
-//TODO currently default tag is missing.
-
 #[derive(Deserialize, Serialize, Debug, Clone)]
 pub struct NSettings {
   pub workspace: String,
@@ -169,4 +177,13 @@ pub struct NSettings {
   pub default_after_clone: Option<String>,
   pub github_token: Option<String>,
   pub gitlab: Option<GitlabSettings>,
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct NTag {
+  pub after_clone: Option<String>,
+  pub after_workon: Option<String>,
+  pub priority: Option<u8>,
+  pub workspace: Option<String>,
+  pub default: Option<bool>,
 }
