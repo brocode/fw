@@ -135,36 +135,54 @@ pub fn write_settings(settings: &NSettings, logger: &Logger) -> Result<(), AppEr
   Ok(())
 }
 
-fn migrate_write_tags(config: &Config, fw_paths: &FwPaths, logger: &Logger) -> Result<(), AppError> {
-  let mut default_tags_path = fw_paths.tags.clone();
-  default_tags_path.push("default");
-  std::fs::create_dir_all(&default_tags_path)?;
+pub fn write_tag(tag_name: &str, tag: &Tag, tag_config_path: &str) -> Result<(), AppError> {
+  let paths = fw_path()?;
+  paths.ensure_base_exists()?;
 
+  let mut tag_path = paths.tags.to_owned();
+  tag_path.push(PathBuf::from(tag_config_path));
+  std::fs::create_dir_all(&tag_path)?;
+
+  let mut tag_file_path = tag_path.clone();
+  tag_file_path.push(&tag_name);
+
+  let mut buffer = File::create(&tag_file_path)?;
+  let serialized = toml::to_string_pretty(&tag)?;
+  write!(buffer, "{}", CONF_MODE_HEADER)?;
+  write!(buffer, "{}", serialized)?;
+  Ok(())
+}
+
+pub fn write_project(project: &Project, project_config_path: &str) -> Result<(), AppError> {
+  let paths = fw_path()?;
+  paths.ensure_base_exists()?;
+
+  let mut project_path = paths.projects.to_owned();
+  project_path.push(PathBuf::from(project_config_path));
+  std::fs::create_dir_all(&project_path)?;
+
+  let mut project_file_path = project_path.clone();
+  project_file_path.push(&project.name);
+
+  let mut buffer = File::create(&project_file_path)?;
+  let serialized = toml::to_string_pretty(&project)?;
+  write!(buffer, "{}", CONF_MODE_HEADER)?;
+  write!(buffer, "{}", serialized)?;
+  Ok(())
+}
+
+fn migrate_write_tags(config: &Config, logger: &Logger) -> Result<(), AppError> {
   for (name, tag) in config.settings.tags.clone().unwrap_or_default() {
-    let mut tag_path = default_tags_path.clone();
-    tag_path.push(&name);
-    let mut buffer = File::create(&tag_path)?;
-    let serialized = toml::to_string_pretty(&tag)?;
-    write!(buffer, "{}", CONF_MODE_HEADER)?;
-    write!(buffer, "{}", serialized)?;
+    write_tag(&name, &tag, "default")?;
   }
 
   debug!(logger, "Wrote tags");
   Ok(())
 }
 
-fn migrate_write_projects(config: &Config, fw_paths: &FwPaths, logger: &Logger) -> Result<(), AppError> {
-  let mut default_projects_path = fw_paths.projects.clone();
-  default_projects_path.push("default");
-  std::fs::create_dir_all(&default_projects_path)?;
-
+fn migrate_write_projects(config: &Config, logger: &Logger) -> Result<(), AppError> {
   for project in config.projects.values() {
-    let mut project_path = default_projects_path.clone();
-    project_path.push(&project.name);
-    let mut buffer = File::create(&project_path)?;
-    let serialized = toml::to_string_pretty(&project)?;
-    write!(buffer, "{}", CONF_MODE_HEADER)?;
-    write!(buffer, "{}", serialized)?;
+    write_project(&project, "default")?;
   }
 
   debug!(logger, "Wrote projects");
@@ -180,13 +198,10 @@ pub fn write_new(config: &Config, logger: &Logger) -> Result<(), AppError> {
     github_token: config.settings.github_token.clone(),
     gitlab: config.settings.gitlab.clone(),
   };
-  let paths = fw_path()?;
-
-  paths.ensure_base_exists()?;
 
   write_settings(&new_settings, &logger)?;
-  migrate_write_projects(&config, &paths, &logger)?;
-  migrate_write_tags(&config, &paths, &logger)?;
+  migrate_write_projects(&config, &logger)?;
+  migrate_write_tags(&config, &logger)?;
 
   Ok(())
 }
