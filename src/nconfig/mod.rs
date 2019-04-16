@@ -66,7 +66,7 @@ pub fn read_config(logger: &Logger) -> Result<Config, AppError> {
     if tag_file.metadata()?.is_file() {
       let raw_tag = read_to_string(tag_file.path())?;
       let tag: Tag = toml::from_str(&raw_tag)?;
-      let tag_name: Option<String> = tag_file.file_name().to_str().map(|t| t.to_owned());
+      let tag_name: Option<String> = tag_file.file_name().to_str().map(ToOwned::to_owned);
       tags.insert(tag_name.ok_or(AppError::InternalError(""))?, tag);
     }
   }
@@ -78,7 +78,7 @@ pub fn read_config(logger: &Logger) -> Result<Config, AppError> {
     .collect();
 
   Ok(Config {
-    projects: projects,
+    projects,
     settings: Settings {
       tags: Some(tags),
       workspace: settings.workspace,

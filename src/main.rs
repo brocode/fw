@@ -45,12 +45,12 @@ fn _main() -> i32 {
   let logger = logger_from_verbosity(matches.occurrences_of("v"), matches.is_present("q"));
 
   let config = nconfig::read_config(&logger);
-  let config = if let Ok(_) = config {
+  let config = if config.is_ok() {
     config
   } else {
     let old_config = config::get_config(&logger);
     // write 2.0 for compat
-    if let Ok(_) = old_config {
+    if old_config.is_ok() {
       //TODO link to 2.0 readme or something
       Err(AppError::RuntimeError(
         "Old configuration found. Please use `fw migrate` to migrate your configuration to the new layout.".to_string(),
