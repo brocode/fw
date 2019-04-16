@@ -1,5 +1,7 @@
+use crate::config;
 use crate::config::{expand_path, Config, GitlabSettings, Project, Settings, Tag};
 use crate::errors::AppError;
+use slog::info;
 
 use dirs::config_dir;
 use slog::{debug, Logger};
@@ -13,17 +15,34 @@ use walkdir::WalkDir;
 
 static CONF_MODE_HEADER: &str = "# -*- mode: Conf; -*-\n";
 
-pub struct FwPaths {
+#[derive(Deserialize, Serialize, Debug, Clone)]
+pub struct NSettings {
+  pub workspace: String,
+  pub shell: Option<Vec<String>>,
+  pub default_after_workon: Option<String>,
+  pub default_after_clone: Option<String>,
+  pub github_token: Option<String>,
+  pub gitlab: Option<GitlabSettings>,
+}
+
+struct FwPaths {
   settings: PathBuf,
   base: PathBuf,
   projects: PathBuf,
   tags: PathBuf,
 }
 
+impl FwPaths {
+  fn ensure_base_exists(&self) -> Result<(), AppError> {
+    std::fs::create_dir_all(&self.base)?;
+    Ok(())
+  }
+}
+
 pub fn read_config(logger: &Logger) -> Result<Config, AppError> {
   let paths = fw_path()?;
 
-  let settings_raw = read_to_string(&paths.settings)?;
+  let settings_raw = read_to_string(&paths.settings).map_err(|e| AppError::RuntimeError(format!("Could not read settings file ({}): {}", paths.settings.to_string_lossy(), e)))?;
 
   let settings: NSettings = toml::from_str(&settings_raw)?;
 
@@ -102,7 +121,10 @@ fn fw_path() -> Result<FwPaths, AppError> {
   })
 }
 
-fn write_settings(settings: &NSettings, paths: &FwPaths, logger: &Logger) -> Result<(), AppError> {
+pub fn write_settings(settings: &NSettings, logger: &Logger) -> Result<(), AppError> {
+  let paths = fw_path()?;
+  paths.ensure_base_exists()?;
+
   let mut buffer = File::create(&paths.settings)?;
   let serialized = toml::to_string_pretty(settings)?;
   write!(buffer, "{}", serialized)?;
@@ -112,7 +134,7 @@ fn write_settings(settings: &NSettings, paths: &FwPaths, logger: &Logger) -> Res
   Ok(())
 }
 
-fn write_tags(config: &Config, fw_paths: &FwPaths, logger: &Logger) -> Result<(), AppError> {
+fn migrate_write_tags(config: &Config, fw_paths: &FwPaths, logger: &Logger) -> Result<(), AppError> {
   let mut default_tags_path = fw_paths.tags.clone();
   default_tags_path.push("default");
   std::fs::create_dir_all(&default_tags_path)?;
@@ -130,7 +152,7 @@ fn write_tags(config: &Config, fw_paths: &FwPaths, logger: &Logger) -> Result<()
   Ok(())
 }
 
-fn write_projects(config: &Config, fw_paths: &FwPaths, logger: &Logger) -> Result<(), AppError> {
+fn migrate_write_projects(config: &Config, fw_paths: &FwPaths, logger: &Logger) -> Result<(), AppError> {
   let mut default_projects_path = fw_paths.projects.clone();
   default_projects_path.push("default");
   std::fs::create_dir_all(&default_projects_path)?;
@@ -159,21 +181,27 @@ pub fn write_new(config: &Config, logger: &Logger) -> Result<(), AppError> {
   };
   let paths = fw_path()?;
 
-  std::fs::create_dir_all(&paths.base)?;
+  paths.ensure_base_exists()?;
 
-  write_settings(&new_settings, &paths, &logger)?;
-  write_projects(&config, &paths, &logger)?;
-  write_tags(&config, &paths, &logger)?;
+  write_settings(&new_settings, &logger)?;
+  migrate_write_projects(&config, &paths, &logger)?;
+  migrate_write_tags(&config, &paths, &logger)?;
 
   Ok(())
 }
 
-#[derive(Deserialize, Serialize, Debug, Clone)]
-pub struct NSettings {
-  pub workspace: String,
-  pub shell: Option<Vec<String>>,
-  pub default_after_workon: Option<String>,
-  pub default_after_clone: Option<String>,
-  pub github_token: Option<String>,
-  pub gitlab: Option<GitlabSettings>,
+pub fn migrate(logger: &Logger) -> Result<(), AppError> {
+  let config = config::get_config(&logger);
+
+  // write 2.0 for compat
+  if let Ok(ref c) = config {
+    write_new(&c, &logger).expect("Failed to write v2.0 config");
+    info!(logger, "Wrote new config");
+    // TODO remove me, just for testing
+    let written_config = read_config(&logger).expect("oh noes");
+    info!(logger, "Written config be like: {:?}", written_config);
+    Ok(())
+  } else {
+    Err(AppError::RuntimeError("Could not load old config".to_string()))
+  }
 }
