@@ -42,7 +42,8 @@ impl FwPaths {
 pub fn read_config(logger: &Logger) -> Result<Config, AppError> {
   let paths = fw_path()?;
 
-  let settings_raw = read_to_string(&paths.settings).map_err(|e| AppError::RuntimeError(format!("Could not read settings file ({}): {}", paths.settings.to_string_lossy(), e)))?;
+  let settings_raw = read_to_string(&paths.settings)
+    .map_err(|e| AppError::RuntimeError(format!("Could not read settings file ({}): {}", paths.settings.to_string_lossy(), e)))?;
 
   let settings: NSettings = toml::from_str(&settings_raw)?;
 
