@@ -36,9 +36,6 @@ _fw() {
             'inspect:Inspect project'
             'update:Update project settings'
             'tag:Manipulate tags'
-            'export-project:Exports a project as shell commands'
-            'export-by-tag:Exports all project with a given tag'
-            'export-tag:Exports a tag'
             'print-path:Print project path to stdout'
             'org-import:Import all repositories from a github org'
             'gitlab-import:Import all owned repositories / your organizations repositories from gitlab'
@@ -70,15 +67,6 @@ _fw() {
             ;;
             remove)
               __fw_projects;
-            ;;
-            export-project)
-              __fw_projects;
-            ;;
-            export-by-tag)
-              __fw_tags;
-            ;;
-            export-tag)
-              __fw_tags;
             ;;
             tag)
               actions=(

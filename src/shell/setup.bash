@@ -179,9 +179,6 @@ __fw_complete()
         local cmds=(
             'add-remote'
             'add'
-            'export-by-tag'
-            'export-project'
-            'export-tag'
             'foreach'
             'gitlab-import'
             'help '
@@ -233,18 +230,6 @@ __fw_complete()
 
     _fw_add_remote() {
         __fw_comp "$(__fw_projects)"
-    }
-
-    _fw_export_by_tag () {
-        __fw_comp "$(__fw_tags)"
-    }
-
-    _fw_export_project () {
-        __fw_comp "$(__fw_projects)"
-    }
-
-    _fw_export_tag () {
-        __fw_comp "$(__fw_tags)"
     }
 
     _fw_foreach () {
