@@ -34,6 +34,7 @@ pub struct Tag {
   pub after_workon: Option<String>,
   pub priority: Option<u8>,
   pub workspace: Option<String>,
+  pub default: Option<bool>,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]

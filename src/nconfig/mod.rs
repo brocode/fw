@@ -3,7 +3,7 @@ use crate::errors::AppError;
 
 use dirs::config_dir;
 use slog::{debug, Logger};
-use std::collections::BTreeMap;
+use std::collections::{BTreeMap, BTreeSet};
 use std::env;
 use std::fs::{read_to_string, File};
 use std::io::Write;
@@ -51,6 +51,12 @@ pub fn read_config(logger: &Logger) -> Result<Config, AppError> {
     }
   }
 
+  let default_tags: BTreeSet<String> = tags
+    .iter()
+    .filter(|(_, value)| value.default.unwrap_or_default())
+    .map(|(key, _)| key.to_string())
+    .collect();
+
   Ok(Config {
     projects: projects,
     settings: Settings {
@@ -59,7 +65,7 @@ pub fn read_config(logger: &Logger) -> Result<Config, AppError> {
       shell: settings.shell,
       default_after_workon: settings.default_after_workon,
       default_after_clone: settings.default_after_clone,
-      default_tags: None, // TODO fixme no default tags yet
+      default_tags: Some(default_tags),
       github_token: settings.github_token,
       gitlab: settings.gitlab,
     },
@@ -115,14 +121,7 @@ fn write_tags(config: &Config, fw_paths: &FwPaths, logger: &Logger) -> Result<()
     let mut tag_path = default_tags_path.clone();
     tag_path.push(&name);
     let mut buffer = File::create(&tag_path)?;
-    let ntag = NTag {
-      after_clone: tag.after_clone.clone(),
-      after_workon: tag.after_workon.clone(),
-      priority: tag.priority.clone(),
-      workspace: tag.workspace.clone(),
-      default: Some(config.settings.default_tags.clone().unwrap_or_default().contains(&name)),
-    };
-    let serialized = toml::to_string_pretty(&ntag)?;
+    let serialized = toml::to_string_pretty(&tag)?;
     write!(buffer, "{}", CONF_MODE_HEADER)?;
     write!(buffer, "{}", serialized)?;
   }
@@ -177,13 +176,4 @@ pub struct NSettings {
   pub default_after_clone: Option<String>,
   pub github_token: Option<String>,
   pub gitlab: Option<GitlabSettings>,
-}
-
-#[derive(Serialize, Deserialize, Debug, Clone)]
-pub struct NTag {
-  pub after_clone: Option<String>,
-  pub after_workon: Option<String>,
-  pub priority: Option<u8>,
-  pub workspace: Option<String>,
-  pub default: Option<bool>,
 }

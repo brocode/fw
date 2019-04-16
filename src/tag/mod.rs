@@ -34,6 +34,7 @@ pub fn create_tag(
     after_workon,
     priority,
     workspace: tag_workspace,
+    default: None,
   };
   tags.insert(tag_name, new_tag);
   config.settings.tags = Some(tags);
