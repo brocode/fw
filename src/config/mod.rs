@@ -548,24 +548,28 @@ mod tests {
       after_workon: Some("workon1".to_owned()),
       priority: None,
       workspace: None,
+      default: None,
     };
     let tag2 = Tag {
       after_clone: Some("clone2".to_owned()),
       after_workon: Some("workon2".to_owned()),
       priority: None,
       workspace: None,
+      default: None,
     };
     let tag3 = Tag {
       after_clone: Some("clone3".to_owned()),
       after_workon: Some("workon3".to_owned()),
       priority: Some(100),
       workspace: None,
+      default: None,
     };
     let tag4 = Tag {
       after_clone: Some("clone4".to_owned()),
       after_workon: Some("workon4".to_owned()),
       priority: Some(0),
       workspace: None,
+      default: None,
     };
     let mut projects: BTreeMap<String, Project> = BTreeMap::new();
     projects.insert("test1".to_owned(), project);
