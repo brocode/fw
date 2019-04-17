@@ -11,24 +11,31 @@ extern crate spectral;
 
 use crate::errors::AppError;
 use clap::{crate_version, App, AppSettings, Arg, SubCommand};
+use slog::Logger;
 use slog::{crit, debug, o, warn};
-use slog::{Drain, Level, LevelFilter, Logger};
 use std::str::FromStr;
 use std::time::SystemTime;
 
+use sloggers::terminal::{Destination, TerminalLoggerBuilder};
+use sloggers::types::{Format, Severity};
+use sloggers::Build;
+
 fn logger_from_verbosity(verbosity: u64, quiet: bool) -> Logger {
-  let log_level: Level = match verbosity {
-    _ if quiet => Level::Error,
-    0 => Level::Warning,
-    1 => Level::Info,
-    2 => Level::Debug,
-    3 | _ => Level::Trace,
+  let log_level = match verbosity {
+    _ if quiet => Severity::Error,
+    0 => Severity::Warning,
+    1 => Severity::Info,
+    2 => Severity::Debug,
+    3 | _ => Severity::Trace,
   };
 
-  let plain = slog_term::PlainSyncDecorator::new(std::io::stdout());
-  let drain = slog_term::FullFormat::new(plain).build().fuse();
-  let drain = LevelFilter::new(drain, log_level).fuse();
-  let logger = Logger::root(drain, o!());
+  let mut logger_builder = TerminalLoggerBuilder::new();
+  logger_builder.level(log_level);
+  logger_builder.destination(Destination::Stderr);
+  logger_builder.format(Format::Full);
+
+  let logger = logger_builder.build().unwrap();
+
   debug!(logger, "Logger ready" ; "level" => format!("{:?}", log_level));
   logger
 }
