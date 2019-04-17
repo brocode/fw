@@ -167,6 +167,7 @@ pub fn import(maybe_config: Result<Config, AppError>, path: &str, logger: &Logge
   Ok(())
 }
 
+// TODO @mriehl @bomgar this needs the current config if it exists, in order to determine default tags, after_x etc
 fn load_project(path_to_repo: PathBuf, name: &str, logger: &Logger) -> Result<Project, AppError> {
   let project_logger = logger.new(o!("project" => name.to_string()));
   let repo: Repository = Repository::open(path_to_repo)?;
