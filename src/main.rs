@@ -11,7 +11,7 @@ extern crate spectral;
 
 use crate::errors::AppError;
 use clap::{crate_version, App, AppSettings, Arg, SubCommand};
-use slog::{crit, debug, o};
+use slog::{crit, debug, o, warn};
 use slog::{Drain, Level, LevelFilter, Logger};
 use std::str::FromStr;
 use std::time::SystemTime;
@@ -48,6 +48,7 @@ fn _main() -> i32 {
   let config = if config.is_ok() {
     config
   } else {
+    warn!(logger, "Could not read v2.0 config: {:?}", config);
     let old_config = config::get_config(&logger);
     // write 2.0 for compat
     if old_config.is_ok() {
