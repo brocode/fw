@@ -1,6 +1,7 @@
 use crate::config;
 use crate::config::{Config, Project, Settings};
 use crate::errors::AppError;
+use crate::nconfig;
 use crate::ws::github;
 use git2::Repository;
 use slog::Logger;
@@ -29,7 +30,7 @@ pub fn setup(workspace_dir: &str, logger: &Logger) -> Result<(), AppError> {
       }
     })
     .and_then(|path| determine_projects(path, logger))
-    .and_then(|projects| write_config(projects, logger, workspace_dir))
+    .and_then(|projects| write_new_config_with_projects(projects, logger, workspace_dir))
 }
 
 fn determine_projects(path: PathBuf, logger: &Logger) -> Result<BTreeMap<String, Project>, AppError> {
@@ -196,20 +197,19 @@ fn load_project(path_to_repo: PathBuf, name: &str, logger: &Logger) -> Result<Pr
   })
 }
 
-fn write_config(projects: BTreeMap<String, Project>, logger: &Logger, workspace_dir: &str) -> Result<(), AppError> {
-  let config = Config {
-    projects,
-    settings: Settings {
-      workspace: workspace_dir.to_owned(),
-      default_after_workon: None,
-      default_after_clone: None,
-      default_tags: None,
-      shell: None,
-      tags: Some(BTreeMap::new()),
-      github_token: None,
-      gitlab: None,
-    },
+fn write_new_config_with_projects(projects: BTreeMap<String, Project>, logger: &Logger, workspace_dir: &str) -> Result<(), AppError> {
+  let settings: nconfig::NSettings = nconfig::NSettings {
+    workspace: workspace_dir.to_owned(),
+    default_after_workon: None,
+    default_after_clone: None,
+    shell: None,
+    github_token: None,
+    gitlab: None,
   };
-  debug!(logger, "Finished"; "projects" => format!("{:?}", config.projects.len()));
-  config::write_config(config, logger)
+  nconfig::write_settings(&settings, &logger)?;
+  for p in projects.values() {
+    nconfig::write_project(&p, "default")?;
+  }
+  debug!(logger, "Finished"; "projects" => format!("{:?}", projects.len()));
+  Ok(())
 }
