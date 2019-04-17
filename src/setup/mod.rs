@@ -1,5 +1,4 @@
-use crate::config;
-use crate::config::{Config, Project};
+use crate::config::{Config, Project, Settings};
 use crate::errors::AppError;
 use crate::nconfig;
 use crate::ws::github;
@@ -46,7 +45,7 @@ fn determine_projects(path: PathBuf, logger: &Logger) -> Result<BTreeMap<String,
         Ok(name) => {
           let mut path_to_repo = workspace_path.clone();
           path_to_repo.push(&name);
-          match load_project(path_to_repo, &name, logger) {
+          match load_project(None, path_to_repo, &name, logger) {
             Ok(project) => {
               projects.insert(project.name.clone(), project);
             }
@@ -158,7 +157,8 @@ pub fn import(maybe_config: Result<Config, AppError>, path: &str, logger: &Logge
   let project_path = path.to_str().ok_or(AppError::InternalError("project path is not valid unicode"))?.to_owned();
   let file_name = AppError::require(path.file_name(), AppError::UserError("Import path needs to be valid".to_string()))?;
   let project_name: String = file_name.to_string_lossy().into_owned();
-  let new_project = load_project(path.clone(), &project_name, logger)?;
+  let maybe_settings = maybe_config.ok().map(|c| c.settings);
+  let new_project = load_project(maybe_settings, path.clone(), &project_name, logger)?;
   let new_project_with_path = Project {
     override_path: Some(project_path),
     ..new_project
@@ -167,8 +167,7 @@ pub fn import(maybe_config: Result<Config, AppError>, path: &str, logger: &Logge
   Ok(())
 }
 
-// TODO @mriehl @bomgar this needs the current config if it exists, in order to determine default tags, after_x etc
-fn load_project(path_to_repo: PathBuf, name: &str, logger: &Logger) -> Result<Project, AppError> {
+fn load_project(maybe_settings: Option<Settings>, path_to_repo: PathBuf, name: &str, logger: &Logger) -> Result<Project, AppError> {
   let project_logger = logger.new(o!("project" => name.to_string()));
   let repo: Repository = Repository::open(path_to_repo)?;
   let all = repo.remotes()?;
@@ -181,11 +180,11 @@ fn load_project(path_to_repo: PathBuf, name: &str, logger: &Logger) -> Result<Pr
   Ok(Project {
     name: name.to_owned(),
     git: url.to_owned(),
-    after_clone: None,
-    after_workon: None,
+    after_clone: maybe_settings.clone().and_then(|s| s.default_after_clone),
+    after_workon: maybe_settings.clone().and_then(|s| s.default_after_workon),
     override_path: None,
     additional_remotes: None, // TODO: use remotes
-    tags: None,
+    tags: maybe_settings.clone().and_then(|s| s.default_tags),
     bare: None,
   })
 }
