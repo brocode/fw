@@ -1,10 +1,9 @@
 use crate::config;
 use crate::config::{expand_path, Config, GitlabSettings, Project, Settings, Tag};
 use crate::errors::AppError;
-use slog::info;
 
 use dirs::config_dir;
-use slog::{debug, Logger};
+use slog::{debug, info, warn, Logger};
 use std::collections::{BTreeMap, BTreeSet};
 use std::env;
 use std::fs::{read_to_string, File};
@@ -50,25 +49,30 @@ pub fn read_config(logger: &Logger) -> Result<Config, AppError> {
   debug!(logger, "read new settings ok");
 
   let mut projects: BTreeMap<String, Project> = BTreeMap::new();
-  for maybe_project_file in WalkDir::new(&paths.projects).follow_links(true) {
-    let project_file = maybe_project_file?;
-    if project_file.metadata()?.is_file() {
-      let raw_project = read_to_string(project_file.path())?;
-      let project: Project = toml::from_str(&raw_project)?;
-      projects.insert(project.name.clone(), project);
+  if paths.projects.exists() {
+    for maybe_project_file in WalkDir::new(&paths.projects).follow_links(true) {
+      let project_file = maybe_project_file?;
+      if project_file.metadata()?.is_file() {
+        let raw_project = read_to_string(project_file.path())?;
+        let project: Project = toml::from_str(&raw_project)?;
+        projects.insert(project.name.clone(), project);
+      }
     }
+    debug!(logger, "read projects ok");
   }
-  debug!(logger, "read new projects ok");
 
   let mut tags: BTreeMap<String, Tag> = BTreeMap::new();
-  for maybe_tag_file in WalkDir::new(&paths.tags).follow_links(true) {
-    let tag_file = maybe_tag_file?;
-    if tag_file.metadata()?.is_file() {
-      let raw_tag = read_to_string(tag_file.path())?;
-      let tag: Tag = toml::from_str(&raw_tag)?;
-      let tag_name: Option<String> = tag_file.file_name().to_str().map(ToOwned::to_owned);
-      tags.insert(tag_name.ok_or(AppError::InternalError(""))?, tag);
+  if paths.tags.exists() {
+    for maybe_tag_file in WalkDir::new(&paths.tags).follow_links(true) {
+      let tag_file = maybe_tag_file?;
+      if tag_file.metadata()?.is_file() {
+        let raw_tag = read_to_string(tag_file.path())?;
+        let tag: Tag = toml::from_str(&raw_tag)?;
+        let tag_name: Option<String> = tag_file.file_name().to_str().map(ToOwned::to_owned);
+        tags.insert(tag_name.ok_or(AppError::InternalError(""))?, tag);
+      }
     }
+    debug!(logger, "read tags ok");
   }
 
   let default_tags: BTreeSet<String> = tags
@@ -215,7 +219,7 @@ pub fn migrate(logger: &Logger) -> Result<(), AppError> {
     info!(logger, "Wrote new config");
     // TODO remove me, just for testing
     let written_config = read_config(&logger).expect("oh noes");
-    info!(logger, "Written config be like: {:?}", written_config);
+    warn!(logger, "Written v2.0 config with {} projects", written_config.projects.values().len());
     Ok(())
   } else {
     Err(AppError::RuntimeError("Could not load old config".to_string()))
