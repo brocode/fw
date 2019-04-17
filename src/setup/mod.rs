@@ -1,5 +1,5 @@
 use crate::config;
-use crate::config::{Config, Project, Settings};
+use crate::config::{Config, Project};
 use crate::errors::AppError;
 use crate::nconfig;
 use crate::ws::github;
@@ -62,7 +62,7 @@ fn determine_projects(path: PathBuf, logger: &Logger) -> Result<BTreeMap<String,
 }
 
 pub fn gitlab_import(maybe_config: Result<Config, AppError>, logger: &Logger) -> Result<(), AppError> {
-  let mut current_config = maybe_config?;
+  let current_config = maybe_config?;
 
   let gitlab_config = current_config.settings.gitlab.clone().ok_or_else(|| {
     AppError::UserError(
@@ -81,44 +81,40 @@ pub fn gitlab_import(maybe_config: Result<Config, AppError>, logger: &Logger) ->
     .map(|repo| (repo.name.to_owned(), repo.ssh_url_to_repo.to_owned()))
     .collect();
 
-  let new_projects = {
-    let after_clone = current_config.settings.default_after_clone.clone();
-    let after_workon = current_config.settings.default_after_workon.clone();
-    let tags = current_config.settings.default_tags.clone();
+  let after_clone = current_config.settings.default_after_clone.clone();
+  let after_workon = current_config.settings.default_after_workon.clone();
+  let tags = current_config.settings.default_tags.clone();
+  let mut current_projects = current_config.projects.clone();
 
-    names_and_urls.into_iter().map(move |name_and_url| Project {
-      name: name_and_url.0,
-      git: name_and_url.1,
+  for (name, url) in names_and_urls {
+    let p = Project {
+      name,
+      git: url,
       after_clone: after_clone.clone(),
       after_workon: after_workon.clone(),
       override_path: None,
       tags: tags.clone(),
       additional_remotes: None,
       bare: None,
-    })
-  };
+    };
 
-  let mut current_projects = current_config.projects.clone();
-
-  for new_project in new_projects {
-    if current_projects.contains_key(&new_project.name) {
+    if current_projects.contains_key(&p.name) {
       info!(
         logger,
-          "Skipping new project from Gitlab import because it already exists in the current fw config"; "project_name" => &new_project.name);
+          "Skipping new project from Gitlab import because it already exists in the current fw config"; "project_name" => &p.name);
     } else {
-      info!(logger, "Adding new project"; "project_name" => &new_project.name);
-      current_projects.insert(new_project.name.clone(), new_project);
+      info!(logger, "Saving new project"; "project_name" => &p.name);
+      nconfig::write_project(&p, "default")?; // TODO not sure if this should be default or gitlab subfolder? or even user specified?
+      current_projects.insert(p.name.clone(), p); // to ensure no duplicated name encountered during processing
     }
   }
-
-  current_config.projects = current_projects;
-  config::write_config(current_config, logger)?;
 
   Ok(())
 }
 
+// TODO nconfig
 pub fn org_import(maybe_config: Result<Config, AppError>, org_name: &str, include_archived: bool, logger: &Logger) -> Result<(), AppError> {
-  let mut current_config = maybe_config?;
+  let current_config = maybe_config?;
   let token = current_config.settings.github_token.clone().ok_or_else(|| {
     AppError::UserError(format!(
       "Can't call GitHub API for org {} because no github oauth token (settings.github_token) specified in the configuration.",
@@ -126,36 +122,34 @@ pub fn org_import(maybe_config: Result<Config, AppError>, org_name: &str, includ
     ))
   })?;
   let mut api = github::github_api(&token)?;
-  let mut current_projects = current_config.projects.clone();
   let org_repository_names: Vec<String> = api.list_repositories(org_name, include_archived)?;
-  let new_projects = {
-    let after_clone = current_config.settings.default_after_clone.clone();
-    let after_workon = current_config.settings.default_after_workon.clone();
-    let tags = current_config.settings.default_tags.clone();
+  let after_clone = current_config.settings.default_after_clone.clone();
+  let after_workon = current_config.settings.default_after_workon.clone();
+  let tags = current_config.settings.default_tags.clone();
+  let mut current_projects = current_config.projects.clone();
 
-    org_repository_names.into_iter().map(move |repo_name| Project {
-      name: repo_name.clone(),
-      git: format!("git@github.com:{}/{}.git", org_name, repo_name),
+  for name in org_repository_names {
+    let p = Project {
+      name: name.clone(),
+      git: format!("git@github.com:{}/{}.git", org_name, name),
       after_clone: after_clone.clone(),
       after_workon: after_workon.clone(),
       override_path: None,
       tags: tags.clone(),
       additional_remotes: None,
       bare: None,
-    })
-  };
-  for new_project in new_projects {
-    if current_projects.contains_key(&new_project.name) {
+    };
+
+    if current_projects.contains_key(&p.name) {
       info!(
         logger,
-          "Skipping new project from org import because it already exists in the current fw config"; "project_name" => &new_project.name);
+          "Skipping new project from Gitlab import because it already exists in the current fw config"; "project_name" => &p.name);
     } else {
-      info!(logger, "Adding new project"; "project_name" => &new_project.name);
-      current_projects.insert(new_project.name.clone(), new_project);
+      info!(logger, "Saving new project"; "project_name" => &p.name);
+      nconfig::write_project(&p, "default")?; // TODO not sure if this should be default or gitlab subfolder? or even user specified?
+      current_projects.insert(p.name.clone(), p); // to ensure no duplicated name encountered during processing
     }
   }
-  current_config.projects = current_projects;
-  config::write_config(current_config, logger)?;
   Ok(())
 }
 
