@@ -15,13 +15,26 @@ use walkdir::WalkDir;
 static CONF_MODE_HEADER: &str = "# -*- mode: Conf; -*-\n";
 
 #[derive(Deserialize, Serialize, Debug, Clone)]
-pub struct NSettings {
+pub struct PersistedSettings {
   pub workspace: String,
   pub shell: Option<Vec<String>>,
   pub default_after_workon: Option<String>,
   pub default_after_clone: Option<String>,
   pub github_token: Option<String>,
   pub gitlab: Option<GitlabSettings>,
+}
+
+impl PersistedSettings {
+  fn from_settings(settings: &Settings) -> PersistedSettings {
+    PersistedSettings {
+      workspace: settings.workspace.clone(),
+      shell: settings.shell.clone(),
+      default_after_workon: settings.default_after_workon.clone(),
+      default_after_clone: settings.default_after_clone.clone(),
+      github_token: settings.github_token.clone(),
+      gitlab: settings.gitlab.clone(),
+    }
+  }
 }
 
 struct FwPaths {
@@ -44,7 +57,7 @@ pub fn read_config(logger: &Logger) -> Result<Config, AppError> {
   let settings_raw = read_to_string(&paths.settings)
     .map_err(|e| AppError::RuntimeError(format!("Could not read settings file ({}): {}", paths.settings.to_string_lossy(), e)))?;
 
-  let settings: NSettings = toml::from_str(&settings_raw)?;
+  let settings: PersistedSettings = toml::from_str(&settings_raw)?;
 
   debug!(logger, "read new settings ok");
 
@@ -54,7 +67,12 @@ pub fn read_config(logger: &Logger) -> Result<Config, AppError> {
       let project_file = maybe_project_file?;
       if project_file.metadata()?.is_file() {
         let raw_project = read_to_string(project_file.path())?;
-        let project: Project = toml::from_str(&raw_project)?;
+        let mut project: Project = toml::from_str(&raw_project)?;
+        project.project_config_path = PathBuf::from(project_file.path().parent().ok_or(AppError::InternalError("Expected file to have a parent"))?)
+          .strip_prefix(paths.projects.as_path())
+          .map_err(|e| AppError::RuntimeError(format!("Failed to strip prefix: {}", e)))?
+          .to_string_lossy()
+          .to_string();
         projects.insert(project.name.clone(), project);
       }
     }
@@ -126,7 +144,7 @@ fn fw_path() -> Result<FwPaths, AppError> {
   })
 }
 
-pub fn write_settings(settings: &NSettings, logger: &Logger) -> Result<(), AppError> {
+pub fn write_settings(settings: &PersistedSettings, logger: &Logger) -> Result<(), AppError> {
   let paths = fw_path()?;
   paths.ensure_base_exists()?;
 
@@ -157,12 +175,12 @@ pub fn write_tag(tag_name: &str, tag: &Tag, tag_config_path: &str) -> Result<(),
   Ok(())
 }
 
-pub fn write_project(project: &Project, project_config_path: &str) -> Result<(), AppError> {
+pub fn write_project(project: &Project) -> Result<(), AppError> {
   let paths = fw_path()?;
   paths.ensure_base_exists()?;
 
   let mut project_path = paths.projects.to_owned();
-  project_path.push(PathBuf::from(project_config_path));
+  project_path.push(PathBuf::from(&project.project_config_path));
   std::fs::create_dir_all(&project_path)?;
 
   let mut project_file_path = project_path.clone();
@@ -186,7 +204,9 @@ fn migrate_write_tags(config: &Config, logger: &Logger) -> Result<(), AppError> 
 
 fn migrate_write_projects(config: &Config, logger: &Logger) -> Result<(), AppError> {
   for project in config.projects.values() {
-    write_project(&project, "default")?;
+    let mut p = project.clone();
+    p.project_config_path = "default".to_string();
+    write_project(&p)?;
   }
 
   debug!(logger, "Wrote projects");
@@ -194,14 +214,7 @@ fn migrate_write_projects(config: &Config, logger: &Logger) -> Result<(), AppErr
 }
 
 pub fn write_new(config: &Config, logger: &Logger) -> Result<(), AppError> {
-  let new_settings = NSettings {
-    workspace: config.settings.workspace.clone(),
-    shell: config.settings.shell.clone(),
-    default_after_workon: config.settings.default_after_workon.clone(),
-    default_after_clone: config.settings.default_after_clone.clone(),
-    github_token: config.settings.github_token.clone(),
-    gitlab: config.settings.gitlab.clone(),
-  };
+  let new_settings = PersistedSettings::from_settings(&config.settings);
 
   write_settings(&new_settings, &logger)?;
   migrate_write_projects(&config, &logger)?;

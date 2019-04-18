@@ -95,6 +95,7 @@ pub fn gitlab_import(maybe_config: Result<Config, AppError>, logger: &Logger) ->
       tags: tags.clone(),
       additional_remotes: None,
       bare: None,
+      project_config_path: "gitlab".to_string(),
     };
 
     if current_projects.contains_key(&p.name) {
@@ -103,7 +104,7 @@ pub fn gitlab_import(maybe_config: Result<Config, AppError>, logger: &Logger) ->
           "Skipping new project from Gitlab import because it already exists in the current fw config"; "project_name" => &p.name);
     } else {
       info!(logger, "Saving new project"; "project_name" => &p.name);
-      nconfig::write_project(&p, "default")?; // TODO not sure if this should be default or gitlab subfolder? or even user specified?
+      nconfig::write_project(&p)?; // TODO not sure if this should be default or gitlab subfolder? or even user specified?
       current_projects.insert(p.name.clone(), p); // to ensure no duplicated name encountered during processing
     }
   }
@@ -137,6 +138,7 @@ pub fn org_import(maybe_config: Result<Config, AppError>, org_name: &str, includ
       tags: tags.clone(),
       additional_remotes: None,
       bare: None,
+      project_config_path: org_name.to_string(),
     };
 
     if current_projects.contains_key(&p.name) {
@@ -145,7 +147,7 @@ pub fn org_import(maybe_config: Result<Config, AppError>, org_name: &str, includ
           "Skipping new project from Gitlab import because it already exists in the current fw config"; "project_name" => &p.name);
     } else {
       info!(logger, "Saving new project"; "project_name" => &p.name);
-      nconfig::write_project(&p, "default")?; // TODO not sure if this should be default or gitlab subfolder? or even user specified?
+      nconfig::write_project(&p)?;
       current_projects.insert(p.name.clone(), p); // to ensure no duplicated name encountered during processing
     }
   }
@@ -163,7 +165,7 @@ pub fn import(maybe_config: Result<Config, AppError>, path: &str, logger: &Logge
     override_path: Some(project_path),
     ..new_project
   };
-  nconfig::write_project(&new_project_with_path, "default")?;
+  nconfig::write_project(&new_project_with_path)?;
   Ok(())
 }
 
@@ -186,11 +188,12 @@ fn load_project(maybe_settings: Option<Settings>, path_to_repo: PathBuf, name: &
     additional_remotes: None, // TODO: use remotes
     tags: maybe_settings.clone().and_then(|s| s.default_tags),
     bare: None,
+    project_config_path: "default".to_string(),
   })
 }
 
 fn write_new_config_with_projects(projects: BTreeMap<String, Project>, logger: &Logger, workspace_dir: &str) -> Result<(), AppError> {
-  let settings: nconfig::NSettings = nconfig::NSettings {
+  let settings: nconfig::PersistedSettings = nconfig::PersistedSettings {
     workspace: workspace_dir.to_owned(),
     default_after_workon: None,
     default_after_clone: None,
@@ -200,7 +203,7 @@ fn write_new_config_with_projects(projects: BTreeMap<String, Project>, logger: &
   };
   nconfig::write_settings(&settings, &logger)?;
   for p in projects.values() {
-    nconfig::write_project(&p, "default")?;
+    nconfig::write_project(&p)?;
   }
   debug!(logger, "Finished"; "projects" => format!("{:?}", projects.len()));
   Ok(())

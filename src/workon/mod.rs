@@ -48,6 +48,7 @@ pub fn inspect(name: &str, maybe_config: Result<config::Config, AppError>, json:
     .ok_or(AppError::InternalError("project path is not valid unicode"))?;
   println!("{}", Style::new().underline().bold().paint(project.name.clone()));
   println!("{:<20}: {}", "Path", path);
+  println!("{:<20}: {}", "config path", project.project_config_path);
   let tags = project
     .tags
     .clone()

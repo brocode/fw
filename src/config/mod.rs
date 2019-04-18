@@ -53,6 +53,9 @@ pub struct Project {
   pub bare: Option<bool>,
   pub tags: Option<BTreeSet<String>>,
   pub additional_remotes: Option<Vec<Remote>>,
+
+  #[serde(skip)]
+  pub project_config_path: String,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -248,6 +251,7 @@ pub fn add_entry(
         tags: config.settings.default_tags.clone(),
         bare: None,
         additional_remotes: None,
+        project_config_path: "".to_string(),
       },
     );
     info!(logger, "Updated config"; "config" => format!("{:?}", config));
@@ -349,6 +353,7 @@ pub fn update_entry(
         tags: old_project_config.tags,
         bare: old_project_config.bare,
         additional_remotes: old_project_config.additional_remotes,
+        project_config_path: "".to_string(),
       },
     );
     debug!(logger, "Updated config"; "config" => format!("{:?}", config));
