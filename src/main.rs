@@ -93,7 +93,7 @@ fn _main() -> i32 {
       let name: &str = subcommand_matches.value_of("NAME").expect("argument required by clap.rs");
       let remote_name: &str = subcommand_matches.value_of("REMOTE_NAME").expect("argument required by clap.rs");
       let url: &str = subcommand_matches.value_of("URL").expect("argument required by clap.rs");
-      config::add_remote(config, name, remote_name.to_string(), url.to_string(), &subcommand_logger)
+      nconfig::add_remote(config, name, remote_name.to_string(), url.to_string())
     }
     "remove-remote" => {
       let name: &str = subcommand_matches.value_of("NAME").expect("argument required by clap.rs");

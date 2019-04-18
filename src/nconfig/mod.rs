@@ -1,5 +1,5 @@
 use crate::config;
-use crate::config::{expand_path, Config, GitlabSettings, Project, Settings, Tag};
+use crate::config::{expand_path, Config, GitlabSettings, Project, Remote, Settings, Tag};
 use crate::errors::AppError;
 
 use dirs::config_dir;
@@ -220,6 +220,26 @@ pub fn write_new(config: &Config, logger: &Logger) -> Result<(), AppError> {
   migrate_write_projects(&config, &logger)?;
   migrate_write_tags(&config, &logger)?;
 
+  Ok(())
+}
+
+pub fn add_remote(maybe_config: Result<Config, AppError>, name: &str, remote_name: String, git: String) -> Result<(), AppError> {
+  let config: Config = maybe_config?;
+  if !config.projects.contains_key(name) {
+    return Err(AppError::UserError(format!("Project key {} does not exists. Can not update.", name)));
+  }
+  let mut project_config: Project = config.projects.get(name).expect("Already checked in the if above").clone();
+  let mut additional_remotes = project_config.additional_remotes.unwrap_or_default();
+  if additional_remotes.iter().any(|r| r.name == remote_name) {
+    return Err(AppError::UserError(format!(
+      "Remote {} for project {} does already exist. Can not add.",
+      remote_name, name
+    )));
+  }
+  additional_remotes.push(Remote { name: remote_name, git });
+  project_config.additional_remotes = Some(additional_remotes);
+
+  write_project(&project_config)?;
   Ok(())
 }
 

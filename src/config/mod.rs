@@ -300,28 +300,6 @@ pub fn remove_remote(maybe_config: Result<Config, AppError>, name: &str, remote_
   write_config(config, logger)
 }
 
-pub fn add_remote(maybe_config: Result<Config, AppError>, name: &str, remote_name: String, git: String, logger: &Logger) -> Result<(), AppError> {
-  let mut config: Config = maybe_config?;
-  if !config.projects.contains_key(name) {
-    return Err(AppError::UserError(format!("Project key {} does not exists. Can not update.", name)));
-  }
-  let mut project_config: Project = config.projects.get(name).expect("Already checked in the if above").clone();
-  let mut additional_remotes = project_config.additional_remotes.unwrap_or_default();
-  if additional_remotes.iter().any(|r| r.name == remote_name) {
-    return Err(AppError::UserError(format!(
-      "Remote {} for project {} does already exist. Can not add.",
-      remote_name, name
-    )));
-  }
-  additional_remotes.push(Remote { name: remote_name, git });
-  project_config.additional_remotes = Some(additional_remotes);
-
-  config.projects.insert(name.to_owned(), project_config);
-
-  debug!(logger, "Updated config"; "config" => format!("{:?}", config));
-  write_config(config, logger)
-}
-
 pub fn update_entry(
   maybe_config: Result<Config, AppError>,
   name: &str,
