@@ -507,6 +507,7 @@ mod tests {
       override_path: None,
       additional_remotes: None,
       bare: None,
+      project_config_path: "".to_string(),
     };
     let project2 = Project {
       name: "test2".to_owned(),
@@ -517,6 +518,7 @@ mod tests {
       override_path: None,
       additional_remotes: None,
       bare: None,
+      project_config_path: "".to_string(),
     };
     let project3 = Project {
       name: "test3".to_owned(),
@@ -527,6 +529,7 @@ mod tests {
       override_path: None,
       additional_remotes: None,
       bare: None,
+      project_config_path: "".to_string(),
     };
     let project4 = Project {
       name: "test4".to_owned(),
@@ -537,6 +540,7 @@ mod tests {
       override_path: None,
       additional_remotes: None,
       bare: None,
+      project_config_path: "".to_string(),
     };
     let project5 = Project {
       name: "test5".to_owned(),
@@ -547,6 +551,7 @@ mod tests {
       override_path: None,
       additional_remotes: None,
       bare: None,
+      project_config_path: "".to_string(),
     };
     let tag1 = Tag {
       after_clone: Some("clone1".to_owned()),
