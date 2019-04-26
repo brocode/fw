@@ -284,22 +284,6 @@ pub fn remove_entry(maybe_config: Result<Config, AppError>, project_name: &str, 
   }
 }
 
-pub fn remove_remote(maybe_config: Result<Config, AppError>, name: &str, remote_name: String, logger: &Logger) -> Result<(), AppError> {
-  let mut config: Config = maybe_config?;
-  if !config.projects.contains_key(name) {
-    return Err(AppError::UserError(format!("Project key {} does not exists. Can not update.", name)));
-  }
-  let mut project_config: Project = config.projects.get(name).expect("Already checked in the if above").clone();
-  let additional_remotes = project_config.additional_remotes.unwrap_or_default();
-  let additional_remotes = additional_remotes.into_iter().filter(|r| r.name != remote_name).collect();
-  project_config.additional_remotes = Some(additional_remotes);
-
-  config.projects.insert(name.to_owned(), project_config);
-
-  debug!(logger, "Updated config"; "config" => format!("{:?}", config));
-  write_config(config, logger)
-}
-
 pub fn update_entry(
   maybe_config: Result<Config, AppError>,
   name: &str,
