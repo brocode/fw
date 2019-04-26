@@ -46,7 +46,7 @@ struct FwPaths {
 
 impl FwPaths {
   fn ensure_base_exists(&self) -> Result<(), AppError> {
-    std::fs::create_dir_all(&self.base)?;
+    std::fs::create_dir_all(&self.base).map_err(|e| AppError::RuntimeError(format!("Failed to create fw config base directory. {}", e)))?;
     Ok(())
   }
 }
@@ -181,12 +181,14 @@ pub fn write_project(project: &Project) -> Result<(), AppError> {
 
   let mut project_path = paths.projects.to_owned();
   project_path.push(PathBuf::from(&project.project_config_path));
-  std::fs::create_dir_all(&project_path)?;
+  std::fs::create_dir_all(&project_path)
+    .map_err(|e| AppError::RuntimeError(format!("Failed to create project config path '{}'. {}", project_path.to_string_lossy(), e)))?;
 
   let mut project_file_path = project_path.clone();
   project_file_path.push(&project.name);
 
-  let mut buffer = File::create(&project_file_path)?;
+  let mut buffer = File::create(&project_file_path)
+    .map_err(|e| AppError::RuntimeError(format!("Failed to create project config file '{}'. {}", project_file_path.to_string_lossy(), e)))?;
   let serialized = toml::to_string_pretty(&project)?;
   write!(buffer, "{}", CONF_MODE_HEADER)?;
   write!(buffer, "{}", serialized)?;
@@ -221,6 +223,41 @@ pub fn write_new(config: &Config, logger: &Logger) -> Result<(), AppError> {
   migrate_write_tags(&config, &logger)?;
 
   Ok(())
+}
+
+pub fn update_entry(
+  maybe_config: Result<Config, AppError>,
+  name: &str,
+  git: Option<String>,
+  after_workon: Option<String>,
+  after_clone: Option<String>,
+  override_path: Option<String>,
+  logger: &Logger,
+) -> Result<(), AppError> {
+  let config: Config = maybe_config?;
+  info!(logger, "Update project entry"; "name" => name);
+  if name.starts_with("http") || name.starts_with("git@") {
+    Err(AppError::UserError(format!(
+      "{} looks like a repo URL and not like a project name, please fix",
+      name
+    )))
+  } else if !config.projects.contains_key(name) {
+    Err(AppError::UserError(format!("Project key {} does not exists. Can not update.", name)))
+  } else {
+    let old_project_config: Project = config.projects.get(name).expect("Already checked in the if above").clone();
+    write_project(&Project {
+      git: git.unwrap_or(old_project_config.git),
+      name: old_project_config.name,
+      after_clone: after_clone.or(old_project_config.after_clone),
+      after_workon: after_workon.or(old_project_config.after_workon),
+      override_path: override_path.or(old_project_config.override_path),
+      tags: old_project_config.tags,
+      bare: old_project_config.bare,
+      additional_remotes: old_project_config.additional_remotes,
+      project_config_path: old_project_config.project_config_path,
+    })?;
+    Ok(())
+  }
 }
 
 pub fn add_entry(

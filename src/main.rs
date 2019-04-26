@@ -120,7 +120,7 @@ fn _main() -> i32 {
       let after_workon: Option<String> = subcommand_matches.value_of("after-workon").map(str::to_string);
       let after_clone: Option<String> = subcommand_matches.value_of("after-clone").map(str::to_string);
       let override_path: Option<String> = subcommand_matches.value_of("override-path").map(str::to_string);
-      config::update_entry(config, name, git, after_workon, after_clone, override_path, &subcommand_logger)
+      nconfig::update_entry(config, name, git, after_workon, after_clone, override_path, &subcommand_logger)
     }
     "setup" => setup::setup(
       subcommand_matches.value_of("WORKSPACE_DIR").expect("argument required by clap.rs"),
