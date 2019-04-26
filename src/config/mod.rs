@@ -200,7 +200,7 @@ pub fn get_config(logger: &Logger) -> Result<Config, AppError> {
   read_config(reader, logger)
 }
 
-fn repo_name_from_url(url: &str) -> Result<&str, AppError> {
+pub fn repo_name_from_url(url: &str) -> Result<&str, AppError> {
   let last_fragment = url.rsplit('/').next().ok_or_else(|| {
     AppError::UserError(format!(
       "Given URL {} does not have path fragments so cannot determine project name. Please give \
@@ -215,48 +215,6 @@ fn repo_name_from_url(url: &str) -> Result<&str, AppError> {
   } else {
     last_fragment
   })
-}
-
-pub fn add_entry(
-  maybe_config: Result<Config, AppError>,
-  maybe_name: Option<&str>,
-  url: &str,
-  after_workon: Option<String>,
-  after_clone: Option<String>,
-  override_path: Option<String>,
-  logger: &Logger,
-) -> Result<(), AppError> {
-  let name = maybe_name
-    .ok_or_else(|| AppError::UserError(format!("No project name specified for {}", url)))
-    .or_else(|_| repo_name_from_url(url))?;
-  let mut config: Config = maybe_config?;
-  info!(logger, "Prepare new project entry"; "name" => name, "url" => url);
-  if config.projects.contains_key(name) {
-    Err(AppError::UserError(format!(
-      "Project key {} already exists, not gonna overwrite it for you",
-      name
-    )))
-  } else {
-    let default_after_clone = config.settings.default_after_clone.clone();
-    let default_after_workon = config.settings.default_after_clone.clone();
-
-    config.projects.insert(
-      name.to_owned(),
-      Project {
-        git: url.to_owned(),
-        name: name.to_owned(),
-        after_clone: after_clone.or(default_after_clone),
-        after_workon: after_workon.or(default_after_workon),
-        override_path,
-        tags: config.settings.default_tags.clone(),
-        bare: None,
-        additional_remotes: None,
-        project_config_path: "".to_string(),
-      },
-    );
-    info!(logger, "Updated config"; "config" => format!("{:?}", config));
-    write_config(config, logger)
-  }
 }
 
 pub fn remove_entry(maybe_config: Result<Config, AppError>, project_name: &str, purge_directory: bool, logger: &Logger) -> Result<(), AppError> {

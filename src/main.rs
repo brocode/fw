@@ -106,7 +106,7 @@ fn _main() -> i32 {
       let after_workon: Option<String> = subcommand_matches.value_of("after-workon").map(str::to_string);
       let after_clone: Option<String> = subcommand_matches.value_of("after-clone").map(str::to_string);
       let override_path: Option<String> = subcommand_matches.value_of("override-path").map(str::to_string);
-      config::add_entry(config, name, url, after_workon, after_clone, override_path, &subcommand_logger)
+      nconfig::add_entry(config, name, url, after_workon, after_clone, override_path, &subcommand_logger)
     }
     "remove" => config::remove_entry(
       config,

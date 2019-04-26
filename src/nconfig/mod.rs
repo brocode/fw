@@ -1,5 +1,5 @@
 use crate::config;
-use crate::config::{expand_path, Config, GitlabSettings, Project, Remote, Settings, Tag};
+use crate::config::{expand_path, repo_name_from_url, Config, GitlabSettings, Project, Remote, Settings, Tag};
 use crate::errors::AppError;
 
 use dirs::config_dir;
@@ -221,6 +221,44 @@ pub fn write_new(config: &Config, logger: &Logger) -> Result<(), AppError> {
   migrate_write_tags(&config, &logger)?;
 
   Ok(())
+}
+
+pub fn add_entry(
+  maybe_config: Result<Config, AppError>,
+  maybe_name: Option<&str>,
+  url: &str,
+  after_workon: Option<String>,
+  after_clone: Option<String>,
+  override_path: Option<String>,
+  logger: &Logger,
+) -> Result<(), AppError> {
+  let name = maybe_name
+    .ok_or_else(|| AppError::UserError(format!("No project name specified for {}", url)))
+    .or_else(|_| repo_name_from_url(url))?;
+  let config: Config = maybe_config?;
+  info!(logger, "Prepare new project entry"; "name" => name, "url" => url);
+  if config.projects.contains_key(name) {
+    Err(AppError::UserError(format!(
+      "Project key {} already exists, not gonna overwrite it for you",
+      name
+    )))
+  } else {
+    let default_after_clone = config.settings.default_after_clone.clone();
+    let default_after_workon = config.settings.default_after_clone.clone();
+
+    write_project(&Project {
+      git: url.to_owned(),
+      name: name.to_owned(),
+      after_clone: after_clone.or(default_after_clone),
+      after_workon: after_workon.or(default_after_workon),
+      override_path,
+      tags: config.settings.default_tags.clone(),
+      bare: None,
+      additional_remotes: None,
+      project_config_path: "".to_string(),
+    })?;
+    Ok(())
+  }
 }
 
 pub fn add_remote(maybe_config: Result<Config, AppError>, name: &str, remote_name: String, git: String) -> Result<(), AppError> {
