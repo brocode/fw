@@ -163,12 +163,14 @@ pub fn write_tag(tag_name: &str, tag: &Tag, tag_config_path: &str) -> Result<(),
 
   let mut tag_path = paths.tags.to_owned();
   tag_path.push(PathBuf::from(tag_config_path));
-  std::fs::create_dir_all(&tag_path)?;
+  std::fs::create_dir_all(&tag_path)
+    .map_err(|e| AppError::RuntimeError(format!("Failed to create tag config path '{}'. {}", tag_path.to_string_lossy(), e)))?;
 
   let mut tag_file_path = tag_path.clone();
   tag_file_path.push(&tag_name);
 
-  let mut buffer = File::create(&tag_file_path)?;
+  let mut buffer = File::create(&tag_file_path)
+    .map_err(|e| AppError::RuntimeError(format!("Failed to create project config file '{}'. {}", tag_file_path.to_string_lossy(), e)))?;
   let serialized = toml::to_string_pretty(&tag)?;
   write!(buffer, "{}", CONF_MODE_HEADER)?;
   write!(buffer, "{}", serialized)?;
