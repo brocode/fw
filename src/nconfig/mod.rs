@@ -255,7 +255,7 @@ pub fn add_entry(
       tags: config.settings.default_tags.clone(),
       bare: None,
       additional_remotes: None,
-      project_config_path: "".to_string(),
+      project_config_path: "default".to_string(),
     })?;
     Ok(())
   }
