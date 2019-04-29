@@ -157,12 +157,12 @@ pub fn write_settings(settings: &PersistedSettings, logger: &Logger) -> Result<(
   Ok(())
 }
 
-pub fn write_tag(tag_name: &str, tag: &Tag, tag_config_path: &str) -> Result<(), AppError> {
+pub fn write_tag(tag_name: &str, tag: &Tag) -> Result<(), AppError> {
   let paths = fw_path()?;
   paths.ensure_base_exists()?;
 
   let mut tag_path = paths.tags.to_owned();
-  tag_path.push(PathBuf::from(tag_config_path));
+  tag_path.push(PathBuf::from(&tag.tag_config_path));
   std::fs::create_dir_all(&tag_path)
     .map_err(|e| AppError::RuntimeError(format!("Failed to create tag config path '{}'. {}", tag_path.to_string_lossy(), e)))?;
 
@@ -199,7 +199,9 @@ pub fn write_project(project: &Project) -> Result<(), AppError> {
 
 fn migrate_write_tags(config: &Config, logger: &Logger) -> Result<(), AppError> {
   for (name, tag) in config.settings.tags.clone().unwrap_or_default() {
-    write_tag(&name, &tag, "default")?;
+    let mut tag = tag.clone();
+    tag.tag_config_path = "default".to_string();
+    write_tag(&name, &tag)?;
   }
 
   debug!(logger, "Wrote tags");

@@ -2,6 +2,7 @@ use crate::config;
 use crate::config::Config;
 use crate::config::Tag;
 use crate::errors::AppError;
+use crate::nconfig;
 use slog::Logger;
 use slog::{debug, info};
 use std::collections::{BTreeMap, BTreeSet};
@@ -15,30 +16,6 @@ pub fn list_tags(maybe_config: Result<Config, AppError>, maybe_project_name: Opt
     debug!(logger, "Listing tags");
     list_all_tags(config)
   }
-}
-
-pub fn create_tag(
-  maybe_config: Result<Config, AppError>,
-  tag_name: String,
-  after_workon: Option<String>,
-  after_clone: Option<String>,
-  priority: Option<u8>,
-  tag_workspace: Option<String>,
-  logger: &Logger,
-) -> Result<(), AppError> {
-  let mut config: Config = maybe_config?;
-  let mut tags: BTreeMap<String, Tag> = config.settings.tags.unwrap_or_else(BTreeMap::new);
-  info!(logger, "Create tag");
-  let new_tag = Tag {
-    after_clone,
-    after_workon,
-    priority,
-    workspace: tag_workspace,
-    default: None,
-  };
-  tags.insert(tag_name, new_tag);
-  config.settings.tags = Some(tags);
-  config::write_config(config, logger)
 }
 
 pub fn delete_tag(maybe_config: Result<Config, AppError>, tag_name: &str, logger: &Logger) -> Result<(), AppError> {
@@ -93,6 +70,35 @@ pub fn add_tag(maybe_config: Result<Config, AppError>, project_name: String, tag
     }
   } else {
     Err(AppError::UserError(format!("Unknown project {}", project_name)))
+  }
+}
+
+pub fn create_tag(
+  maybe_config: Result<Config, AppError>,
+  tag_name: String,
+  after_workon: Option<String>,
+  after_clone: Option<String>,
+  priority: Option<u8>,
+  tag_workspace: Option<String>,
+  logger: &Logger,
+) -> Result<(), AppError> {
+  let config: Config = maybe_config?;
+  let tags: BTreeMap<String, Tag> = config.settings.tags.unwrap_or_else(BTreeMap::new);
+  info!(logger, "Create tag");
+
+  if tags.contains_key(&tag_name) {
+    Err(AppError::UserError(format!("Tag {} already exists, not gonna overwrite it for you", tag_name)))
+  } else {
+    let new_tag = Tag {
+      after_clone,
+      after_workon,
+      priority,
+      workspace: tag_workspace,
+      default: None,
+      tag_config_path: "default".to_string(),
+    };
+    nconfig::write_tag(&tag_name, &new_tag)?;
+    Ok(())
   }
 }
 

@@ -35,6 +35,9 @@ pub struct Tag {
   pub priority: Option<u8>,
   pub workspace: Option<String>,
   pub default: Option<bool>,
+
+  #[serde(skip)]
+  pub tag_config_path: String,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -440,6 +443,7 @@ mod tests {
       priority: None,
       workspace: None,
       default: None,
+      tag_config_path: "".to_string(),
     };
     let tag2 = Tag {
       after_clone: Some("clone2".to_owned()),
@@ -447,6 +451,7 @@ mod tests {
       priority: None,
       workspace: None,
       default: None,
+      tag_config_path: "".to_string(),
     };
     let tag3 = Tag {
       after_clone: Some("clone3".to_owned()),
@@ -454,6 +459,7 @@ mod tests {
       priority: Some(100),
       workspace: None,
       default: None,
+      tag_config_path: "".to_string(),
     };
     let tag4 = Tag {
       after_clone: Some("clone4".to_owned()),
@@ -461,6 +467,7 @@ mod tests {
       priority: Some(0),
       workspace: None,
       default: None,
+      tag_config_path: "".to_string(),
     };
     let mut projects: BTreeMap<String, Project> = BTreeMap::new();
     projects.insert("test1".to_owned(), project);
