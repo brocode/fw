@@ -2,7 +2,7 @@ use crate::errors::AppError;
 use dirs;
 use serde_json;
 use slog::Logger;
-use slog::{debug, info, o, trace, warn};
+use slog::{debug, o, trace, warn};
 use std::collections::{BTreeMap, BTreeSet};
 use std::env;
 use std::fs::File;
@@ -217,20 +217,6 @@ pub fn repo_name_from_url(url: &str) -> Result<&str, AppError> {
     last_fragment.split_at(last_fragment.len() - 4).0
   } else {
     last_fragment
-  })
-}
-
-pub fn write_config(config: Config, logger: &Logger) -> Result<(), AppError> {
-  let config_path = fw_path()?;
-  info!(logger, "Writing config"; "path" => format!("{:?}", config_path));
-  config.check_sanity(logger).and_then(|c| {
-    std::fs::create_dir_all(
-      config_path
-        .parent()
-        .ok_or_else(|| AppError::RuntimeError("Failed to get parent of config path.".to_string()))?,
-    )?;
-    let mut buffer = File::create(config_path)?;
-    serde_json::ser::to_writer_pretty(&mut buffer, &c).map_err(AppError::BadJson)
   })
 }
 

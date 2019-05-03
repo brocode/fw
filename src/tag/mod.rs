@@ -1,4 +1,3 @@
-use crate::config;
 use crate::config::Config;
 use crate::config::Tag;
 use crate::errors::AppError;
@@ -101,15 +100,14 @@ pub fn create_tag(
 }
 
 pub fn remove_tag(maybe_config: Result<Config, AppError>, project_name: String, tag_name: &str, logger: &Logger) -> Result<(), AppError> {
-  let mut config: Config = maybe_config?;
+  let config: Config = maybe_config?;
 
   if let Some(mut project) = config.projects.get(&project_name).cloned() {
     info!(logger, "Remove tag from project"; "tag" => &tag_name, "project" => &project_name);
     let mut new_tags: BTreeSet<String> = project.tags.clone().unwrap_or_else(BTreeSet::new);
     if new_tags.remove(tag_name) {
       project.tags = Some(new_tags);
-      config.projects.insert(project_name, project);
-      config::write_config(config, logger)
+      nconfig::write_project(&project)
     } else {
       Ok(())
     }
