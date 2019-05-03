@@ -93,12 +93,12 @@ fn _main() -> i32 {
       let name: &str = subcommand_matches.value_of("NAME").expect("argument required by clap.rs");
       let remote_name: &str = subcommand_matches.value_of("REMOTE_NAME").expect("argument required by clap.rs");
       let url: &str = subcommand_matches.value_of("URL").expect("argument required by clap.rs");
-      nconfig::add_remote(config, name, remote_name.to_string(), url.to_string())
+      project::add_remote(config, name, remote_name.to_string(), url.to_string())
     }
     "remove-remote" => {
       let name: &str = subcommand_matches.value_of("NAME").expect("argument required by clap.rs");
       let remote_name: &str = subcommand_matches.value_of("REMOTE_NAME").expect("argument required by clap.rs");
-      nconfig::remove_remote(config, name, remote_name.to_string(), &subcommand_logger)
+      project::remove_remote(config, name, remote_name.to_string(), &subcommand_logger)
     }
     "add" => {
       let name: Option<&str> = subcommand_matches.value_of("NAME");
@@ -106,9 +106,9 @@ fn _main() -> i32 {
       let after_workon: Option<String> = subcommand_matches.value_of("after-workon").map(str::to_string);
       let after_clone: Option<String> = subcommand_matches.value_of("after-clone").map(str::to_string);
       let override_path: Option<String> = subcommand_matches.value_of("override-path").map(str::to_string);
-      nconfig::add_entry(config, name, url, after_workon, after_clone, override_path, &subcommand_logger)
+      project::add_entry(config, name, url, after_workon, after_clone, override_path, &subcommand_logger)
     }
-    "remove" => nconfig::remove_project(
+    "remove" => project::remove_project(
       config,
       subcommand_matches.value_of("NAME").expect("argument required by clap.rs"),
       subcommand_matches.is_present("purge-directory"),
@@ -120,7 +120,7 @@ fn _main() -> i32 {
       let after_workon: Option<String> = subcommand_matches.value_of("after-workon").map(str::to_string);
       let after_clone: Option<String> = subcommand_matches.value_of("after-clone").map(str::to_string);
       let override_path: Option<String> = subcommand_matches.value_of("override-path").map(str::to_string);
-      nconfig::update_entry(config, name, git, after_workon, after_clone, override_path, &subcommand_logger)
+      project::update_entry(config, name, git, after_workon, after_clone, override_path, &subcommand_logger)
     }
     "setup" => setup::setup(
       subcommand_matches.value_of("WORKSPACE_DIR").expect("argument required by clap.rs"),
@@ -579,6 +579,7 @@ For further information please have a look at our README https://github.com/broc
 mod config;
 mod errors;
 mod nconfig;
+mod project;
 mod projectile;
 mod setup;
 mod sync;
