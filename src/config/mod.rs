@@ -5,7 +5,7 @@ use slog::Logger;
 use slog::{debug, info, o, trace, warn};
 use std::collections::{BTreeMap, BTreeSet};
 use std::env;
-use std::fs::{remove_dir_all, File};
+use std::fs::File;
 use std::io::BufReader;
 use std::io::Read;
 use std::path::{Path, PathBuf};
@@ -218,31 +218,6 @@ pub fn repo_name_from_url(url: &str) -> Result<&str, AppError> {
   } else {
     last_fragment
   })
-}
-
-pub fn remove_entry(maybe_config: Result<Config, AppError>, project_name: &str, purge_directory: bool, logger: &Logger) -> Result<(), AppError> {
-  let mut config: Config = maybe_config?;
-
-  info!(logger, "Prepare remove project entry"; "name" => project_name);
-
-  if !config.projects.contains_key(project_name) {
-    Err(AppError::UserError(format!("Project key {} does not exist in config", project_name)))
-  } else if let Some(project) = config.projects.get(&project_name.to_owned()).cloned() {
-    config.projects.remove(&project_name.to_owned());
-
-    info!(logger, "Updated config"; "config" => format!("{:?}", config));
-
-    if purge_directory {
-      let path = config.actual_path_to_project(&project, logger);
-
-      if path.exists() {
-        remove_dir_all(&path)?;
-      }
-    }
-    write_config(config, logger)
-  } else {
-    Err(AppError::UserError(format!("Unknown project {}", project_name)))
-  }
 }
 
 pub fn write_config(config: Config, logger: &Logger) -> Result<(), AppError> {

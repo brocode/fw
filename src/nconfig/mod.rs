@@ -6,7 +6,7 @@ use dirs::config_dir;
 use slog::{debug, info, warn, Logger};
 use std::collections::{BTreeMap, BTreeSet};
 use std::env;
-use std::fs::{read_to_string, File};
+use std::fs::{self, read_to_string, File};
 use std::io::Write;
 use std::path::PathBuf;
 use toml;
@@ -177,6 +177,30 @@ pub fn write_tag(tag_name: &str, tag: &Tag) -> Result<(), AppError> {
   Ok(())
 }
 
+pub fn delete_tag_config(tag_name: &str, tag: &Tag) -> Result<(), AppError> {
+  let paths = fw_path()?;
+  paths.ensure_base_exists()?;
+
+  let mut tag_file_path = paths.tags.to_owned();
+  tag_file_path.push(PathBuf::from(&tag.tag_config_path));
+  tag_file_path.push(tag_name);
+
+  fs::remove_file(tag_file_path).map_err(|e| AppError::RuntimeError(format!("Failed to delete tag config: {}", e)))?;
+  Ok(())
+}
+
+pub fn delete_project_config(project: &Project) -> Result<(), AppError> {
+  let paths = fw_path()?;
+  paths.ensure_base_exists()?;
+
+  let mut project_file_path = paths.projects.to_owned();
+  project_file_path.push(PathBuf::from(&project.project_config_path));
+  project_file_path.push(&project.name);
+
+  fs::remove_file(project_file_path).map_err(|e| AppError::RuntimeError(format!("Failed to delete project config: {}", e)))?;
+  Ok(())
+}
+
 pub fn write_project(project: &Project) -> Result<(), AppError> {
   let paths = fw_path()?;
   paths.ensure_base_exists()?;
@@ -299,6 +323,29 @@ pub fn add_entry(
       project_config_path: "default".to_string(),
     })?;
     Ok(())
+  }
+}
+
+pub fn remove_project(maybe_config: Result<Config, AppError>, project_name: &str, purge_directory: bool, logger: &Logger) -> Result<(), AppError> {
+  let config: Config = maybe_config?;
+
+  info!(logger, "Prepare remove project entry"; "name" => project_name);
+
+  if !config.projects.contains_key(project_name) {
+    Err(AppError::UserError(format!("Project key {} does not exist in config", project_name)))
+  } else if let Some(project) = config.projects.get(&project_name.to_owned()).cloned() {
+    info!(logger, "Updated config"; "config" => format!("{:?}", config));
+
+    if purge_directory {
+      let path = config.actual_path_to_project(&project, logger);
+
+      if path.exists() {
+        fs::remove_dir_all(&path)?;
+      }
+    }
+    delete_project_config(&project)
+  } else {
+    Err(AppError::UserError(format!("Unknown project {}", project_name)))
   }
 }
 

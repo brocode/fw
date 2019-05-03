@@ -19,8 +19,8 @@ pub fn list_tags(maybe_config: Result<Config, AppError>, maybe_project_name: Opt
 }
 
 pub fn delete_tag(maybe_config: Result<Config, AppError>, tag_name: &str, logger: &Logger) -> Result<(), AppError> {
-  let mut config: Config = maybe_config?;
-  let mut tags: BTreeMap<String, Tag> = config.settings.tags.unwrap_or_else(BTreeMap::new);
+  let config: Config = maybe_config?;
+  let tags: BTreeMap<String, Tag> = config.settings.tags.unwrap_or_else(BTreeMap::new);
 
   // remove tags from projects
   for (project_name, _value) in config.projects.clone().iter() {
@@ -29,7 +29,7 @@ pub fn delete_tag(maybe_config: Result<Config, AppError>, tag_name: &str, logger
       let mut new_tags: BTreeSet<String> = project.tags.clone().unwrap_or_else(BTreeSet::new);
       if new_tags.remove(tag_name) {
         project.tags = Some(new_tags);
-        config.projects.insert(project_name.to_string(), project);
+        nconfig::write_project(&project)?;
       }
     } else {
       return Err(AppError::UserError(format!("Unknown project {}", project_name)));
@@ -37,9 +37,8 @@ pub fn delete_tag(maybe_config: Result<Config, AppError>, tag_name: &str, logger
   }
 
   info!(logger, "Delete tag"; "tag" => tag_name);
-  if tags.remove(tag_name).is_some() {
-    config.settings.tags = Some(tags);
-    config::write_config(config, logger)
+  if let Some(tag) = tags.get(tag_name) {
+    nconfig::delete_tag_config(tag_name, tag)
   } else {
     Ok(())
   }
