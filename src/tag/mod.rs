@@ -54,8 +54,7 @@ fn list_all_tags(config: Config) -> Result<(), AppError> {
   Ok(())
 }
 
-pub fn add_tag(maybe_config: Result<Config, AppError>, project_name: String, tag_name: String, logger: &Logger) -> Result<(), AppError> {
-  let mut config: Config = maybe_config?;
+pub fn add_tag(config: &Config, project_name: String, tag_name: String, logger: &Logger) -> Result<(), AppError> {
   if let Some(mut project) = config.projects.get(&project_name).cloned() {
     info!(logger, "Add tag to project"; "tag" => &tag_name, "project" => &project_name);
     let tags: BTreeMap<String, Tag> = config.settings.tags.clone().unwrap_or_else(BTreeMap::new);
@@ -63,8 +62,8 @@ pub fn add_tag(maybe_config: Result<Config, AppError>, project_name: String, tag
       let mut new_tags: BTreeSet<String> = project.tags.clone().unwrap_or_else(BTreeSet::new);
       new_tags.insert(tag_name);
       project.tags = Some(new_tags);
-      config.projects.insert(project_name, project);
-      config::write_config(config, logger)
+      nconfig::write_project(&project)?;
+      Ok(())
     } else {
       Err(AppError::UserError(format!("Unknown tag {}", tag_name)))
     }
@@ -99,25 +98,6 @@ pub fn create_tag(
     };
     nconfig::write_tag(&tag_name, &new_tag)?;
     Ok(())
-  }
-}
-
-pub fn add_tag_project(maybe_config: Result<Config, AppError>, project_name: String, tag_name: String, logger: &Logger) -> Result<Config, AppError> {
-  let mut config: Config = maybe_config?;
-  if let Some(mut project) = config.projects.get(&project_name).cloned() {
-    info!(logger, "Add tag to project"; "tag" => &tag_name, "project" => &project_name);
-    let tags: BTreeMap<String, Tag> = config.settings.tags.clone().unwrap_or_else(BTreeMap::new);
-    if tags.contains_key(&tag_name) {
-      let mut new_tags: BTreeSet<String> = project.tags.clone().unwrap_or_else(BTreeSet::new);
-      new_tags.insert(tag_name);
-      project.tags = Some(new_tags);
-      config.projects.insert(project_name, project);
-      Ok(config)
-    } else {
-      Err(AppError::UserError(format!("Unknown tag {}", tag_name)))
-    }
-  } else {
-    Err(AppError::UserError(format!("Unknown project {}", project_name)))
   }
 }
 

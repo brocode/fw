@@ -1,4 +1,3 @@
-use crate::config;
 use crate::config::Tag;
 use crate::config::{Config, Project, Settings};
 use crate::errors::AppError;
@@ -215,7 +214,7 @@ pub fn foreach(
 }
 
 pub fn autotag(maybe_config: Result<Config, AppError>, cmd: &str, tag_name: &str, logger: &Logger, parallel_raw: &Option<String>) -> Result<(), AppError> {
-  let mut config = maybe_config?;
+  let config = maybe_config?;
 
   let tags: BTreeMap<String, Tag> = config.settings.tags.clone().unwrap_or_else(BTreeMap::new);
   if tags.contains_key(tag_name) {
@@ -244,9 +243,9 @@ pub fn autotag(maybe_config: Result<Config, AppError>, cmd: &str, tag_name: &str
       .collect::<Vec<&Project>>();
 
     for project in filtered_projects.iter() {
-      config = tag::add_tag_project(Ok(config), project.name.clone(), tag_name.to_string(), logger)?;
+      tag::add_tag(&config, project.name.clone(), tag_name.to_string(), logger)?;
     }
-    config::write_config(config, logger)
+    Ok(())
   } else {
     Err(AppError::UserError(format!("Unknown tag {}", tag_name)))
   }

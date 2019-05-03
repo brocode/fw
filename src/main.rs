@@ -208,7 +208,7 @@ fn execute_tag_subcommand(
     "tag-project" => {
       let project_name: String = tag_matches.value_of("PROJECT_NAME").map(str::to_string).expect("argument enforced by clap.rs");
       let tag_name: String = tag_matches.value_of("tag-name").map(str::to_string).expect("argument enforced by clap.rs");
-      tag::add_tag(maybe_config, project_name, tag_name, logger)
+      tag::add_tag(&maybe_config?, project_name, tag_name, logger)
     }
     "untag-project" => {
       let project_name: String = tag_matches.value_of("PROJECT_NAME").map(str::to_string).expect("argument enforced by clap.rs");
