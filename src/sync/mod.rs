@@ -220,15 +220,14 @@ pub fn autotag(maybe_config: Result<Config, AppError>, cmd: &str, tag_name: &str
   if tags.contains_key(tag_name) {
     init_threads(parallel_raw, logger)?;
 
-    let config2 = &config.clone();
-    let projects: Vec<&Project> = config2.projects.values().collect();
+    let projects: Vec<&Project> = config.projects.values().collect();
 
     let script_results = projects
       .par_iter()
       .map(|p| {
-        let shell = project_shell(&config2.settings);
+        let shell = project_shell(&config.settings);
         let project_logger = logger.new(o!("project" => p.name.clone()));
-        let path = &config2.actual_path_to_project(p, &project_logger);
+        let path = &config.actual_path_to_project(p, &project_logger);
         info!(project_logger, "Entering");
         spawn_maybe(&shell, cmd, &path, &p.name, random_colour(), &project_logger)
       })
