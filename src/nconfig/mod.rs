@@ -73,6 +73,12 @@ pub fn read_config(logger: &Logger) -> Result<Config, AppError> {
           .map_err(|e| AppError::RuntimeError(format!("Failed to strip prefix: {}", e)))?
           .to_string_lossy()
           .to_string();
+        if projects.contains_key(&project.name) {
+          warn!(
+            logger,
+            "Inconsistency found: project {} defined more than once. Will use the project that is found last. Results might be inconsistent.", project.name
+          );
+        }
         projects.insert(project.name.clone(), project);
       }
     }
@@ -86,8 +92,14 @@ pub fn read_config(logger: &Logger) -> Result<Config, AppError> {
       if tag_file.metadata()?.is_file() {
         let raw_tag = read_to_string(tag_file.path())?;
         let tag: Tag = toml::from_str(&raw_tag)?;
-        let tag_name: Option<String> = tag_file.file_name().to_str().map(ToOwned::to_owned);
-        tags.insert(tag_name.ok_or(AppError::InternalError(""))?, tag);
+        let tag_name: String = tag_file.file_name().to_str().map(ToOwned::to_owned).ok_or(AppError::InternalError(""))?;
+        if tags.contains_key(&tag_name) {
+          warn!(
+            logger,
+            "Inconsistency found: tag {} defined more than once. Will use the project that is found last. Results might be inconsistent.", tag_name
+          );
+        }
+        tags.insert(tag_name, tag);
       }
     }
     debug!(logger, "read tags ok");
