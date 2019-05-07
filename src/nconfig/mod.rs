@@ -127,7 +127,7 @@ pub fn read_config(logger: &Logger) -> Result<Config, AppError> {
 }
 
 fn fw_path() -> Result<FwPaths, AppError> {
-  let base = env::var("FW_CONFIG_PATH")
+  let base = env::var("FW_CONFIG_DIR")
     .map(PathBuf::from)
     .ok()
     .map(expand_path)
@@ -137,7 +137,7 @@ fn fw_path() -> Result<FwPaths, AppError> {
         c
       })
     })
-    .ok_or_else(|| AppError::InternalError("Cannot resolve fw config path"))?;
+    .ok_or_else(|| AppError::InternalError("Cannot resolve fw config dir"))?;
 
   let mut settings = base.clone();
   settings.push("settings.toml");
