@@ -8,6 +8,7 @@ use std::io;
 use std::time::SystemTimeError;
 use toml;
 use walkdir;
+use ::config as config_crate;
 
 #[derive(Debug)]
 pub enum AppError {
@@ -23,6 +24,7 @@ pub enum AppError {
   TomlSerError(toml::ser::Error),
   TomlDeError(toml::de::Error),
   WalkdirError(walkdir::Error),
+  ConfigError(config_crate::ConfigError),
 }
 
 macro_rules! app_error_from {
@@ -60,6 +62,7 @@ impl fmt::Display for AppError {
       AppError::TomlSerError(ref err) => write!(f, "toml serialization error: {}", err),
       AppError::TomlDeError(ref err) => write!(f, "toml read error: {}", err),
       AppError::WalkdirError(ref err) => write!(f, "walkdir error: {}", err),
+      AppError::ConfigError(ref err) => write!(f, "config error: {}", err),
     }
   }
 }
@@ -78,6 +81,7 @@ impl Error for AppError {
       AppError::TomlSerError(ref err) => err.description(),
       AppError::TomlDeError(ref err) => err.description(),
       AppError::WalkdirError(ref err) => err.description(),
+      AppError::ConfigError(ref err) => err.description(),
     }
   }
 
@@ -93,6 +97,7 @@ impl Error for AppError {
       AppError::TomlSerError(ref err) => Some(err),
       AppError::TomlDeError(ref err) => Some(err),
       AppError::WalkdirError(ref err) => Some(err),
+      AppError::ConfigError(ref err) => Some(err),
     }
   }
 }
@@ -111,3 +116,4 @@ app_error_from!(gitlab::Error, GitlabApiError);
 app_error_from!(toml::ser::Error, TomlSerError);
 app_error_from!(toml::de::Error, TomlDeError);
 app_error_from!(walkdir::Error, WalkdirError);
+app_error_from!(config_crate::ConfigError, ConfigError);

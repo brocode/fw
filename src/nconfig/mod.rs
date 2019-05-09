@@ -11,6 +11,7 @@ use std::io::Write;
 use std::path::PathBuf;
 use toml;
 use walkdir::WalkDir;
+use ::config as config_crate;
 
 static CONF_MODE_HEADER: &str = "# -*- mode: Conf; -*-\n";
 
@@ -54,10 +55,19 @@ impl FwPaths {
 pub fn read_config(logger: &Logger) -> Result<Config, AppError> {
   let paths = fw_path()?;
 
-  let settings_raw = read_to_string(&paths.settings)
-    .map_err(|e| AppError::RuntimeError(format!("Could not read settings file ({}): {}", paths.settings.to_string_lossy(), e)))?;
+  let mut config_settings = config_crate::Config::default();
+  config_settings.merge(config_crate::File::with_name(&paths.settings.to_str().unwrap()).required(true))?;
 
-  let settings: PersistedSettings = toml::from_str(&settings_raw)?;
+  if let Some(p) = env::var("FW_LOCAL_SETTINGS")
+    .map(PathBuf::from)
+    .map(expand_path)
+    .ok()
+    {
+      config_settings.merge(config_crate::File::with_name(&p.to_str().unwrap()).required(false))?;
+  }
+
+  let settings: PersistedSettings = config_settings.try_into()?;
+  println!("settings = {:?}", settings);
 
   debug!(logger, "read new settings ok");
 
