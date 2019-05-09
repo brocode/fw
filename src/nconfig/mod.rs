@@ -91,8 +91,13 @@ pub fn read_config(logger: &Logger) -> Result<Config, AppError> {
       let tag_file = maybe_tag_file?;
       if tag_file.metadata()?.is_file() {
         let raw_tag = read_to_string(tag_file.path())?;
-        let tag: Tag = toml::from_str(&raw_tag)?;
+        let mut tag: Tag = toml::from_str(&raw_tag)?;
         let tag_name: String = tag_file.file_name().to_str().map(ToOwned::to_owned).ok_or(AppError::InternalError(""))?;
+        tag.tag_config_path = PathBuf::from(tag_file.path().parent().ok_or(AppError::InternalError("Expected file to have a parent"))?)
+          .strip_prefix(paths.tags.as_path())
+          .map_err(|e| AppError::RuntimeError(format!("Failed to strip prefix: {}", e)))?
+          .to_string_lossy()
+          .to_string();
         if tags.contains_key(&tag_name) {
           warn!(
             logger,
@@ -197,7 +202,7 @@ pub fn delete_tag_config(tag_name: &str, tag: &Tag) -> Result<(), AppError> {
   tag_file_path.push(PathBuf::from(&tag.tag_config_path));
   tag_file_path.push(tag_name);
 
-  fs::remove_file(tag_file_path).map_err(|e| AppError::RuntimeError(format!("Failed to delete tag config: {}", e)))?;
+  fs::remove_file(&tag_file_path).map_err(|e| AppError::RuntimeError(format!("Failed to delete tag config from '{:?}': {}", tag_file_path, e)))?;
   Ok(())
 }
 
