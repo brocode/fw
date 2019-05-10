@@ -224,7 +224,7 @@ where
 {
   let example_toml = toml::to_string_pretty(&example)?;
   writeln!(buffer, "\n# Example:")?;
-  for line in example_toml.split("\n") {
+  for line in example_toml.split('\n') {
     if line.trim() != "" {
       writeln!(buffer, "# {}", line)?;
     }
