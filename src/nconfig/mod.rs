@@ -225,6 +225,20 @@ pub fn delete_project_config(project: &Project) -> Result<(), AppError> {
   Ok(())
 }
 
+fn write_example<T>(buffer: &mut File, example: T) -> Result<(), AppError>
+where
+  T: serde::Serialize,
+{
+  let example_toml = toml::to_string_pretty(&example)?;
+  write!(buffer, "\n# Example:\n")?;
+  for line in example_toml.split("\n") {
+    if line.trim() != "" {
+      write!(buffer, "# {}\n", line)?;
+    }
+  }
+  Ok(())
+}
+
 pub fn write_project(project: &Project) -> Result<(), AppError> {
   let paths = fw_path()?;
   paths.ensure_base_exists()?;
@@ -237,11 +251,13 @@ pub fn write_project(project: &Project) -> Result<(), AppError> {
   let mut project_file_path = project_path.clone();
   project_file_path.push(&project.name);
 
-  let mut buffer = File::create(&project_file_path)
+  let mut buffer: File = File::create(&project_file_path)
     .map_err(|e| AppError::RuntimeError(format!("Failed to create project config file '{}'. {}", project_file_path.to_string_lossy(), e)))?;
   let serialized = toml::to_string_pretty(&project)?;
+
   write!(buffer, "{}", CONF_MODE_HEADER)?;
   write!(buffer, "{}", serialized)?;
+  write_example(&mut buffer, Project::example())?;
   Ok(())
 }
 
