@@ -25,6 +25,19 @@ pub struct PersistedSettings {
 }
 
 impl PersistedSettings {
+  fn example() -> PersistedSettings {
+    PersistedSettings {
+      workspace: "~/workspace".to_owned(),
+      default_after_workon: Some("echo default after workon".to_string()),
+      default_after_clone: Some("echo default after clone".to_string()),
+      shell: Some(vec!["/usr/bin/zsh".to_string(), "-c".to_string()]),
+      github_token: Some("githubtokensecret".to_string()),
+      gitlab: Some(GitlabSettings {
+        host: "localhost".to_string(),
+        token: "token".to_string(),
+      }),
+    }
+  }
   fn from_settings(settings: &Settings) -> PersistedSettings {
     PersistedSettings {
       workspace: settings.workspace.clone(),
@@ -168,6 +181,7 @@ pub fn write_settings(settings: &PersistedSettings, logger: &Logger) -> Result<(
   let mut buffer = File::create(&paths.settings)?;
   let serialized = toml::to_string_pretty(settings)?;
   write!(buffer, "{}", serialized)?;
+  write_example(&mut buffer, PersistedSettings::example())?;
 
   debug!(logger, "Wrote settings file to {:?}", paths.settings);
 
@@ -191,6 +205,7 @@ pub fn write_tag(tag_name: &str, tag: &Tag) -> Result<(), AppError> {
   let serialized = toml::to_string_pretty(&tag)?;
   write!(buffer, "{}", CONF_MODE_HEADER)?;
   write!(buffer, "{}", serialized)?;
+  write_example(&mut buffer, Tag::example())?;
   Ok(())
 }
 

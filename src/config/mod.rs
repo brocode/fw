@@ -41,6 +41,19 @@ pub struct Tag {
   pub tag_config_path: String,
 }
 
+impl Tag {
+  pub fn example() -> Tag {
+    Tag {
+      after_clone: Some("echo after clone from tag".to_owned()),
+      after_workon: Some("echo after workon from tag".to_owned()),
+      priority: Some(0),
+      workspace: Some("/home/other".to_string()),
+      default: Some(false),
+      tag_config_path: "".to_string(), // ignored
+    }
+  }
+}
+
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Remote {
   pub name: String,
