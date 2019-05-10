@@ -58,16 +58,13 @@ pub fn read_config(logger: &Logger) -> Result<Config, AppError> {
   let mut config_settings = config_crate::Config::default();
   config_settings.merge(config_crate::File::with_name(&paths.settings.to_str().unwrap()).required(true))?;
 
-  if let Some(p) = env::var("FW_LOCAL_SETTINGS")
+  if let Ok(p) = env::var("FW_LOCAL_SETTINGS")
     .map(PathBuf::from)
-    .map(expand_path)
-    .ok()
-    {
+    .map(expand_path) {
       config_settings.merge(config_crate::File::with_name(&p.to_str().unwrap()).required(false))?;
-  }
+    }
 
   let settings: PersistedSettings = config_settings.try_into()?;
-  println!("settings = {:?}", settings);
 
   debug!(logger, "read new settings ok");
 
