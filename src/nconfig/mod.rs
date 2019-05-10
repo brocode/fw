@@ -230,10 +230,10 @@ where
   T: serde::Serialize,
 {
   let example_toml = toml::to_string_pretty(&example)?;
-  write!(buffer, "\n# Example:\n")?;
+  writeln!(buffer, "\n# Example:")?;
   for line in example_toml.split("\n") {
     if line.trim() != "" {
-      write!(buffer, "# {}\n", line)?;
+      writeln!(buffer, "# {}", line)?;
     }
   }
   Ok(())
