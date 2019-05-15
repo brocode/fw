@@ -60,9 +60,15 @@ pub struct Remote {
   pub git: String,
 }
 
+fn empty_string() -> String {
+  "".to_string()
+}
+
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Project {
+  #[serde(default = "empty_string", skip_serializing)]
   pub name: String,
+
   pub git: String,
   pub after_clone: Option<String>,
   pub after_workon: Option<String>,

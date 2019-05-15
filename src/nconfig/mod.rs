@@ -81,6 +81,7 @@ pub fn read_config(logger: &Logger) -> Result<Config, AppError> {
       if project_file.metadata()?.is_file() {
         let raw_project = read_to_string(project_file.path())?;
         let mut project: Project = toml::from_str(&raw_project)?;
+        project.name = project_file.file_name().to_str().map(ToOwned::to_owned).ok_or(AppError::InternalError("Failed to get project name"))?;
         project.project_config_path = PathBuf::from(project_file.path().parent().ok_or(AppError::InternalError("Expected file to have a parent"))?)
           .strip_prefix(paths.projects.as_path())
           .map_err(|e| AppError::RuntimeError(format!("Failed to strip prefix: {}", e)))?
@@ -105,7 +106,7 @@ pub fn read_config(logger: &Logger) -> Result<Config, AppError> {
       if tag_file.metadata()?.is_file() {
         let raw_tag = read_to_string(tag_file.path())?;
         let mut tag: Tag = toml::from_str(&raw_tag)?;
-        let tag_name: String = tag_file.file_name().to_str().map(ToOwned::to_owned).ok_or(AppError::InternalError(""))?;
+        let tag_name: String = tag_file.file_name().to_str().map(ToOwned::to_owned).ok_or(AppError::InternalError("Failed to get tag name"))?;
         tag.tag_config_path = PathBuf::from(tag_file.path().parent().ok_or(AppError::InternalError("Expected file to have a parent"))?)
           .strip_prefix(paths.tags.as_path())
           .map_err(|e| AppError::RuntimeError(format!("Failed to strip prefix: {}", e)))?
