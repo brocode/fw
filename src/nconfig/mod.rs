@@ -321,14 +321,15 @@ pub fn migrate(logger: &Logger) -> Result<(), AppError> {
   let config = config::get_config(&logger);
 
   // write 2.0 for compat
-  if let Ok(ref c) = config {
-    write_new(&c, &logger).expect("Failed to write v2.0 config");
-    info!(logger, "Wrote new config");
-    // TODO remove me, just for testing
-    let written_config = read_config(&logger).expect("oh noes");
-    warn!(logger, "Written v2.0 config with {} projects", written_config.projects.values().len());
-    Ok(())
-  } else {
-    Err(AppError::RuntimeError("Could not load old config".to_string()))
+  match config {
+    Ok(ref c) => {
+      write_new(&c, &logger).expect("Failed to write v2.0 config");
+      info!(logger, "Wrote new config");
+      // TODO remove me, just for testing
+      let written_config = read_config(&logger).expect("oh noes");
+      warn!(logger, "Written v2.0 config with {} projects", written_config.projects.values().len());
+      Ok(())
+    }
+    Err(e) => Err(AppError::RuntimeError(format!("Could not load old config: {:?}", e))),
   }
 }
