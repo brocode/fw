@@ -1,0 +1,10 @@
+# -*- mode: Conf; -*-
+after_clone = 'cargo build'
+after_workon = 'cargo test && rustup run nightly cargo clippy'
+
+# Example:
+# after_clone = 'echo after clone from tag'
+# after_workon = 'echo after workon from tag'
+# priority = 0
+# workspace = '/home/other'
+# default = false
