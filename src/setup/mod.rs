@@ -118,7 +118,7 @@ pub fn org_import(maybe_config: Result<Config, AppError>, org_name: &str, includ
   let current_config = maybe_config?;
   let token = env::var_os("FW_GITHUB_TOKEN")
     .map(|s| s.to_string_lossy().to_string())
-    .or(current_config.settings.github_token.clone())
+    .or_else(|| current_config.settings.github_token.clone())
     .ok_or_else(|| {
       AppError::UserError(format!(
         "Can't call GitHub API for org {} because no github oauth token (settings.github_token) specified in the configuration.",
