@@ -159,7 +159,10 @@ fn fw_path() -> Result<FwPaths, AppError> {
     .ok_or_else(|| AppError::InternalError("Cannot resolve fw config dir"))?;
 
   let mut settings = base.clone();
-  settings.push("settings.toml");
+
+  let env: String = env::var_os("FW_ENV").map(|s| s.to_string_lossy().to_string()).map(|s| format!("{}_", s)).unwrap_or_default().replace("/", "");
+
+  settings.push(format!("{}settings.toml", env));
 
   let mut projects = base.clone();
   projects.push("projects");
