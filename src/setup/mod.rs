@@ -6,6 +6,7 @@ use git2::Repository;
 use slog::Logger;
 use slog::{debug, info, o, warn};
 use std::collections::BTreeMap;
+use std::env;
 use std::fs;
 use std::iter::Iterator;
 use std::path::{Path, PathBuf};
@@ -115,12 +116,15 @@ pub fn gitlab_import(maybe_config: Result<Config, AppError>, logger: &Logger) ->
 // TODO nconfig
 pub fn org_import(maybe_config: Result<Config, AppError>, org_name: &str, include_archived: bool, logger: &Logger) -> Result<(), AppError> {
   let current_config = maybe_config?;
-  let token = current_config.settings.github_token.clone().ok_or_else(|| {
-    AppError::UserError(format!(
-      "Can't call GitHub API for org {} because no github oauth token (settings.github_token) specified in the configuration.",
-      org_name
-    ))
-  })?;
+  let token = env::var_os("FW_GITHUB_TOKEN")
+    .map(|s| s.to_string_lossy().to_string())
+    .or(current_config.settings.github_token.clone())
+    .ok_or_else(|| {
+      AppError::UserError(format!(
+        "Can't call GitHub API for org {} because no github oauth token (settings.github_token) specified in the configuration.",
+        org_name
+      ))
+    })?;
   let mut api = github::github_api(&token)?;
   let org_repository_names: Vec<String> = api.list_repositories(org_name, include_archived)?;
   let after_clone = current_config.settings.default_after_clone.clone();
@@ -144,7 +148,7 @@ pub fn org_import(maybe_config: Result<Config, AppError>, org_name: &str, includ
     if current_projects.contains_key(&p.name) {
       info!(
         logger,
-          "Skipping new project from Gitlab import because it already exists in the current fw config"; "project_name" => &p.name);
+          "Skipping new project from Github import because it already exists in the current fw config"; "project_name" => &p.name);
     } else {
       info!(logger, "Saving new project"; "project_name" => &p.name);
       nconfig::write_project(&p)?;

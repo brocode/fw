@@ -352,7 +352,9 @@ For further information please have a look at our README https://github.com/broc
     )
     .subcommand(
       SubCommand::with_name("org-import")
-        .about("Import all repositories from github org into fw")
+        .about(
+          "Import all repositories from github org into fw. Token can be set in the settings file or provided via the environment variable FW_GITHUB_TOKEN",
+        )
         .arg(
           Arg::with_name("include-archived")
             .value_name("include-archived")
