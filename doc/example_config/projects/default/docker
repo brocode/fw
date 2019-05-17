@@ -1,0 +1,17 @@
+# -*- mode: Conf; -*-
+git = 'git@github.com:docker/docker.git'
+override_path = '/home/brocode/go/src/github.com/docker/docker'
+
+# Example:
+# git = 'git@github.com:brocode/fw.git'
+# after_clone = 'echo BROCODE!!'
+# after_workon = 'echo workon fw'
+# override_path = '/some/fancy/path/to/fw'
+# bare = false
+# tags = [
+#     'brocode',
+#     'rust',
+# ]
+# [[additional_remotes]]
+# name = 'upstream'
+# git = 'git@...'

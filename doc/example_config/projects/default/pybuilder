@@ -1,0 +1,18 @@
+# -*- mode: Conf; -*-
+git = 'git@github.com:pybuilder/pybuilder.git'
+after_clone = 'virtualenv venv && source venv/bin/activate && ./build.py install_dependencies'
+after_workon = 'source venv/bin/activate'
+
+# Example:
+# git = 'git@github.com:brocode/fw.git'
+# after_clone = 'echo BROCODE!!'
+# after_workon = 'echo workon fw'
+# override_path = '/some/fancy/path/to/fw'
+# bare = false
+# tags = [
+#     'brocode',
+#     'rust',
+# ]
+# [[additional_remotes]]
+# name = 'upstream'
+# git = 'git@...'
