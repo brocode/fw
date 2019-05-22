@@ -23,16 +23,12 @@ pub fn delete_tag(maybe_config: Result<Config, AppError>, tag_name: &str, logger
   let tags: BTreeMap<String, Tag> = config.settings.tags.unwrap_or_else(BTreeMap::new);
 
   // remove tags from projects
-  for project_name in config.projects.keys().cloned() {
-    if let Some(mut project) = config.projects.get(&project_name).cloned() {
-      info!(logger, "Remove tag from project"; "tag" => &tag_name, "project" => &project_name);
-      let mut new_tags: BTreeSet<String> = project.tags.clone().unwrap_or_else(BTreeSet::new);
-      if new_tags.remove(tag_name) {
-        project.tags = Some(new_tags);
-        nconfig::write_project(&project)?;
-      }
-    } else {
-      return Err(AppError::UserError(format!("Unknown project {}", project_name)));
+  for mut project in config.projects.values().cloned() {
+    info!(logger, "Remove tag from project"; "tag" => &tag_name, "project" => &project.name);
+    let mut new_tags: BTreeSet<String> = project.tags.clone().unwrap_or_else(BTreeSet::new);
+    if new_tags.remove(tag_name) {
+      project.tags = Some(new_tags);
+      nconfig::write_project(&project)?;
     }
   }
 
@@ -111,6 +107,13 @@ pub fn inspect_tag(maybe_config: Result<Config, AppError>, tag_name: &str) -> Re
     println!("{:<20}: {}", "priority", tag.priority.map(|n| n.to_string()).unwrap_or_else(|| "".to_string()));
     println!("{:<20}: {}", "workspace", tag.workspace.clone().unwrap_or_else(|| "".to_string()));
     println!("{:<20}: {}", "default", tag.default.map(|n| n.to_string()).unwrap_or_else(|| "".to_string()));
+    println!();
+    println!("{}", Style::new().underline().bold().paint("projects".to_string()));
+    for project in config.projects.values().cloned() {
+      if project.tags.unwrap_or_default().contains(tag_name) {
+        println!("{}", project.name)
+      }
+    }
     Ok(())
   } else {
     Err(AppError::UserError(format!("Unkown tag {}", tag_name)))
