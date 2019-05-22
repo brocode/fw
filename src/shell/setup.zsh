@@ -73,6 +73,7 @@ _fw() {
                 'add:Adds a tag'
                 'rm:Removes a tag'
                 'ls:Lists tags'
+                'inspect:inspect a tag'
                 'tag-project:Add a tag to a project'
                 'untag-project:Remove a tag from a project'
                 'autotag:Execute command for every tagged project'
@@ -101,6 +102,9 @@ _fw() {
               ;;
               ls)
                 __fw_projects;
+              ;;
+              inspect)
+                __fw_tags;
               ;;
               rm)
                 __fw_tags;

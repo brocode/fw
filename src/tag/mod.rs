@@ -2,6 +2,7 @@ use crate::config::Config;
 use crate::config::Tag;
 use crate::errors::AppError;
 use crate::nconfig;
+use ansi_term::Style;
 use slog::Logger;
 use slog::{debug, info};
 use std::collections::{BTreeMap, BTreeSet};
@@ -96,6 +97,23 @@ pub fn create_tag(
     };
     nconfig::write_tag(&tag_name, &new_tag)?;
     Ok(())
+  }
+}
+
+pub fn inspect_tag(maybe_config: Result<Config, AppError>, tag_name: &str) -> Result<(), AppError> {
+  let config: Config = maybe_config?;
+  let tags: BTreeMap<String, Tag> = config.settings.tags.unwrap_or_else(BTreeMap::new);
+  if let Some(tag) = tags.get(tag_name) {
+    println!("{}", Style::new().underline().bold().paint(tag_name));
+    println!("{:<20}: {}", "config path", tag.tag_config_path);
+    println!("{:<20}: {}", "after workon", tag.after_workon.clone().unwrap_or_else(|| "".to_string()));
+    println!("{:<20}: {}", "after clone", tag.after_clone.clone().unwrap_or_else(|| "".to_string()));
+    println!("{:<20}: {}", "priority", tag.priority.map(|n| n.to_string()).unwrap_or_else(|| "".to_string()));
+    println!("{:<20}: {}", "workspace", tag.workspace.clone().unwrap_or_else(|| "".to_string()));
+    println!("{:<20}: {}", "default", tag.default.map(|n| n.to_string()).unwrap_or_else(|| "".to_string()));
+    Ok(())
+  } else {
+    Err(AppError::UserError(format!("Unkown tag {}", tag_name)))
   }
 }
 

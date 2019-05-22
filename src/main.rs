@@ -215,6 +215,10 @@ fn execute_tag_subcommand(
       let tag_name: String = tag_matches.value_of("tag-name").map(str::to_string).expect("argument enforced by clap.rs");
       tag::remove_tag(maybe_config, project_name, &tag_name, logger)
     }
+    "inspect" => {
+      let tag_name: String = tag_matches.value_of("tag-name").map(str::to_string).expect("argument enforced by clap.rs");
+      tag::inspect_tag(maybe_config, &tag_name)
+    }
     "rm" => {
       let tag_name: String = tag_matches.value_of("tag-name").map(str::to_string).expect("argument enforced by clap.rs");
       tag::delete_tag(maybe_config, &tag_name, logger)
@@ -523,7 +527,7 @@ For further information please have a look at our README https://github.com/broc
         )
         .subcommand(
           SubCommand::with_name("autotag")
-            .about("tags projects when script executes to 0")
+            .about("tags projects when CMD returns exit code 0")
             .arg(Arg::with_name("tag-name").value_name("tag").required(true))
             .arg(Arg::with_name("CMD").value_name("CMD").required(true))
             .arg(
@@ -534,6 +538,11 @@ For further information please have a look at our README https://github.com/broc
                 .validator(|input| validate_number(&input, 20))
                 .takes_value(true),
             ),
+        )
+        .subcommand(
+          SubCommand::with_name("inspect")
+            .about("Inspect a tag")
+            .arg(Arg::with_name("tag-name").value_name("tag name").required(true)),
         )
         .subcommand(
           SubCommand::with_name("rm")
