@@ -22,8 +22,8 @@ pub fn delete_tag(maybe_config: Result<Config, AppError>, tag_name: &str, logger
   let tags: BTreeMap<String, Tag> = config.settings.tags.unwrap_or_else(BTreeMap::new);
 
   // remove tags from projects
-  for (project_name, _value) in config.projects.clone().iter() {
-    if let Some(mut project) = config.projects.get(&project_name.to_string()).cloned() {
+  for project_name in config.projects.keys().cloned() {
+    if let Some(mut project) = config.projects.get(&project_name).cloned() {
       info!(logger, "Remove tag from project"; "tag" => &tag_name, "project" => &project_name);
       let mut new_tags: BTreeSet<String> = project.tags.clone().unwrap_or_else(BTreeSet::new);
       if new_tags.remove(tag_name) {
