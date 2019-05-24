@@ -14,7 +14,7 @@ pub fn app<'a>() -> App<'a, 'a> {
     .version(crate_version!())
     .author("Brocode <bros@brocode.sh>")
     .about(
-      "fast workspace manager. Config set by FW_CONFIG_PATH or default.
+      "fast workspace manager. Config set by FW_CONFIG_DIR or default.
 For further information please have a look at our README https://github.com/brocode/fw/blob/master/README.org",
     )
     .global_setting(AppSettings::ColoredHelp)
