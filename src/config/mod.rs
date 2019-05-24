@@ -23,6 +23,12 @@ pub struct Settings {
   pub gitlab: Option<GitlabSettings>,
 }
 
+impl Settings {
+  pub fn get_shell_or_default(self: &Settings) -> Vec<String> {
+    self.shell.clone().unwrap_or_else(|| vec!["sh".to_owned(), "-c".to_owned()])
+  }
+}
+
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct GitlabSettings {
   pub token: String,
@@ -495,8 +501,6 @@ mod tests {
 
   fn a_logger() -> Logger {
     use slog::Drain;
-    use slog_term;
-    use std;
     let plain = slog_term::PlainSyncDecorator::new(std::io::stdout());
     let drain = slog_term::FullFormat::new(plain).build().fuse();
     Logger::root(drain, o!())

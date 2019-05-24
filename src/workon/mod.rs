@@ -1,76 +1,13 @@
 use crate::config;
 use crate::config::Project;
 use crate::errors::AppError;
-use crate::sync;
+use crate::spawn::spawn_maybe;
+
 use ansi_term::Colour;
-use ansi_term::Style;
-use serde_json;
 use slog::debug;
 use slog::Logger;
 use std::borrow::ToOwned;
 use std::env;
-
-pub fn ls(maybe_config: Result<config::Config, AppError>) -> Result<(), AppError> {
-  let config = maybe_config?;
-  for (name, _) in config.projects {
-    println!("{}", name)
-  }
-  Ok(())
-}
-
-pub fn print_path(maybe_config: Result<config::Config, AppError>, name: &str, logger: &Logger) -> Result<(), AppError> {
-  let config = maybe_config?;
-  let project = config
-    .projects
-    .get(name)
-    .ok_or_else(|| AppError::UserError(format!("project {} not found", name)))?;
-  let canonical_project_path = config.actual_path_to_project(project, logger);
-  let path = canonical_project_path
-    .to_str()
-    .ok_or(AppError::InternalError("project path is not valid unicode"))?;
-  println!("{}", path);
-  Ok(())
-}
-
-pub fn inspect(name: &str, maybe_config: Result<config::Config, AppError>, json: bool, logger: &Logger) -> Result<(), AppError> {
-  let config = maybe_config?;
-  let project = config
-    .projects
-    .get(name)
-    .ok_or_else(|| AppError::UserError(format!("project {} not found", name)))?;
-  if json {
-    println!("{}", serde_json::to_string(project)?);
-    return Ok(());
-  }
-  let canonical_project_path = config.actual_path_to_project(project, logger);
-  let path = canonical_project_path
-    .to_str()
-    .ok_or(AppError::InternalError("project path is not valid unicode"))?;
-  println!("{}", Style::new().underline().bold().paint(project.name.clone()));
-  println!("{:<20}: {}", "Path", path);
-  println!("{:<20}: {}", "config path", project.project_config_path);
-  let tags = project
-    .tags
-    .clone()
-    .map(|t| {
-      let project_tags: Vec<String> = t.into_iter().collect();
-      project_tags.join(", ")
-    })
-    .unwrap_or_else(|| "None".to_owned());
-  println!("{:<20}: {}", "Tags", tags);
-  let additional_remotes = project
-    .additional_remotes
-    .clone()
-    .map(|t| {
-      let project_tags: Vec<String> = t.into_iter().map(|r| format!("{} - {}", r.name, r.git)).collect();
-      project_tags.join(", ")
-    })
-    .unwrap_or_else(|| "None".to_owned());
-  println!("{:<20}: {}", "Additional remotes", additional_remotes);
-  let git = project.git.clone();
-  println!("{:<20}: {}", "Git", git);
-  Ok(())
-}
 
 pub fn gen_reworkon(maybe_config: Result<config::Config, AppError>, logger: &Logger) -> Result<(), AppError> {
   let config = maybe_config?;
@@ -99,8 +36,8 @@ pub fn reworkon(maybe_config: Result<config::Config, AppError>, logger: &Logger)
   commands.extend_from_slice(&config.resolve_after_workon(logger, &project));
 
   debug!(logger, "Reworkon match: {:?} with command {:?}", project, commands);
-  let shell = sync::project_shell(&config.settings);
-  sync::spawn_maybe(&shell, &commands.join(" && "), &path, &project.name, Colour::Yellow, logger)
+  let shell = config.settings.get_shell_or_default();
+  spawn_maybe(&shell, &commands.join(" && "), &path, &project.name, Colour::Yellow, logger)
 }
 
 pub fn gen(name: &str, maybe_config: Result<config::Config, AppError>, quick: bool, logger: &Logger) -> Result<(), AppError> {

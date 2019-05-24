@@ -1,10 +1,15 @@
-use crate::config::Config;
 use crate::config::Tag;
+use crate::config::{Config, Project};
 use crate::errors::AppError;
 use crate::nconfig;
+use crate::spawn::init_threads;
+use crate::spawn::spawn_maybe;
+use crate::util::random_colour;
 use ansi_term::Style;
+use rayon;
+use rayon::prelude::*;
 use slog::Logger;
-use slog::{debug, info};
+use slog::{debug, info, o};
 use std::collections::{BTreeMap, BTreeSet};
 
 pub fn list_tags(maybe_config: Result<Config, AppError>, maybe_project_name: Option<String>, logger: &Logger) -> Result<(), AppError> {
@@ -147,5 +152,42 @@ fn list_project_tags(config: &Config, project_name: &str) -> Result<(), AppError
     Ok(())
   } else {
     Err(AppError::UserError(format!("Unknown project {}", project_name)))
+  }
+}
+
+pub fn autotag(maybe_config: Result<Config, AppError>, cmd: &str, tag_name: &str, logger: &Logger, parallel_raw: &Option<String>) -> Result<(), AppError> {
+  let config = maybe_config?;
+
+  let tags: BTreeMap<String, Tag> = config.settings.tags.clone().unwrap_or_else(BTreeMap::new);
+  if tags.contains_key(tag_name) {
+    init_threads(parallel_raw, logger)?;
+
+    let projects: Vec<&Project> = config.projects.values().collect();
+
+    let script_results = projects
+      .par_iter()
+      .map(|p| {
+        let shell = config.settings.get_shell_or_default();
+        let project_logger = logger.new(o!("project" => p.name.clone()));
+        let path = &config.actual_path_to_project(p, &project_logger);
+        info!(project_logger, "Entering");
+        spawn_maybe(&shell, cmd, &path, &p.name, random_colour(), &project_logger)
+      })
+      .collect::<Vec<Result<(), AppError>>>();
+
+    // map with projects and filter if result == 0
+    let filtered_projects: Vec<&Project> = script_results
+      .into_iter()
+      .zip(projects.into_iter())
+      .filter(|(x, _)| x.is_ok())
+      .map(|(_, p)| p)
+      .collect::<Vec<&Project>>();
+
+    for project in filtered_projects.iter() {
+      add_tag(&config, project.name.clone(), tag_name.to_string(), logger)?;
+    }
+    Ok(())
+  } else {
+    Err(AppError::UserError(format!("Unknown tag {}", tag_name)))
   }
 }
