@@ -27,7 +27,7 @@ fn sync_project(config: &Config, project: &Project, logger: &Logger, only_new: b
     "exists" => exists,
     "path" => format!("{:?}", path),
   ));
-  if exists {
+  let result = if exists {
     if only_new {
       Ok(())
     } else {
@@ -35,7 +35,8 @@ fn sync_project(config: &Config, project: &Project, logger: &Logger, only_new: b
     }
   } else {
     clone_project(config, project, &path, &project_logger)
-  }
+  };
+  result.map_err(|e| AppError::RuntimeError(format!("Failed to sync {}: {}", project.name, e)))
 }
 
 pub fn synchronize(
