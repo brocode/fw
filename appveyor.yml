@@ -1,11 +1,17 @@
 environment:
   matrix:
-  - TARGET: x86_64-pc-windows-gnu
-    BITS: 64
-    MSYS2: 1
-  - TARGET: x86_64-pc-windows-msvc
-    BITS: 64
+    - TARGET: x86_64-pc-windows-msvc
+        BITS: 64
+        OPENSSL_VERSION: 1_1_1c
+        OPENSSL_DIR: C:\OpenSSL
 install:
+   # install OpenSSL
+  - mkdir C:\OpenSSL
+  - ps: if (Test-Path env:OPENSSL_VERSION) { Start-FileDownload "http://slproweb.com/download/Win${env:BITS}OpenSSL-${env:OPENSSL_VERSION}.exe" }
+  - if defined OPENSSL_VERSION Win%BITS%OpenSSL-%OPENSSL_VERSION%.exe /SILENT /VERYSILENT /SP- /DIR="C:\OpenSSL"
+  - appveyor DownloadFile https://curl.haxx.se/ca/cacert.pem -FileName C:\OpenSSL\cacert.pem
+
+  # Install Rust
   - curl -sSf -o rustup-init.exe https://win.rustup.rs/
   - rustup-init.exe -y --default-host %TARGET%
   - set PATH=%PATH%;C:\Users\appveyor\.cargo\bin
