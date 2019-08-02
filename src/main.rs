@@ -31,7 +31,7 @@ fn _main() -> i32 {
   let config = if config.is_ok() {
     config
   } else {
-    warn!(logger, "Could not read v2.0 config: {:?}", config);
+    warn!(logger, "Could not read v2.0 config: {:?}. If you are running the setup right now this is expected.", config);
     let old_config = config::get_config(&logger);
     // write 2.0 for compat
     if old_config.is_ok() {
