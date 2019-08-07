@@ -1,6 +1,5 @@
-use crate::config::{Config, Project, Settings};
+use crate::config::{self, project::Project, settings::Settings, Config};
 use crate::errors::AppError;
-use crate::nconfig;
 use crate::ws::github;
 use git2::Repository;
 use slog::Logger;
@@ -105,7 +104,7 @@ pub fn gitlab_import(maybe_config: Result<Config, AppError>, logger: &Logger) ->
           "Skipping new project from Gitlab import because it already exists in the current fw config"; "project_name" => &p.name);
     } else {
       info!(logger, "Saving new project"; "project_name" => &p.name);
-      nconfig::write_project(&p)?; // TODO not sure if this should be default or gitlab subfolder? or even user specified?
+      config::write_project(&p)?; // TODO not sure if this should be default or gitlab subfolder? or even user specified?
       current_projects.insert(p.name.clone(), p); // to ensure no duplicated name encountered during processing
     }
   }
@@ -113,7 +112,6 @@ pub fn gitlab_import(maybe_config: Result<Config, AppError>, logger: &Logger) ->
   Ok(())
 }
 
-// TODO nconfig
 pub fn org_import(maybe_config: Result<Config, AppError>, org_name: &str, include_archived: bool, logger: &Logger) -> Result<(), AppError> {
   let current_config = maybe_config?;
   let token = env::var_os("FW_GITHUB_TOKEN")
@@ -151,7 +149,7 @@ pub fn org_import(maybe_config: Result<Config, AppError>, org_name: &str, includ
           "Skipping new project from Github import because it already exists in the current fw config"; "project_name" => &p.name);
     } else {
       info!(logger, "Saving new project"; "project_name" => &p.name);
-      nconfig::write_project(&p)?;
+      config::write_project(&p)?;
       current_projects.insert(p.name.clone(), p); // to ensure no duplicated name encountered during processing
     }
   }
@@ -169,7 +167,7 @@ pub fn import(maybe_config: Result<Config, AppError>, path: &str, logger: &Logge
     override_path: Some(project_path),
     ..new_project
   };
-  nconfig::write_project(&new_project_with_path)?;
+  config::write_project(&new_project_with_path)?;
   Ok(())
 }
 
@@ -197,7 +195,7 @@ fn load_project(maybe_settings: Option<Settings>, path_to_repo: PathBuf, name: &
 }
 
 fn write_new_config_with_projects(projects: BTreeMap<String, Project>, logger: &Logger, workspace_dir: &str) -> Result<(), AppError> {
-  let settings: nconfig::PersistedSettings = nconfig::PersistedSettings {
+  let settings: config::settings::PersistedSettings = config::settings::PersistedSettings {
     workspace: workspace_dir.to_owned(),
     default_after_workon: None,
     default_after_clone: None,
@@ -205,9 +203,9 @@ fn write_new_config_with_projects(projects: BTreeMap<String, Project>, logger: &
     github_token: None,
     gitlab: None,
   };
-  nconfig::write_settings(&settings, &logger)?;
+  config::write_settings(&settings, &logger)?;
   for p in projects.values() {
-    nconfig::write_project(&p)?;
+    config::write_project(&p)?;
   }
   debug!(logger, "Finished"; "projects" => format!("{:?}", projects.len()));
   Ok(())

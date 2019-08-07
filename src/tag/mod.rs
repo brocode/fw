@@ -1,7 +1,7 @@
-use crate::config::Tag;
-use crate::config::{Config, Project};
+use crate::config;
+use crate::config::settings::Tag;
+use crate::config::{project::Project, Config};
 use crate::errors::AppError;
-use crate::nconfig;
 use crate::spawn::init_threads;
 use crate::spawn::spawn_maybe;
 use crate::util::random_colour;
@@ -33,13 +33,13 @@ pub fn delete_tag(maybe_config: Result<Config, AppError>, tag_name: &str, logger
     let mut new_tags: BTreeSet<String> = project.tags.clone().unwrap_or_else(BTreeSet::new);
     if new_tags.remove(tag_name) {
       project.tags = Some(new_tags);
-      nconfig::write_project(&project)?;
+      config::write_project(&project)?;
     }
   }
 
   info!(logger, "Delete tag"; "tag" => tag_name);
   if let Some(tag) = tags.get(tag_name) {
-    nconfig::delete_tag_config(tag_name, tag)
+    config::delete_tag_config(tag_name, tag)
   } else {
     Ok(())
   }
@@ -62,7 +62,7 @@ pub fn add_tag(config: &Config, project_name: String, tag_name: String, logger: 
       let mut new_tags: BTreeSet<String> = project.tags.clone().unwrap_or_else(BTreeSet::new);
       new_tags.insert(tag_name);
       project.tags = Some(new_tags);
-      nconfig::write_project(&project)?;
+      config::write_project(&project)?;
       Ok(())
     } else {
       Err(AppError::UserError(format!("Unknown tag {}", tag_name)))
@@ -96,7 +96,7 @@ pub fn create_tag(
       default: None,
       tag_config_path: "default".to_string(),
     };
-    nconfig::write_tag(&tag_name, &new_tag)?;
+    config::write_tag(&tag_name, &new_tag)?;
     Ok(())
   }
 }
@@ -133,7 +133,7 @@ pub fn remove_tag(maybe_config: Result<Config, AppError>, project_name: String, 
     let mut new_tags: BTreeSet<String> = project.tags.clone().unwrap_or_else(BTreeSet::new);
     if new_tags.remove(tag_name) {
       project.tags = Some(new_tags);
-      nconfig::write_project(&project)
+      config::write_project(&project)
     } else {
       Ok(())
     }

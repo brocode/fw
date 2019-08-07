@@ -1,7 +1,8 @@
+use crate::config;
 use crate::config::Config;
-use crate::config::{repo_name_from_url, Project, Remote};
+use crate::config::{project::Project, project::Remote};
 use crate::errors::AppError;
-use crate::nconfig;
+use crate::git::repo_name_from_url;
 use ansi_term::Style;
 use serde_json;
 use slog::Logger;
@@ -31,7 +32,7 @@ pub fn add_entry(
     let default_after_clone = config.settings.default_after_clone.clone();
     let default_after_workon = config.settings.default_after_clone.clone();
 
-    nconfig::write_project(&Project {
+    config::write_project(&Project {
       git: url.to_owned(),
       name: name.to_owned(),
       after_clone: after_clone.or(default_after_clone),
@@ -63,7 +64,7 @@ pub fn remove_project(maybe_config: Result<Config, AppError>, project_name: &str
         fs::remove_dir_all(&path)?;
       }
     }
-    nconfig::delete_project_config(&project)
+    config::delete_project_config(&project)
   } else {
     Err(AppError::UserError(format!("Unknown project {}", project_name)))
   }
@@ -85,7 +86,7 @@ pub fn add_remote(maybe_config: Result<Config, AppError>, name: &str, remote_nam
   additional_remotes.push(Remote { name: remote_name, git });
   project_config.additional_remotes = Some(additional_remotes);
 
-  nconfig::write_project(&project_config)?;
+  config::write_project(&project_config)?;
   Ok(())
 }
 
@@ -100,7 +101,7 @@ pub fn remove_remote(maybe_config: Result<Config, AppError>, name: &str, remote_
   project_config.additional_remotes = Some(additional_remotes);
 
   debug!(logger, "Updated config"; "config" => format!("{:?}", config));
-  nconfig::write_project(&project_config)?;
+  config::write_project(&project_config)?;
   Ok(())
 }
 
@@ -124,7 +125,7 @@ pub fn update_entry(
     Err(AppError::UserError(format!("Project key {} does not exists. Can not update.", name)))
   } else {
     let old_project_config: Project = config.projects.get(name).expect("Already checked in the if above").clone();
-    nconfig::write_project(&Project {
+    config::write_project(&Project {
       git: git.unwrap_or(old_project_config.git),
       name: old_project_config.name,
       after_clone: after_clone.or(old_project_config.after_clone),

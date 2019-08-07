@@ -1,4 +1,4 @@
-use crate::config::{Config, Project};
+use crate::config::{project::Project, Config};
 use crate::errors::AppError;
 
 use crate::spawn::spawn_maybe;
@@ -17,6 +17,23 @@ use std::borrow::ToOwned;
 use std::env;
 
 use std::path::PathBuf;
+
+pub fn repo_name_from_url(url: &str) -> Result<&str, AppError> {
+  let last_fragment = url.rsplit('/').next().ok_or_else(|| {
+    AppError::UserError(format!(
+      "Given URL {} does not have path fragments so cannot determine project name. Please give \
+       one.",
+      url
+    ))
+  })?;
+
+  // trim_right_matches is more efficient but would fuck us up with repos like git@github.com:bauer/test.git.git (which is legal)
+  Ok(if last_fragment.ends_with(".git") {
+    last_fragment.split_at(last_fragment.len() - 4).0
+  } else {
+    last_fragment
+  })
+}
 
 fn username_from_git_url(url: &str) -> String {
   let url_regex = Regex::new(r"([^:]+://)?((?P<user>[a-z_][a-z0-9_]{0,30})@)?").unwrap();
@@ -85,7 +102,7 @@ pub fn update_project_remotes(project: &Project, path: &PathBuf, project_logger:
     AppError::GitError(error)
   })?;
   for desired_remote in project.additional_remotes.clone().unwrap_or_default().into_iter().chain(
-    vec![crate::config::Remote {
+    vec![crate::config::project::Remote {
       name: "origin".to_string(),
       git: project.git.to_owned(),
     }]
@@ -190,5 +207,24 @@ mod tests {
 
     assert_that(&username_from_git_url(&"https://github.com/brocode/fw.git")).is_equal_to(user.to_string());
     assert_that(&username_from_git_url(&"https://kuci@github.com/brocode/fw.git")).is_equal_to("kuci".to_string());
+  }
+
+  #[test]
+  fn test_repo_name_from_url() {
+    let https_url = "https://github.com/mriehl/fw";
+    let name = repo_name_from_url(&https_url).unwrap().to_owned();
+    assert_that(&name).is_equal_to("fw".to_owned());
+  }
+  #[test]
+  fn test_repo_name_from_ssh_pragma() {
+    let ssh_pragma = "git@github.com:mriehl/fw.git";
+    let name = repo_name_from_url(&ssh_pragma).unwrap().to_owned();
+    assert_that(&name).is_equal_to("fw".to_owned());
+  }
+  #[test]
+  fn test_repo_name_from_ssh_pragma_with_multiple_git_endings() {
+    let ssh_pragma = "git@github.com:mriehl/fw.git.git";
+    let name = repo_name_from_url(&ssh_pragma).unwrap().to_owned();
+    assert_that(&name).is_equal_to("fw.git".to_owned());
   }
 }

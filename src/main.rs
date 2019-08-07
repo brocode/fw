@@ -27,21 +27,12 @@ fn _main() -> i32 {
 
   let logger = logger_from_verbosity(matches.occurrences_of("v"), matches.is_present("q"));
 
-  let config = nconfig::read_config(&logger);
-  let config = if config.is_ok() {
-    config
-  } else {
-    warn!(logger, "Could not read v2.0 config: {:?}. If you are running the setup right now this is expected.", config);
-    let old_config = config::get_config(&logger);
-    // write 2.0 for compat
-    if old_config.is_ok() {
-      //TODO link to 2.0 readme or something
-      Err(AppError::RuntimeError(
-        "Old configuration found. Please use `fw migrate` to migrate your configuration to the new layout.".to_string(),
-      ))
-    } else {
-      config
-    }
+  let config = config::read_config(&logger);
+  if config.is_err() {
+    warn!(
+      logger,
+      "Could not read v2.0 config: {:?}. If you are running the setup right now this is expected.", config
+    );
   };
 
   let subcommand_name = matches.subcommand_name().expect("subcommand required by clap.rs").to_owned();
@@ -102,7 +93,6 @@ fn _main() -> i32 {
       subcommand_matches.value_of("WORKSPACE_DIR").expect("argument required by clap.rs"),
       &subcommand_logger,
     ),
-    "migrate" => nconfig::migrate(&subcommand_logger),
     "import" => setup::import(
       config,
       subcommand_matches.value_of("PROJECT_DIR").expect("argument required by clap.rs"),
@@ -225,7 +215,6 @@ mod app;
 mod config;
 mod errors;
 mod git;
-mod nconfig;
 mod project;
 mod projectile;
 mod setup;

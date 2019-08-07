@@ -1,5 +1,5 @@
 use crate::config;
-use crate::config::Project;
+use crate::config::project::Project;
 use crate::errors::AppError;
 use crate::spawn::spawn_maybe;
 

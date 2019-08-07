@@ -1,4 +1,4 @@
-use crate::config::{Config, Project};
+use crate::config::{project::Project, Config};
 use crate::errors::AppError;
 
 use ansi_term::Colour;
