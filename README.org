@@ -2,8 +2,8 @@
 
 * fw
   [[https://travis-ci.org/brocode/fw][file:https://travis-ci.org/brocode/fw.svg?branch=master]]
-  [[https://ci.appveyor.com/project/bomgar/fw/branch/master][file:https://ci.appveyor.com/api/projects/status/wwo6gdv44591p919/branch/master?svg=true]]
   [[https://crates.io/crates/fw][file:https://img.shields.io/crates/v/fw.svg]]
+  [[https://ci.appveyor.com/project/bomgar/fw/branch/master][Appveyor]]
 
   [[https://asciinema.org/a/222856][https://asciinema.org/a/222856.png]]
 
