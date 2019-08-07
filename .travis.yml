@@ -10,6 +10,7 @@ services:
 
 os:
   - linux
+  - osx
 
 matrix:
   allow_failures:
@@ -47,6 +48,7 @@ deploy:
   on:
     tags: true
     rust: stable
+    os: linux
 
 
 notifications:
