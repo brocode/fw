@@ -7,6 +7,7 @@ use ansi_term::Style;
 use serde_json;
 use slog::Logger;
 use slog::{debug, info};
+use std::collections::BTreeSet;
 use std::fs;
 
 pub fn add_entry(
@@ -140,10 +141,12 @@ pub fn update_entry(
   }
 }
 
-pub fn ls(maybe_config: Result<Config, AppError>) -> Result<(), AppError> {
+pub fn ls(maybe_config: Result<Config, AppError>, tags: &BTreeSet<String>) -> Result<(), AppError> {
   let config = maybe_config?;
-  for (name, _) in config.projects {
-    println!("{}", name)
+  for (name, project) in config.projects {
+    if tags.is_empty() || project.tags.unwrap_or_default().intersection(tags).count() > 0 {
+      println!("{}", name)
+    }
   }
   Ok(())
 }

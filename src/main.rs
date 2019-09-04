@@ -142,7 +142,7 @@ fn _main() -> i32 {
         .to_owned();
       execute_tag_subcommand(config, &subsubcommand_name, &subsubcommand_matches, &subcommand_logger)
     }
-    "ls" => project::ls(config),
+    "ls" => project::ls(config, &subcommand_matches.values_of_lossy("tag").unwrap_or_default().into_iter().collect()),
     _ => Err(AppError::InternalError("Command not implemented")),
   }
   .and_then(|_| now.elapsed().map_err(AppError::ClockError))
