@@ -37,10 +37,6 @@ script:
   - zsh -c "source smoke/vanilla-grml-zshrc && eval $(cargo run -- print-zsh-setup 2>/dev/null)"
 
 before_deploy: "bash package.sh"
-  on:
-    tags: true
-    rust: stable
-    os: linux
 deploy:
   provider: releases
   api_key:
