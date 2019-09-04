@@ -138,7 +138,7 @@ pub fn remove_tag(maybe_config: Result<Config, AppError>, project_name: String, 
       Ok(())
     }
   } else {
-    return Err(AppError::UserError(format!("Unknown project {}", project_name)));
+    Err(AppError::UserError(format!("Unknown project {}", project_name)))
   }
 }
 

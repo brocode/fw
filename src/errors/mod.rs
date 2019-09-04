@@ -81,7 +81,7 @@ impl Error for AppError {
     }
   }
 
-  fn cause(&self) -> Option<&Error> {
+  fn cause(&self) -> Option<&dyn Error> {
     match *self {
       AppError::IO(ref err) => Some(err),
       AppError::UserError(_) | AppError::RuntimeError(_) | AppError::InternalError(_) => None,
