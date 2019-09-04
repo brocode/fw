@@ -7,13 +7,9 @@ pub struct Remote {
   pub git: String,
 }
 
-fn empty_string() -> String {
-  "".to_string()
-}
-
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Project {
-  #[serde(default = "empty_string", skip_serializing)]
+  #[serde(skip)]
   pub name: String,
 
   pub git: String,
