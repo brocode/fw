@@ -27,3 +27,11 @@ pub fn print_bash_setup(use_fzf: bool) -> Result<(), AppError> {
 
   Ok(())
 }
+
+pub fn print_fish_setup() -> Result<(), AppError> {
+  let setup = include_str!("setup.fish");
+
+  println!("{}", setup);
+
+  Ok(())
+}
