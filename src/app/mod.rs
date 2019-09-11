@@ -66,6 +66,10 @@ For further information please have a look at our README https://github.com/broc
         .arg(Arg::with_name("with-fzf").long("with-fzf").short("-f").help("Integrate with fzf")),
     )
     .subcommand(
+      SubCommand::with_name("print-fish-setup")
+        .about("Prints fish completion code.")
+    )
+    .subcommand(
       SubCommand::with_name("setup")
         .about("Setup config from existing workspace")
         .arg(Arg::with_name("WORKSPACE_DIR").value_name("WORKSPACE_DIR").index(1).required(true)),
