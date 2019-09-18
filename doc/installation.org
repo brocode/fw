@@ -29,11 +29,11 @@
 
   Bash
     #+BEGIN_SRC shell-script
-    if [[ -x "$(command -v fw )]]; then
-      if [[ -x "$(command -v fzf ) ]]; then
-        eval "$(fw print-bash-setup -f 2/dev/null)"
+    if [[ -x "$(command -v fw)" ]]; then
+      if [[ -x "$(command -v fzf)" ]]; then
+        eval "$(fw print-bash-setup -f 2>/dev/null)"
       else
-        eval "$(fw print-bash-setup 2/dev/null)"
+        eval "$(fw print-bash-setup 2>/dev/null)"
       fi
     fi
     #+END_SRC
@@ -51,7 +51,7 @@
 
   Bash
     #+BEGIN_SRC shell-script
-    [[ -x "$(command -v fw )]] && eval "$(fw print-bash-setup)"
+    [[ -x "$(command -v fw)" ]] && eval "$(fw print-bash-setup)"
     #+END_SRC
 
   Fish
