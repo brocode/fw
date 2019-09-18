@@ -259,6 +259,7 @@ __fw_complete()
         __fw_comp "$(__fw_projects)"
     }
     _fw_migrate() {
+        :
     }
 
     _fw_org_import () {
