@@ -185,7 +185,6 @@ __fw_complete()
             'import'
             'inspect'
             'ls'
-            'migrate'
             'org-import'
             'print-path'
             'projectile'
@@ -257,8 +256,6 @@ __fw_complete()
         esac
 
         __fw_comp "$(__fw_projects)"
-    }
-    _fw_migrate() {
     }
 
     _fw_org_import () {

@@ -71,7 +71,6 @@ For further information please have a look at our README https://github.com/broc
         .about("Setup config from existing workspace")
         .arg(Arg::with_name("WORKSPACE_DIR").value_name("WORKSPACE_DIR").index(1).required(true)),
     )
-    .subcommand(SubCommand::with_name("migrate").about("Migrate config to fw 2.0"))
     .subcommand(
       SubCommand::with_name("reworkon")
         .aliases(&[".", "rw", "re", "fkbr"])
