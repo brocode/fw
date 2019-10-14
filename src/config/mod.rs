@@ -265,11 +265,7 @@ conscious choice and set the value."#;
   {
     let tag_logger = logger.new(o!("tags" => format!("{:?}", maybe_tags)));
     trace!(tag_logger, "Resolving");
-    if maybe_tags.is_none() || self.settings.tags.is_none() {
-      vec![]
-    } else {
-      let tags: BTreeSet<String> = maybe_tags.unwrap();
-      let settings_tags = self.clone().settings.tags.unwrap();
+    if let (Some(tags), Some(settings_tags)) = (maybe_tags, self.clone().settings.tags) {
       let mut resolved_with_priority: Vec<(String, u8)> = tags
         .iter()
         .flat_map(|t| match settings_tags.get(t) {
@@ -286,6 +282,8 @@ conscious choice and set the value."#;
       resolved_with_priority.sort_by_key(|resolved_and_priority| resolved_and_priority.1);
       trace!(logger, "after sort"; "tags" => format!("{:?}", resolved_with_priority));
       resolved_with_priority.into_iter().map(|r| r.0).collect()
+    } else {
+      vec![]
     }
   }
 }
