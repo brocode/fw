@@ -19,7 +19,7 @@ pub enum AppError {
   ClockError(SystemTimeError),
   GitError(git2::Error),
   Regex(regex::Error),
-  GitlabApiError(gitlab::Error),
+  GitlabApiError(gitlab::GitlabError),
   TomlSerError(toml::ser::Error),
   TomlDeError(toml::de::Error),
   WalkdirError(walkdir::Error),
@@ -107,7 +107,7 @@ app_error_from!(git2::Error, GitError);
 app_error_from!(io::Error, IO);
 app_error_from!(serde_json::Error, BadJson);
 app_error_from!(regex::Error, Regex);
-app_error_from!(gitlab::Error, GitlabApiError);
+app_error_from!(gitlab::GitlabError, GitlabApiError);
 app_error_from!(toml::ser::Error, TomlSerError);
 app_error_from!(toml::de::Error, TomlDeError);
 app_error_from!(walkdir::Error, WalkdirError);
