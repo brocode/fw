@@ -39,7 +39,7 @@ pub fn add_entry(
       after_clone: after_clone.or(default_after_clone),
       after_workon: after_workon.or(default_after_workon),
       override_path,
-      tags: config.settings.default_tags.clone(),
+      tags: config.settings.default_tags,
       bare: None,
       additional_remotes: None,
       project_config_path: "default".to_string(),

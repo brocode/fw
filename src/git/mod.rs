@@ -44,7 +44,7 @@ fn username_from_git_url(url: &str) -> String {
   }
   if let Ok(user) = env::var("USER") {
     if user != "" {
-      return user.to_string();
+      return user;
     }
   }
   "git".to_string()

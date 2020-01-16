@@ -130,12 +130,12 @@ pub fn write_tag(tag_name: &str, tag: &Tag) -> Result<(), AppError> {
   let paths = fw_path()?;
   paths.ensure_base_exists()?;
 
-  let mut tag_path = paths.tags.to_owned();
+  let mut tag_path = paths.tags;
   tag_path.push(PathBuf::from(&tag.tag_config_path));
   std::fs::create_dir_all(&tag_path)
     .map_err(|e| AppError::RuntimeError(format!("Failed to create tag config path '{}'. {}", tag_path.to_string_lossy(), e)))?;
 
-  let mut tag_file_path = tag_path.clone();
+  let mut tag_file_path = tag_path;
   tag_file_path.push(&tag_name);
 
   let mut buffer = File::create(&tag_file_path)
@@ -151,7 +151,7 @@ pub fn delete_tag_config(tag_name: &str, tag: &Tag) -> Result<(), AppError> {
   let paths = fw_path()?;
   paths.ensure_base_exists()?;
 
-  let mut tag_file_path = paths.tags.to_owned();
+  let mut tag_file_path = paths.tags;
   tag_file_path.push(PathBuf::from(&tag.tag_config_path));
   tag_file_path.push(tag_name);
 
@@ -163,7 +163,7 @@ pub fn delete_project_config(project: &Project) -> Result<(), AppError> {
   let paths = fw_path()?;
   paths.ensure_base_exists()?;
 
-  let mut project_file_path = paths.projects.to_owned();
+  let mut project_file_path = paths.projects;
   project_file_path.push(PathBuf::from(&project.project_config_path));
   project_file_path.push(&project.name);
 
@@ -189,12 +189,12 @@ pub fn write_project(project: &Project) -> Result<(), AppError> {
   let paths = fw_path()?;
   paths.ensure_base_exists()?;
 
-  let mut project_path = paths.projects.to_owned();
+  let mut project_path = paths.projects;
   project_path.push(PathBuf::from(&project.project_config_path));
   std::fs::create_dir_all(&project_path)
     .map_err(|e| AppError::RuntimeError(format!("Failed to create project config path '{}'. {}", project_path.to_string_lossy(), e)))?;
 
-  let mut project_file_path = project_path.clone();
+  let mut project_file_path = project_path;
   project_file_path.push(&project.name);
 
   let mut buffer: File = File::create(&project_file_path)
@@ -273,9 +273,7 @@ conscious choice and set the value."#;
             warn!(tag_logger, "Ignoring tag since it was not found in the config"; "missing_tag" => t.clone());
             None
           }
-          Some(actual_tag) => resolver(actual_tag)
-            .clone()
-            .map(|val| (val, self.tag_priority_or_fallback(t, actual_tag, logger))),
+          Some(actual_tag) => resolver(actual_tag).map(|val| (val, self.tag_priority_or_fallback(t, actual_tag, logger))),
         })
         .collect();
       trace!(logger, "before sort"; "tags" => format!("{:?}", resolved_with_priority));

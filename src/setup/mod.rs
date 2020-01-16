@@ -83,7 +83,7 @@ pub fn gitlab_import(maybe_config: Result<Config, AppError>, logger: &Logger) ->
   let after_clone = current_config.settings.default_after_clone.clone();
   let after_workon = current_config.settings.default_after_workon.clone();
   let tags = current_config.settings.default_tags.clone();
-  let mut current_projects = current_config.projects.clone();
+  let mut current_projects = current_config.projects;
 
   for (name, url) in names_and_urls {
     let p = Project {
@@ -128,7 +128,7 @@ pub fn org_import(maybe_config: Result<Config, AppError>, org_name: &str, includ
   let after_clone = current_config.settings.default_after_clone.clone();
   let after_workon = current_config.settings.default_after_workon.clone();
   let tags = current_config.settings.default_tags.clone();
-  let mut current_projects = current_config.projects.clone();
+  let mut current_projects = current_config.projects;
 
   for name in org_repository_names {
     let p = Project {
@@ -188,7 +188,7 @@ fn load_project(maybe_settings: Option<Settings>, path_to_repo: PathBuf, name: &
     after_workon: maybe_settings.clone().and_then(|s| s.default_after_workon),
     override_path: None,
     additional_remotes: None, // TODO: use remotes
-    tags: maybe_settings.clone().and_then(|s| s.default_tags),
+    tags: maybe_settings.and_then(|s| s.default_tags),
     bare: None,
     project_config_path: "default".to_string(),
   })
