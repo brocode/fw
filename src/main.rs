@@ -52,6 +52,7 @@ fn _main() -> i32 {
         subcommand_matches.is_present("no-progress-bar"),
         subcommand_matches.is_present("only-new"),
         !subcommand_matches.is_present("no-fast-forward-merge"),
+        &subcommand_matches.values_of_lossy("tag").unwrap_or_default().into_iter().collect(),
         worker,
         &subcommand_logger,
       )

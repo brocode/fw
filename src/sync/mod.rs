@@ -1,5 +1,6 @@
 use crate::config::{project::Project, Config};
 use crate::errors::AppError;
+use std::collections::BTreeSet;
 
 use crate::git::{clone_project, update_project_remotes};
 
@@ -44,6 +45,7 @@ pub fn synchronize(
   no_progress_bar: bool,
   only_new: bool,
   ff_merge: bool,
+  tags: &BTreeSet<String>,
   worker: i32,
   logger: &Logger,
 ) -> Result<(), AppError> {
@@ -57,9 +59,11 @@ pub fn synchronize(
   let projects: Vec<Project> = config.projects.values().map(ToOwned::to_owned).collect();
   let q: Arc<SegQueue<Project>> = Arc::new(SegQueue::new());
   let projects_count = projects.len() as u64;
-  for project in projects {
-    q.push(project);
-  }
+
+  projects
+    .into_iter()
+    .filter(|p| tags.is_empty() || p.tags.clone().unwrap_or_default().intersection(tags).count() > 0)
+    .for_each(|p| q.push(p));
 
   let spinner_style = ProgressStyle::default_spinner()
     .tick_chars("⣾⣽⣻⢿⡿⣟⣯⣷⣿")

@@ -25,6 +25,15 @@ For further information please have a look at our README https://github.com/broc
       SubCommand::with_name("sync")
         .about("Sync workspace. Clones projects or updates remotes for existing projects.")
         .arg(
+          Arg::with_name("tag")
+            .long("tag")
+            .short("t")
+            .help("Filter projects by tag. More than 1 is allowed.")
+            .required(false)
+            .takes_value(true)
+            .multiple(true),
+        )
+        .arg(
           Arg::with_name("no-progress-bar")
             .long("no-progress-bar")
             .short("q")
