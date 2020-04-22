@@ -65,6 +65,7 @@ impl fmt::Display for AppError {
 }
 
 impl Error for AppError {
+  #[allow(deprecated)]
   fn description(&self) -> &str {
     match *self {
       AppError::IO(ref err) => err.description(),
@@ -99,7 +100,7 @@ impl Error for AppError {
 
 impl From<core::num::ParseIntError> for AppError {
   fn from(err: core::num::ParseIntError) -> AppError {
-    AppError::UserError(format!("Type error: {}", err.description()))
+    AppError::UserError(format!("Type error: {}", err.to_string()))
   }
 }
 

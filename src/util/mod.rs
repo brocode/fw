@@ -40,7 +40,8 @@ pub fn logger_from_verbosity(verbosity: u64, quiet: bool) -> Logger {
     0 => Severity::Warning,
     1 => Severity::Info,
     2 => Severity::Debug,
-    3 | _ => Severity::Trace,
+    3 => Severity::Trace,
+    _ => Severity::Trace,
   };
 
   let mut logger_builder = TerminalLoggerBuilder::new();
