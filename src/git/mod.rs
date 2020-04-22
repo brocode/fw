@@ -86,11 +86,11 @@ fn update_remote(project: &Project, remote: &mut Remote, project_logger: &Logger
       AppError::GitError(error)
     })?;
   let mut options = agent_fetch_options(&git_user);
-  remote.download(&[], Some(&mut options)).map_err(|error| {
+  remote.download::<String>(&[], Some(&mut options)).map_err(|error| {
     warn!(project_logger, "Error downloading for remote"; "error" => format!("{}", error), "project" => &project.name);
     AppError::GitError(error)
   })?;
-  remote.disconnect();
+  remote.disconnect()?;
   remote.update_tips(None, true, AutotagOption::Unspecified, None)?;
   Ok(())
 }
