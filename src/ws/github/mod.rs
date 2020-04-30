@@ -9,8 +9,6 @@ use futures::future::ok;
 use futures::{Future, Stream};
 use tokio_core::reactor::Core;
 
-use serde_json;
-
 use hyper::client::Client;
 use hyper::StatusCode;
 use hyper::{self, HeaderMap};

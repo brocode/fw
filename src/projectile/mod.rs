@@ -1,6 +1,5 @@
 use crate::config::Config;
 use crate::errors::AppError;
-use dirs;
 use regex::Regex;
 use slog::debug;
 use slog::Logger;

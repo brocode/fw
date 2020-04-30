@@ -4,14 +4,12 @@ use crate::errors::AppError;
 use crate::spawn::spawn_maybe;
 use crate::util::random_colour;
 
-use git2;
 use git2::build::RepoBuilder;
 use git2::{AutotagOption, Branch, Direction, FetchOptions, MergeAnalysis, ProxyOptions, Remote, RemoteCallbacks, Repository};
 
 use regex::Regex;
 use slog::Logger;
 use slog::{debug, warn};
-use std;
 use std::borrow::ToOwned;
 
 use std::env;

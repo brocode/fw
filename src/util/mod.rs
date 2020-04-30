@@ -1,9 +1,7 @@
 use ansi_term::Colour;
 
-use rand;
 use rand::seq::SliceRandom;
 
-use std;
 use std::borrow::ToOwned;
 
 use slog::debug;

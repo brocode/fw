@@ -4,7 +4,6 @@ use std::collections::{BTreeMap, BTreeSet};
 use std::fs::{self, read_to_string, File};
 use std::io::Write;
 use std::path::{Path, PathBuf};
-use toml;
 use walkdir::WalkDir;
 
 static CONF_MODE_HEADER: &str = "# -*- mode: Conf; -*-\n";

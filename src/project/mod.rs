@@ -4,7 +4,6 @@ use crate::config::{project::Project, project::Remote};
 use crate::errors::AppError;
 use crate::git::repo_name_from_url;
 use ansi_term::Style;
-use serde_json;
 use slog::Logger;
 use slog::{debug, info};
 use std::collections::BTreeSet;

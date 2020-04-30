@@ -6,7 +6,6 @@ use crate::spawn::init_threads;
 use crate::spawn::spawn_maybe;
 use crate::util::random_colour;
 use ansi_term::Style;
-use rayon;
 use rayon::prelude::*;
 use slog::Logger;
 use slog::{debug, info, o};

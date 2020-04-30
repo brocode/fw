@@ -2,14 +2,11 @@ use crate::config::{project::Project, Config};
 use crate::errors::AppError;
 
 use ansi_term::Colour;
-use atty;
-use rayon;
 use rayon::prelude::*;
 use std::collections::BTreeSet;
 
 use slog::Logger;
 use slog::{error, info};
-use std;
 use std::borrow::ToOwned;
 
 use crate::util::random_colour;
