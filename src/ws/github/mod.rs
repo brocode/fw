@@ -2,13 +2,12 @@
 // this package seems unmaintained at the moment. Also it is basically just a small http client wrapper.
 
 use crate::errors::AppError;
-use reqwest;
 use serde::de::DeserializeOwned;
 
 pub fn github_api(token: &str) -> Result<GithubApi, AppError> {
   let client = reqwest::blocking::Client::new();
   Ok(GithubApi {
-    client: client,
+    client,
     token: token.to_string(),
   })
 }
