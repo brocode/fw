@@ -1,3 +1,4 @@
+use reqwest;
 use std::error::Error;
 use std::fmt;
 use std::io;
@@ -17,6 +18,7 @@ pub enum AppError {
   TomlSerError(toml::ser::Error),
   TomlDeError(toml::de::Error),
   WalkdirError(walkdir::Error),
+  ReqwestError(reqwest::Error),
 }
 
 macro_rules! app_error_from {
@@ -54,6 +56,7 @@ impl fmt::Display for AppError {
       AppError::TomlSerError(ref err) => write!(f, "toml serialization error: {}", err),
       AppError::TomlDeError(ref err) => write!(f, "toml read error: {}", err),
       AppError::WalkdirError(ref err) => write!(f, "walkdir error: {}", err),
+      AppError::ReqwestError(ref err) => write!(f, "reqwest error: {}", err),
     }
   }
 }
@@ -73,6 +76,7 @@ impl Error for AppError {
       AppError::TomlSerError(ref err) => err.description(),
       AppError::TomlDeError(ref err) => err.description(),
       AppError::WalkdirError(ref err) => err.description(),
+      AppError::ReqwestError(ref err) => err.description(),
     }
   }
 
@@ -88,6 +92,7 @@ impl Error for AppError {
       AppError::TomlSerError(ref err) => Some(err),
       AppError::TomlDeError(ref err) => Some(err),
       AppError::WalkdirError(ref err) => Some(err),
+      AppError::ReqwestError(ref err) => Some(err),
     }
   }
 }
@@ -106,3 +111,4 @@ app_error_from!(gitlab::GitlabError, GitlabApiError);
 app_error_from!(toml::ser::Error, TomlSerError);
 app_error_from!(toml::de::Error, TomlDeError);
 app_error_from!(walkdir::Error, WalkdirError);
+app_error_from!(reqwest::Error, ReqwestError);
