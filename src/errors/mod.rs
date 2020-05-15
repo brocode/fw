@@ -13,7 +13,6 @@ pub enum AppError {
   ClockError(SystemTimeError),
   GitError(git2::Error),
   Regex(regex::Error),
-  GitlabApiError(gitlab::GitlabError),
   TomlSerError(toml::ser::Error),
   TomlDeError(toml::de::Error),
   WalkdirError(walkdir::Error),
@@ -51,7 +50,6 @@ impl fmt::Display for AppError {
       AppError::ClockError(ref err) => write!(f, "System clock error: {}", err),
       AppError::GitError(ref err) => write!(f, "Git error: {}", err),
       AppError::Regex(ref err) => write!(f, "Regex error: {}", err),
-      AppError::GitlabApiError(ref err) => write!(f, "Gitlab API error: {}", err),
       AppError::TomlSerError(ref err) => write!(f, "toml serialization error: {}", err),
       AppError::TomlDeError(ref err) => write!(f, "toml read error: {}", err),
       AppError::WalkdirError(ref err) => write!(f, "walkdir error: {}", err),
@@ -71,7 +69,6 @@ impl Error for AppError {
       AppError::ClockError(ref err) => err.description(),
       AppError::GitError(ref err) => err.description(),
       AppError::Regex(ref err) => err.description(),
-      AppError::GitlabApiError(ref err) => err.description(),
       AppError::TomlSerError(ref err) => err.description(),
       AppError::TomlDeError(ref err) => err.description(),
       AppError::WalkdirError(ref err) => err.description(),
@@ -87,7 +84,6 @@ impl Error for AppError {
       AppError::ClockError(ref err) => Some(err),
       AppError::GitError(ref err) => Some(err),
       AppError::Regex(ref err) => Some(err),
-      AppError::GitlabApiError(ref err) => Some(err),
       AppError::TomlSerError(ref err) => Some(err),
       AppError::TomlDeError(ref err) => Some(err),
       AppError::WalkdirError(ref err) => Some(err),
@@ -106,7 +102,6 @@ app_error_from!(git2::Error, GitError);
 app_error_from!(io::Error, IO);
 app_error_from!(serde_json::Error, BadJson);
 app_error_from!(regex::Error, Regex);
-app_error_from!(gitlab::GitlabError, GitlabApiError);
 app_error_from!(toml::ser::Error, TomlSerError);
 app_error_from!(toml::de::Error, TomlDeError);
 app_error_from!(walkdir::Error, WalkdirError);

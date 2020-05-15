@@ -61,6 +61,7 @@ fn determine_projects(path: PathBuf, logger: &Logger) -> Result<BTreeMap<String,
 }
 
 pub fn gitlab_import(maybe_config: Result<Config, AppError>, logger: &Logger) -> Result<(), AppError> {
+  use gitlab::api::Query;
   let current_config = maybe_config?;
 
   let gitlab_config = current_config.settings.gitlab.clone().ok_or_else(|| {
@@ -70,10 +71,16 @@ pub fn gitlab_import(maybe_config: Result<Config, AppError>, logger: &Logger) ->
     )
   })?;
 
-  let gitlab_client = gitlab::Gitlab::new(gitlab_config.host, gitlab_config.token)?;
+  let gitlab_client =
+    gitlab::Gitlab::new(gitlab_config.host, gitlab_config.token).map_err(|e| AppError::RuntimeError(format!("Failed to create gitlab client: {}", e)))?;
 
   // owned repos and your organizations repositories
-  let owned_projects = gitlab_client.owned_projects()?;
+  let owned_projects: Vec<gitlab::Project> = gitlab::api::paged(
+    gitlab::api::projects::Projects::builder().owned(true).build().unwrap(),
+    gitlab::api::Pagination::All,
+  )
+  .query(&gitlab_client)
+  .map_err(|e| AppError::RuntimeError(format!("Failed to query gitlab: {}", e)))?;
 
   let names_and_urls: Vec<(String, String)> = owned_projects
     .iter()
