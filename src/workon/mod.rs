@@ -54,7 +54,7 @@ pub fn gen(name: &str, maybe_config: Result<config::Config, AppError>, quick: bo
     Err(AppError::UserError(format!("project key {} found but path {} does not exist", name, path)))
   } else {
     let mut commands: Vec<String> = vec![];
-    commands.push(format!("cd {}", path));
+    commands.push(format!("cd '{}'", path));
     if !quick {
       commands.extend_from_slice(&config.resolve_after_workon(logger, project))
     }
