@@ -10,6 +10,26 @@ use std::fs;
 use std::iter::Iterator;
 use std::path::{Path, PathBuf};
 
+#[derive(Copy, Clone)]
+pub enum ProjectState {
+  Active,
+  Archived,
+  Both,
+}
+
+impl std::str::FromStr for ProjectState {
+  type Err = AppError;
+
+  fn from_str(s: &str) -> Result<Self, Self::Err> {
+    match s {
+      "active" => Ok(Self::Active),
+      "archived" => Ok(Self::Archived),
+      "both" => Ok(Self::Both),
+      _ => Err(AppError::InternalError("invalid value for ProjectState")), // TODO should this be unreachable?,
+    }
+  }
+}
+
 pub fn setup(workspace_dir: &str, logger: &Logger) -> Result<(), AppError> {
   let setup_logger = logger.new(o!("workspace" => workspace_dir.to_owned()));
   debug!(setup_logger, "Entering setup");
@@ -60,7 +80,7 @@ fn determine_projects(path: PathBuf, logger: &Logger) -> Result<BTreeMap<String,
   Ok(projects)
 }
 
-pub fn gitlab_import(maybe_config: Result<Config, AppError>, include_archived: bool, logger: &Logger) -> Result<(), AppError> {
+pub fn gitlab_import(maybe_config: Result<Config, AppError>, state: ProjectState, logger: &Logger) -> Result<(), AppError> {
   use gitlab::api::Query;
   let current_config = maybe_config?;
 
@@ -76,8 +96,14 @@ pub fn gitlab_import(maybe_config: Result<Config, AppError>, include_archived: b
 
   let mut builder = gitlab::api::projects::Projects::builder();
   builder.owned(true);
-  if !include_archived {
-    builder.archived(false);
+  match state {
+    ProjectState::Active => {
+      builder.archived(false);
+    }
+    ProjectState::Archived => {
+      builder.archived(true);
+    }
+    ProjectState::Both => {}
   }
 
   // owned repos and your organizations repositories

@@ -105,7 +105,14 @@ fn _main() -> i32 {
       subcommand_matches.is_present("include-archived"),
       &subcommand_logger,
     ),
-    "gitlab-import" => setup::gitlab_import(config, subcommand_matches.is_present("include-archived"), &subcommand_logger),
+    "gitlab-import" => {
+      let state = subcommand_matches
+        .value_of("include")
+        .expect("argument required by clap.rs")
+        .parse()
+        .expect("argument values restricted by clap.rs");
+      setup::gitlab_import(config, state, &subcommand_logger)
+    }
     "gen-workon" => workon::gen(
       subcommand_matches.value_of("PROJECT_NAME").expect("argument required by clap.rs"),
       config,

@@ -109,12 +109,14 @@ For further information please have a look at our README https://github.com/broc
       SubCommand::with_name("gitlab-import")
         .about("Import all owned repositories / your organizations repositories from gitlab into fw")
         .arg(
-          Arg::with_name("include-archived")
-            .help("Also import archived projects")
-            .long("include-archived")
+          Arg::with_name("include")
+            .help("Filter projects to import by state")
+            .long("include")
             .short("a")
-            .takes_value(false)
-            .required(false),
+            .takes_value(true)
+            .value_name("state")
+            .possible_values(&["active", "archived", "both"])
+            .default_value("active"),
         ),
     )
     .subcommand(
