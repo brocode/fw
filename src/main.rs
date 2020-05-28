@@ -105,7 +105,7 @@ fn _main() -> i32 {
       subcommand_matches.is_present("include-archived"),
       &subcommand_logger,
     ),
-    "gitlab-import" => setup::gitlab_import(config, &subcommand_logger),
+    "gitlab-import" => setup::gitlab_import(config, subcommand_matches.is_present("include-archived"), &subcommand_logger),
     "gen-workon" => workon::gen(
       subcommand_matches.value_of("PROJECT_NAME").expect("argument required by clap.rs"),
       config,
