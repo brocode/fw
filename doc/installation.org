@@ -38,6 +38,17 @@
     fi
     #+END_SRC
 
+  Fish
+    #+BEGIN_SRC shell-script
+    if test -x (command -v fw)
+      if test -x (command -v fzf)
+        fw print-fish-setup -f | source
+      else
+        fw print-fish-setup | source
+      end
+    end
+    #+END_SRC
+
 
 ** Without fzf
    If you don't want ~fzf~ integration:

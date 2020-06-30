@@ -28,10 +28,17 @@ pub fn print_bash_setup(use_fzf: bool) -> Result<(), AppError> {
   Ok(())
 }
 
-pub fn print_fish_setup() -> Result<(), AppError> {
+pub fn print_fish_setup(use_fzf: bool) -> Result<(), AppError> {
   let setup = include_str!("setup.fish");
+  let basic = include_str!("workon.fish");
+  let fzf = include_str!("workon-fzf.fish");
 
   println!("{}", setup);
+  if use_fzf {
+    println!("{}", fzf);
+  } else {
+    println!("{}", basic);
+  }
 
   Ok(())
 }
