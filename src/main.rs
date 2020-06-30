@@ -142,7 +142,7 @@ fn _main() -> i32 {
     ),
     "print-zsh-setup" => crate::shell::print_zsh_setup(subcommand_matches.is_present("with-fzf")),
     "print-bash-setup" => crate::shell::print_bash_setup(subcommand_matches.is_present("with-fzf")),
-    "print-fish-setup" => crate::shell::print_fish_setup(),
+    "print-fish-setup" => crate::shell::print_fish_setup(subcommand_matches.is_present("with-fzf")),
     "tag" => {
       let subsubcommand_name: String = subcommand_matches.subcommand_name().expect("subcommand matches enforced by clap.rs").to_owned();
       let subsubcommand_matches: clap::ArgMatches = subcommand_matches
