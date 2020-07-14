@@ -91,7 +91,7 @@ impl GithubApi {
     let mut initial_names = initial_page.repository_names;
 
     let mut next: Option<String> = initial_page.next_cursor;
-    while next.clone().is_some() {
+    while next.is_some() {
       let next_repos = self.page_repositories(org, next.clone(), include_archived)?;
       initial_names.extend(next_repos.repository_names);
       next = next_repos.next_cursor;
