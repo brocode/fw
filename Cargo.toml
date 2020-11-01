@@ -34,7 +34,7 @@ indicatif = "0"
 openssl-probe = "0.1"
 gitlab = "0"
 reqwest = { version = "0.10", features = ["json"] }
-tokio = { version = "0.2", features = ["full"] }
+tokio = { version = "0.3", features = ["full"] }
 
 # This is needed to make sure that Cargo statically links against
 # `libssl`. This should happen automatically, but it doesn't.
