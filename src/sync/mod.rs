@@ -93,7 +93,7 @@ pub fn synchronize(
     thread::spawn(move || {
       let mut job_result: Result<(), AppError> = Result::Ok(());
       loop {
-        if let Ok(project) = job_q.pop() {
+        if let Some(project) = job_q.pop() {
           pb.set_message(&project.name);
           let sync_result = sync_project(&job_config, &project, &job_logger, only_new, ff_merge);
           job_result = job_result.and(sync_result);
@@ -108,7 +108,7 @@ pub fn synchronize(
   m.join_and_clear().unwrap();
 
   let mut synchronize_result: Result<(), AppError> = Result::Ok(());
-  while let Ok(result) = job_results.pop() {
+  while let Some(result) = job_results.pop() {
     synchronize_result = synchronize_result.and(result);
   }
   synchronize_result

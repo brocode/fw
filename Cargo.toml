@@ -29,12 +29,12 @@ ansi_term = "0.12"
 atty = "0.2"
 rand = "0.7"
 spectral = "0.6"
-crossbeam = "0.7"
+crossbeam = "0"
 indicatif = "0"
 openssl-probe = "0.1"
 gitlab = "0"
-reqwest = { version = "0.10", features = ["json"] }
-tokio = { version = "0.2", features = ["full"] }
+reqwest = { version = "0", features = ["json"] }
+tokio = { version = "0", features = ["full"] }
 
 # This is needed to make sure that Cargo statically links against
 # `libssl`. This should happen automatically, but it doesn't.
