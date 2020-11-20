@@ -44,7 +44,7 @@ pub fn fw_path() -> Result<FwPaths, AppError> {
         c
       })
     })
-    .ok_or_else(|| AppError::InternalError("Cannot resolve fw config dir"))?;
+    .ok_or(AppError::InternalError("Cannot resolve fw config dir"))?;
 
   let mut settings = base.clone();
 
