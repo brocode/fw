@@ -1,13 +1,3 @@
-extern crate clap;
-
-#[macro_use]
-extern crate serde_derive;
-
-#[cfg(test)]
-extern crate maplit;
-
-#[cfg(test)]
-extern crate spectral;
 
 use crate::errors::AppError;
 use crate::util::logger_from_verbosity;
@@ -145,7 +135,7 @@ fn _main() -> i32 {
     "print-fish-setup" => crate::shell::print_fish_setup(subcommand_matches.is_present("with-fzf")),
     "tag" => {
       let subsubcommand_name: String = subcommand_matches.subcommand_name().expect("subcommand matches enforced by clap.rs").to_owned();
-      let subsubcommand_matches: clap::ArgMatches = subcommand_matches
+      let subsubcommand_matches: clap::ArgMatches<'_> = subcommand_matches
         .subcommand_matches(&subsubcommand_name)
         .expect("subcommand matches enforced by clap.rs")
         .to_owned();
@@ -172,7 +162,7 @@ fn _main() -> i32 {
 fn execute_tag_subcommand(
   maybe_config: Result<config::Config, AppError>,
   tag_command_name: &str,
-  tag_matches: &clap::ArgMatches,
+  tag_matches: &clap::ArgMatches<'_>,
   logger: &Logger,
 ) -> Result<(), AppError> {
   match tag_command_name {
