@@ -3,6 +3,7 @@
 
 use crate::errors::AppError;
 use serde::de::DeserializeOwned;
+use serde::{Deserialize, Serialize};
 
 pub fn github_api(token: &str) -> Result<GithubApi, AppError> {
   let client = reqwest::blocking::Client::new();

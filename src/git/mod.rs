@@ -48,13 +48,13 @@ fn username_from_git_url(url: &str) -> String {
   "git".to_string()
 }
 
-fn agent_callbacks(git_user: &str) -> git2::RemoteCallbacks {
+fn agent_callbacks(git_user: &str) -> git2::RemoteCallbacks<'_> {
   let mut remote_callbacks = RemoteCallbacks::new();
   remote_callbacks.credentials(move |_, _, _| git2::Cred::ssh_key_from_agent(git_user));
   remote_callbacks
 }
 
-fn agent_fetch_options(git_user: &str) -> git2::FetchOptions {
+fn agent_fetch_options(git_user: &str) -> git2::FetchOptions<'_> {
   let remote_callbacks = agent_callbacks(git_user);
   let mut proxy_options = ProxyOptions::new();
   proxy_options.auto();
@@ -65,14 +65,14 @@ fn agent_fetch_options(git_user: &str) -> git2::FetchOptions {
   fetch_options
 }
 
-fn builder(git_user: &str) -> RepoBuilder {
+fn builder(git_user: &str) -> RepoBuilder<'_> {
   let options = agent_fetch_options(git_user);
   let mut repo_builder = RepoBuilder::new();
   repo_builder.fetch_options(options);
   repo_builder
 }
 
-fn update_remote(project: &Project, remote: &mut Remote, project_logger: &Logger) -> Result<(), AppError> {
+fn update_remote(project: &Project, remote: &mut Remote<'_>, project_logger: &Logger) -> Result<(), AppError> {
   let git_user = username_from_git_url(&project.git);
   let remote_callbacks = agent_callbacks(&git_user);
   let mut proxy_options = ProxyOptions::new();
