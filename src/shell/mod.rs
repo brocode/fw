@@ -1,12 +1,15 @@
 use crate::errors::AppError;
 
-pub fn print_zsh_setup(use_fzf: bool) -> Result<(), AppError> {
+pub fn print_zsh_setup(use_fzf: bool, use_skim: bool) -> Result<(), AppError> {
   let fw_completion = include_str!("setup.zsh");
   let basic_workon = include_str!("workon.zsh");
   let fzf_workon = include_str!("workon-fzf.zsh");
+  let skim_workon = include_str!("workon-sk.zsh");
   println!("{}", fw_completion);
   if use_fzf {
     println!("{}", fzf_workon);
+  } if use_skim {
+    println!("{}",skim_workon);
   } else {
     println!("{}", basic_workon);
   }
