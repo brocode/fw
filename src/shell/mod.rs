@@ -17,14 +17,18 @@ pub fn print_zsh_setup(use_fzf: bool, use_skim: bool) -> Result<(), AppError> {
   Ok(())
 }
 
-pub fn print_bash_setup(use_fzf: bool) -> Result<(), AppError> {
+pub fn print_bash_setup(use_fzf: bool, use_skim: bool) -> Result<(), AppError> {
   let setup = include_str!("setup.bash");
   let basic = include_str!("workon.bash");
   let fzf = include_str!("workon-fzf.bash");
+  let skim = include_str!("workon-sk.bash");
 
   println!("{}", setup);
   if use_fzf {
     println!("{}", fzf);
+  }
+  if use_skim {
+    println!("{}", skim)
   } else {
     println!("{}", basic);
   }
@@ -32,14 +36,18 @@ pub fn print_bash_setup(use_fzf: bool) -> Result<(), AppError> {
   Ok(())
 }
 
-pub fn print_fish_setup(use_fzf: bool) -> Result<(), AppError> {
+pub fn print_fish_setup(use_fzf: bool, use_skim: bool) -> Result<(), AppError> {
   let setup = include_str!("setup.fish");
   let basic = include_str!("workon.fish");
   let fzf = include_str!("workon-fzf.fish");
+  let skim = include_str!("workon-sk.fish");
 
   println!("{}", setup);
   if use_fzf {
     println!("{}", fzf);
+  }
+  if use_skim {
+    println!("{}", skim);
   } else {
     println!("{}", basic);
   }
