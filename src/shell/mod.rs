@@ -8,8 +8,7 @@ pub fn print_zsh_setup(use_fzf: bool, use_skim: bool) -> Result<(), AppError> {
   println!("{}", fw_completion);
   if use_fzf {
     println!("{}", fzf_workon);
-  }
-  if use_skim {
+  } else if use_skim {
     println!("{}", skim_workon);
   } else {
     println!("{}", basic_workon);
@@ -26,8 +25,7 @@ pub fn print_bash_setup(use_fzf: bool, use_skim: bool) -> Result<(), AppError> {
   println!("{}", setup);
   if use_fzf {
     println!("{}", fzf);
-  }
-  if use_skim {
+  } else if use_skim {
     println!("{}", skim)
   } else {
     println!("{}", basic);
@@ -45,8 +43,7 @@ pub fn print_fish_setup(use_fzf: bool, use_skim: bool) -> Result<(), AppError> {
   println!("{}", setup);
   if use_fzf {
     println!("{}", fzf);
-  }
-  if use_skim {
+  } else if use_skim {
     println!("{}", skim);
   } else {
     println!("{}", basic);
