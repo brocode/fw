@@ -1,4 +1,3 @@
-
 use crate::errors::AppError;
 use crate::util::logger_from_verbosity;
 use slog::Logger;

@@ -68,8 +68,13 @@ For further information please have a look at our README https://github.com/broc
       SubCommand::with_name("print-zsh-setup")
         .about("Prints zsh completion code.")
         .arg(Arg::with_name("with-fzf").long("with-fzf").short("-f").help("Integrate with fzf"))
-        .arg(Arg::with_name("with-skim").long("with-skim").short("-s").help("Integrate with skim").conflicts_with("with-fzf")),
-
+        .arg(
+          Arg::with_name("with-skim")
+            .long("with-skim")
+            .short("-s")
+            .help("Integrate with skim")
+            .conflicts_with("with-fzf"),
+        ),
     )
     .subcommand(
       SubCommand::with_name("print-bash-setup")

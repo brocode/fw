@@ -8,8 +8,9 @@ pub fn print_zsh_setup(use_fzf: bool, use_skim: bool) -> Result<(), AppError> {
   println!("{}", fw_completion);
   if use_fzf {
     println!("{}", fzf_workon);
-  } if use_skim {
-    println!("{}",skim_workon);
+  }
+  if use_skim {
+    println!("{}", skim_workon);
   } else {
     println!("{}", basic_workon);
   }
