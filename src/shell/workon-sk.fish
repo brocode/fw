@@ -7,7 +7,7 @@ function __fish_fw_use_script
 end
 
 function __workon
-  set -l project (fw -q ls | sk --query=$argv[1] --color=light --preview-window=up:50% --preview='fw -q inspect {}' --no-mouse)
+  set -l project (fw -q ls | sk --query=$argv[1] --color=light --preview-window=up:50% --preview='fw -q inspect {}' --no-mouse --select-1)
   set -l script (fw -q gen-workon $argv[2] $project)
   __fish_fw_use_script $status $script
 end
