@@ -4,7 +4,7 @@
    cargo install fw
    #+END_SRC
 
-   If you are using `OSX` [[https://rustup.rs/][rustup]] is recommended but you [[https://github.com/Homebrew/homebrew-core/pull/14490][should be able to use brew too]].
+   If you are using OSX, [[https://rustup.rs/][rustup]] is recommended but you [[https://github.com/Homebrew/homebrew-core/pull/14490][should be able to use brew too]].
 
    If you need a deb or rpm package have a look at [[https://github.com/brocode/fw/releases][fw releases]]
 
@@ -14,9 +14,9 @@
 
 ** With fzf
    Since we integrate with [[https://github.com/junegunn/fzf][fzf]] it is recommended to use that or [[https://github.com/lotabout/skim][skim]] for the best possible experience (~workon~ and ~nworkon~ will be helm-style fuzzy finders).
-   Make sure ~fzf~ is installed and then add this to your ~zsh~ configuration:
+   Make sure ~fzf~ is installed and then add this to your shell configuration:
 
-   Zsh (This shell is used by the project maintainers. The support for other shells is untested by us)
+   Zsh (This shell is used by the project maintainers. The support for other shells is untested by us):
     #+BEGIN_SRC shell-script
     if [[ -x "$(command -v fw)" ]]; then
       if [[ -x "$(command -v fzf)" ]]; then
@@ -27,7 +27,7 @@
     fi;
     #+END_SRC
 
-  Bash
+  Bash:
     #+BEGIN_SRC shell-script
     if [[ -x "$(command -v fw)" ]]; then
       if [[ -x "$(command -v fzf)" ]]; then
@@ -38,7 +38,7 @@
     fi
     #+END_SRC
 
-  Fish
+  Fish:
     #+BEGIN_SRC shell-script
     if test -x (command -v fw)
       if test -x (command -v fzf)
@@ -56,8 +56,9 @@
   #+BEGIN_SRC shell-script
   cargo install skim
   #+END_SRC
-  Make sure ~skim~ is installed and then add this to your ~zsh~ configuration:
-  Zsh (This shell is used by the project maintainers. The support for other shells is untested by us)
+  Make sure ~skim~ is installed and then add this to your shell configuration:
+  
+  Zsh (This shell is used by the project maintainers. The support for other shells is untested by us):
     #+BEGIN_SRC shell-script
     if [[ -x "$(command -v fw)" ]]; then
       if [[ -x "$(command -v sk)" ]]; then
@@ -68,7 +69,7 @@
     fi;
     #+END_SRC
 
-  Bash
+  Bash:
     #+BEGIN_SRC shell-script
     if [[ -x "$(command -v fw)" ]]; then
       if [[ -x "$(command -v sk)" ]]; then
@@ -79,7 +80,7 @@
     fi
     #+END_SRC
 
-  Fish
+  Fish:
     #+BEGIN_SRC shell-script
     if test -x (command -v fw)
       if test -x (command -v sk)
@@ -93,22 +94,22 @@
 ** Without fzf or skim
    If you don't want ~fzf~ or ~skim~ integration:
 
-  Zsh (This shell is used by the project maintainers. The support for other shells is untested by us)
+  Zsh (This shell is used by the project maintainers. The support for other shells is untested by us):
     #+BEGIN_SRC shell-script
     if [[ -x "$(command -v fw)" ]]; then
       eval $(fw print-zsh-setup 2>/dev/null);
     fi;
     #+END_SRC
 
-  Bash
+  Bash:
     #+BEGIN_SRC shell-script
     [[ -x "$(command -v fw)" ]] && eval "$(fw print-bash-setup)"
     #+END_SRC
 
-  Fish
+  Fish:
     #+BEGIN_SRC shell-script
     test -x (command -v fw) && fw print-fish-setup | source
     #+END_SRC
 
-   In this case ~workon~ and ~nworkon~ will require an argument (the project) and will provide simple prefix-based autocompletion.
-   You should really use the ~fzf~ or ~skim~ integration instead it's much better!
+   In this case, ~workon~ and ~nworkon~ will require an argument (the project) and will provide simple prefix-based autocompletion.
+   You should really use the ~fzf~ or ~skim~ integration though, it's much better!
