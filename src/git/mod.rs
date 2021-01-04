@@ -41,7 +41,7 @@ fn username_from_git_url(url: &str) -> String {
     }
   }
   if let Ok(user) = env::var("USER") {
-    if user != "" {
+    if !user.is_empty() {
       return user;
     }
   }
@@ -203,7 +203,7 @@ mod tests {
     assert_that(&username_from_git_url(&"github.com:21re/fkbr.git")).is_equal_to(user.to_string());
     assert_that(&username_from_git_url(&"git://fkbr.org/sxoe.git")).is_equal_to(user.to_string());
 
-    assert_that(&username_from_git_url(&"https://github.com/brocode/fw.git")).is_equal_to(user.to_string());
+    assert_that(&username_from_git_url(&"https://github.com/brocode/fw.git")).is_equal_to(user);
     assert_that(&username_from_git_url(&"https://kuci@github.com/brocode/fw.git")).is_equal_to("kuci".to_string());
   }
 
