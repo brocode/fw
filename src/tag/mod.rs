@@ -18,7 +18,8 @@ pub fn list_tags(maybe_config: Result<Config, AppError>, maybe_project_name: Opt
     list_project_tags(&config, &project_name)
   } else {
     debug!(logger, "Listing tags");
-    list_all_tags(config)
+    list_all_tags(config);
+    Ok(())
   }
 }
 
@@ -44,13 +45,12 @@ pub fn delete_tag(maybe_config: Result<Config, AppError>, tag_name: &str, logger
   }
 }
 
-fn list_all_tags(config: Config) -> Result<(), AppError> {
+fn list_all_tags(config: Config) {
   if let Some(tags) = config.settings.tags {
     for tag_name in tags.keys() {
       println!("{}", tag_name);
     }
   }
-  Ok(())
 }
 
 pub fn add_tag(config: &Config, project_name: String, tag_name: String, logger: &Logger) -> Result<(), AppError> {
