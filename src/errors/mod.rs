@@ -5,7 +5,7 @@ use std::time::SystemTimeError;
 
 #[derive(Debug)]
 pub enum AppError {
-  IO(io::Error),
+  Io(io::Error),
   UserError(String),
   RuntimeError(String),
   BadJson(serde_json::Error),
@@ -42,7 +42,7 @@ impl AppError {
 impl fmt::Display for AppError {
   fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
     match *self {
-      AppError::IO(ref err) => write!(f, "IO error: {}", err),
+      AppError::Io(ref err) => write!(f, "Io error: {}", err),
       AppError::UserError(ref str) => write!(f, "User error: {}", str),
       AppError::RuntimeError(ref str) => write!(f, "Runtime error: {}", str),
       AppError::BadJson(ref err) => write!(f, "JSON error: {}", err),
@@ -62,7 +62,7 @@ impl Error for AppError {
   #[allow(deprecated)]
   fn description(&self) -> &str {
     match *self {
-      AppError::IO(ref err) => err.description(),
+      AppError::Io(ref err) => err.description(),
       AppError::UserError(ref str) | AppError::RuntimeError(ref str) => str.as_ref(),
       AppError::BadJson(ref err) => err.description(),
       AppError::InternalError(str) => str,
@@ -78,7 +78,7 @@ impl Error for AppError {
 
   fn cause(&self) -> Option<&dyn Error> {
     match *self {
-      AppError::IO(ref err) => Some(err),
+      AppError::Io(ref err) => Some(err),
       AppError::UserError(_) | AppError::RuntimeError(_) | AppError::InternalError(_) => None,
       AppError::BadJson(ref err) => Some(err),
       AppError::ClockError(ref err) => Some(err),
@@ -99,7 +99,7 @@ impl From<core::num::ParseIntError> for AppError {
 }
 
 app_error_from!(git2::Error, GitError);
-app_error_from!(io::Error, IO);
+app_error_from!(io::Error, Io);
 app_error_from!(serde_json::Error, BadJson);
 app_error_from!(regex::Error, Regex);
 app_error_from!(toml::ser::Error, TomlSerError);

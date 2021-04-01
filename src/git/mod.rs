@@ -14,7 +14,7 @@ use std::borrow::ToOwned;
 
 use std::env;
 
-use std::path::PathBuf;
+use std::path::Path;
 
 pub fn repo_name_from_url(url: &str) -> Result<&str, AppError> {
   let last_fragment = url.rsplit('/').next().ok_or_else(|| {
@@ -93,7 +93,7 @@ fn update_remote(project: &Project, remote: &mut Remote<'_>, project_logger: &Lo
   Ok(())
 }
 
-pub fn update_project_remotes(project: &Project, path: &PathBuf, project_logger: &Logger, ff_merge: bool) -> Result<(), AppError> {
+pub fn update_project_remotes(project: &Project, path: &Path, project_logger: &Logger, ff_merge: bool) -> Result<(), AppError> {
   debug!(project_logger, "Update project remotes");
   let local: Repository = Repository::open(path).map_err(|error| {
     warn!(project_logger, "Error opening local repo"; "error" => format!("{}", error));
@@ -152,7 +152,7 @@ fn fast_forward_merge(local: &Repository, project_logger: &Logger) -> Result<(),
   Ok(())
 }
 
-pub fn clone_project(config: &Config, project: &Project, path: &PathBuf, project_logger: &Logger) -> Result<(), AppError> {
+pub fn clone_project(config: &Config, project: &Project, path: &Path, project_logger: &Logger) -> Result<(), AppError> {
   let shell = config.settings.get_shell_or_default();
   let git_user = username_from_git_url(&project.git);
   let mut repo_builder = builder(&git_user);

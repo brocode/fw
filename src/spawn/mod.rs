@@ -12,7 +12,7 @@ use std::borrow::ToOwned;
 use crate::util::random_colour;
 use slog::{debug, o};
 use std::io::{BufRead, BufReader};
-use std::path::PathBuf;
+use std::path::Path;
 use std::process::{Child, Command, Stdio};
 
 use std::thread;
@@ -52,7 +52,7 @@ fn is_stderr_a_tty() -> bool {
   atty::is(atty::Stream::Stderr)
 }
 
-pub fn spawn_maybe(shell: &[String], cmd: &str, workdir: &PathBuf, project_name: &str, colour: Colour, logger: &Logger) -> Result<(), AppError> {
+pub fn spawn_maybe(shell: &[String], cmd: &str, workdir: &Path, project_name: &str, colour: Colour, logger: &Logger) -> Result<(), AppError> {
   let program: &str = shell
     .first()
     .ok_or_else(|| AppError::UserError("shell entry in project settings must have at least one element".to_owned()))?;

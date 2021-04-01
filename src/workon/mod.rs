@@ -31,8 +31,7 @@ pub fn reworkon(maybe_config: Result<config::Config, AppError>, logger: &Logger)
   let config = maybe_config?;
   let project = current_project(&config, logger)?;
   let path = config.actual_path_to_project(&project, logger);
-  let mut commands: Vec<String> = vec![];
-  commands.push(format!("cd {}", path.to_string_lossy()));
+  let mut commands: Vec<String> = vec![format!("cd {}", path.to_string_lossy())];
   commands.extend_from_slice(&config.resolve_after_workon(logger, &project));
 
   debug!(logger, "Reworkon match: {:?} with command {:?}", project, commands);
@@ -53,8 +52,7 @@ pub fn gen(name: &str, maybe_config: Result<config::Config, AppError>, quick: bo
   if !canonical_project_path.exists() {
     Err(AppError::UserError(format!("project key {} found but path {} does not exist", name, path)))
   } else {
-    let mut commands: Vec<String> = vec![];
-    commands.push(format!("cd '{}'", path));
+    let mut commands: Vec<String> = vec![format!("cd '{}'", path)];
     if !quick {
       commands.extend_from_slice(&config.resolve_after_workon(logger, project))
     }

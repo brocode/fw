@@ -7,7 +7,7 @@ use std::borrow::ToOwned;
 use std::fs;
 use std::io;
 use std::io::Write;
-use std::path::PathBuf;
+use std::path::{PathBuf, Path};
 
 pub fn projectile(maybe_config: Result<Config, AppError>, logger: &Logger) -> Result<(), AppError> {
   let config: Config = maybe_config?;
@@ -25,7 +25,7 @@ pub fn projectile(maybe_config: Result<Config, AppError>, logger: &Logger) -> Re
   persist(logger, &home_dir, writer, projects_paths)
 }
 
-fn persist<W>(logger: &Logger, home_dir: &PathBuf, writer: W, paths: Vec<PathBuf>) -> Result<(), AppError>
+fn persist<W>(logger: &Logger, home_dir: &Path, writer: W, paths: Vec<PathBuf>) -> Result<(), AppError>
 where
   W: io::Write,
 {
@@ -33,7 +33,7 @@ where
   let mut buffer = io::BufWriter::new(writer);
   buffer.write_all(b"(")?;
   for path in paths {
-    let path = replace_path_with_tilde(&path, home_dir.clone()).unwrap_or(path);
+    let path = replace_path_with_tilde(&path, home_dir.to_path_buf()).unwrap_or(path);
     debug!(logger, "Writing projectile entry"; "entry" => &path);
     buffer.write_all(format!("\"{}/\"", path).as_bytes())?;
     buffer.write_all(b" ")?;
