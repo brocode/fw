@@ -2,6 +2,7 @@ use crate::errors::AppError;
 use crate::util::logger_from_verbosity;
 use slog::Logger;
 use slog::{crit, debug, o, warn};
+use std::collections::BTreeSet;
 use std::str::FromStr;
 use std::time::SystemTime;
 
@@ -63,7 +64,8 @@ fn _main() -> i32 {
       let after_workon: Option<String> = subcommand_matches.value_of("after-workon").map(str::to_string);
       let after_clone: Option<String> = subcommand_matches.value_of("after-clone").map(str::to_string);
       let override_path: Option<String> = subcommand_matches.value_of("override-path").map(str::to_string);
-      project::add_entry(config, name, url, after_workon, after_clone, override_path, &subcommand_logger)
+      let tags: Option<BTreeSet<String>> = subcommand_matches.values_of_lossy("tag").map(|v| v.into_iter().collect());
+      project::add_entry(config, name, url, after_workon, after_clone, override_path, tags, &subcommand_logger)
     }
     "remove" => project::remove_project(
       config,

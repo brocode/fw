@@ -177,6 +177,15 @@ For further information please have a look at our README https://github.com/broc
             .required(false),
         )
         .arg(
+          Arg::with_name("tag")
+            .long("tag")
+            .short("t")
+            .help("Add tag to project")
+            .required(false)
+            .takes_value(true)
+            .multiple(true),
+        )
+        .arg(
           Arg::with_name("after-clone")
             .value_name("after-clone")
             .long("after-clone")

@@ -16,6 +16,7 @@ pub fn add_entry(
   after_workon: Option<String>,
   after_clone: Option<String>,
   override_path: Option<String>,
+  tags: Option<BTreeSet<String>>,
   logger: &Logger,
 ) -> Result<(), AppError> {
   let name = maybe_name
@@ -32,13 +33,19 @@ pub fn add_entry(
     let default_after_clone = config.settings.default_after_clone.clone();
     let default_after_workon = config.settings.default_after_clone.clone();
 
+    let project_tags: Option<BTreeSet<String>> = if tags.is_some() && config.settings.default_tags.is_some() {
+      tags.zip(config.settings.default_tags).map(|(t1, t2)| t1.union(&t2).cloned().collect())
+    } else {
+      tags.or(config.settings.default_tags)
+    };
+
     config::write_project(&Project {
       git: url.to_owned(),
       name: name.to_owned(),
       after_clone: after_clone.or(default_after_clone),
       after_workon: after_workon.or(default_after_workon),
       override_path,
-      tags: config.settings.default_tags,
+      tags: project_tags,
       bare: None,
       additional_remotes: None,
       project_config_path: "default".to_string(),
