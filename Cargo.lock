@@ -73,6 +73,17 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "eab1c04a571841102f5345a8fc0f6bb3d31c315dec879b5c6e42e40ce7ffa34e"
 
 [[package]]
+name = "async-trait"
+version = "0.1.50"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "0b98e84bbb4cbcdd97da190ba0c58a1bb0de2c1fdf67d159e192ed766aeca722"
+dependencies = [
+ "proc-macro2 1.0.26",
+ "quote 1.0.9",
+ "syn 1.0.70",
+]
+
+[[package]]
 name = "atty"
 version = "0.2.14"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -667,14 +678,16 @@ dependencies = [
 
 [[package]]
 name = "gitlab"
-version = "0.1310.0"
+version = "0.1311.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e409d507066db0adc1cdeaff9bcea352c1f4658b2e30cb822878510519b1b298"
+checksum = "fe1f9208cd0885378da7cecaadfc615c275732b620e807522a3719b4752b1cb8"
 dependencies = [
+ "async-trait",
  "base64 0.12.3",
  "bytes 0.5.6",
  "chrono",
  "derive_builder",
+ "futures-util",
  "graphql_client",
  "http",
  "itertools",
