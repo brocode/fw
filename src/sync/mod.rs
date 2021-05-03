@@ -79,7 +79,7 @@ pub fn synchronize(
   let progress_bars = (1..=worker).map(|i| {
     let pb = m.add(ProgressBar::new(projects_count));
     pb.set_style(spinner_style.clone());
-    pb.set_prefix(&format!("[{}/{}]", i, worker));
+    pb.set_prefix(format!("[{}/{}]", i, worker));
     pb.set_message("initializing...");
     pb.tick();
     pb.enable_steady_tick(250);
@@ -94,7 +94,7 @@ pub fn synchronize(
       let mut job_result: Result<(), AppError> = Result::Ok(());
       loop {
         if let Some(project) = job_q.pop() {
-          pb.set_message(&project.name);
+          pb.set_message(project.name.to_string());
           let sync_result = sync_project(&job_config, &project, &job_logger, only_new, ff_merge);
           job_result = job_result.and(sync_result);
         } else {
