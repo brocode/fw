@@ -12,10 +12,9 @@ use std::path::{Path, PathBuf};
 pub fn projectile(maybe_config: Result<Config, AppError>, logger: &Logger) -> Result<(), AppError> {
   let config: Config = maybe_config?;
   let projects_paths: Vec<PathBuf> = config
-    .clone()
     .projects
-    .into_iter()
-    .map(|(_, p)| config.actual_path_to_project(&p, logger))
+    .iter()
+    .map(|(_, p)| config.actual_path_to_project(p, logger))
     .collect();
   let home_dir: PathBuf = dirs::home_dir().ok_or_else(|| AppError::UserError("$HOME not set".to_owned()))?;
   let mut projectile_bookmarks: PathBuf = home_dir.clone();
