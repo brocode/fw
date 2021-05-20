@@ -234,6 +234,7 @@ For further information please have a look at our README https://github.com/broc
         .arg(Arg::with_name("PROJECT_NAME").value_name("PROJECT_NAME").index(1).required(true)),
     )
     .subcommand(SubCommand::with_name("projectile").about("Write projectile bookmarks"))
+    .subcommand(SubCommand::with_name("intellij").about("Add projects to intellijs list of recent projects"))
     .subcommand(
       SubCommand::with_name("ls").about("List projects").arg(
         Arg::with_name("tag")
