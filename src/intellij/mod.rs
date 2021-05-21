@@ -32,7 +32,7 @@ pub fn intellij(maybe_config: Result<Config, AppError>, logger: &Logger) -> Resu
 fn get_recent_projects_candidates() -> Result<Vec<PathBuf>, AppError> {
   let mut recent_projects_candidates: Vec<PathBuf> = Vec::new();
   let mut jetbrains_dir: PathBuf = dirs::config_dir().ok_or(AppError::InternalError("Could not resolve user configuration directory"))?;
-  jetbrains_dir.push("Jetbrains");
+  jetbrains_dir.push("JetBrains");
   for entry in fs::read_dir(jetbrains_dir)? {
     let path = entry?.path();
     if let Some(directory_name) = path.file_name() {
