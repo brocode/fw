@@ -6,7 +6,7 @@ use std::io::Write;
 use std::option::Option::Some;
 use std::path::PathBuf;
 
-pub fn intellij(maybe_config: Result<Config, AppError>, logger: &Logger) -> Result<(), AppError> {
+pub fn intellij(maybe_config: Result<Config, AppError>, logger: &Logger, warn: bool) -> Result<(), AppError> {
   let config: Config = maybe_config?;
   let projects_paths: Vec<PathBuf> = config.projects.iter().map(|(_, p)| config.actual_path_to_project(p, logger)).collect();
   let recent_projects_candidates = get_recent_projects_candidates()?;
@@ -26,6 +26,13 @@ pub fn intellij(maybe_config: Result<Config, AppError>, logger: &Logger) -> Resu
     }
     writeln!(writer, "</map></option></component></application>")?;
   }
+
+  let number_of_projects = projects_paths.len();
+
+  if number_of_projects > 50 && warn {
+    print_number_of_projects_warning(number_of_projects)
+  }
+
   Ok(())
 }
 
@@ -48,4 +55,11 @@ fn get_recent_projects_candidates() -> Result<Vec<PathBuf>, AppError> {
     }
   }
   Ok(recent_projects_candidates)
+}
+
+fn print_number_of_projects_warning(number_of_projects: usize) {
+  print!("WARNING: {} ", number_of_projects);
+  print!("projects were added to the list. Intellij only lists 50 projects by default. You can change this in Intellij by going to ");
+  print!(r#""Help -> Find Action -> Registry -> ide.max.recent.projects" "#);
+  println!("and adjusting the number accordingly. A high number is recommended since it won't do any harm to the system.");
 }

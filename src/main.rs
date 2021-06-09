@@ -119,7 +119,7 @@ fn _main() -> i32 {
       &subcommand_logger,
     ),
     "projectile" => projectile::projectile(config, &subcommand_logger),
-    "intellij" => intellij::intellij(config, &subcommand_logger),
+    "intellij" => intellij::intellij(config, &subcommand_logger, !subcommand_matches.is_present("no-warn")),
     "print-path" => project::print_path(
       config,
       subcommand_matches.value_of("PROJECT_NAME").expect("argument required by clap.rs"),
