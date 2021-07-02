@@ -17,7 +17,7 @@
    or ~nvm~, fire up ~sbt~ shell, etc.)
 
    [[doc/example_config][Here's]] an example configuration that should be easy to grasp. The
-   default configuration location is =~/.config/fw=, and can be
+   default configuration location is =~/.config/fw= on *nix systems and =$HOME/Library/Application Support/fw= on MacOS. The location and can be
    overridden by ~FW_CONFIG_DIR~.
 
    Per default projects are cloned into
