@@ -18,7 +18,7 @@
 
    [[doc/example_config][Here's]] an example configuration that should be easy to grasp. 
    
-   The default configuration location under your system's config directory as described [[https://docs.rs/dirs/3.0.2/dirs/fn.config_dir.html][here]]. That is :
+   The default configuration location is located under your system's config directory as described [[https://docs.rs/dirs/3.0.2/dirs/fn.config_dir.html][here]]. That is :
    - Linux: =~/.config/fw=
    - MacOS: =$HOME/Library/Application Support/fw=
    - Windows: ={FOLDERID_RoamingAppData}\fw=
