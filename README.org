@@ -16,9 +16,14 @@
    working on a project (compile stuff, run ~make~, activate ~virtualenv~
    or ~nvm~, fire up ~sbt~ shell, etc.)
 
-   [[doc/example_config][Here's]] an example configuration that should be easy to grasp. The
-   default configuration location is =~/.config/fw= on *nix systems and =$HOME/Library/Application Support/fw= on MacOS. The location and can be
-   overridden by ~FW_CONFIG_DIR~.
+   [[doc/example_config][Here's]] an example configuration that should be easy to grasp. 
+   
+   The default configuration location under your system's config directory as described [[https://docs.rs/dirs/3.0.2/dirs/fn.config_dir.html][here]]. That is :
+   - Linux: =~/.config/fw=
+   - MacOS: =$HOME/Library/Application Support/fw=
+   - Windows: ={FOLDERID_RoamingAppData}\fw=
+   
+   The location and can be overridden by setting ~FW_CONFIG_DIR~.
 
    Per default projects are cloned into
    ~${settings.workspace}/${project.name}~ but you can override that by
