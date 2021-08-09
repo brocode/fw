@@ -205,7 +205,7 @@ fn execute_tag_subcommand(
       maybe_config,
       tag_matches.value_of("CMD").expect("argument required by clap.rs"),
       &tag_matches.value_of("tag-name").map(str::to_string).expect("argument enforced by clap.rs"),
-      &logger,
+      logger,
       &tag_matches.value_of("parallel").map(ToOwned::to_owned),
     ),
     _ => Result::Err(AppError::InternalError("Command not implemented")),

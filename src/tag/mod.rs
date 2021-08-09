@@ -170,7 +170,7 @@ pub fn autotag(maybe_config: Result<Config, AppError>, cmd: &str, tag_name: &str
         let project_logger = logger.new(o!("project" => p.name.clone()));
         let path = &config.actual_path_to_project(p, &project_logger);
         info!(project_logger, "Entering");
-        spawn_maybe(&shell, cmd, &path, &p.name, random_colour(), &project_logger)
+        spawn_maybe(&shell, cmd, path, &p.name, random_colour(), &project_logger)
       })
       .collect::<Vec<Result<(), AppError>>>();
 

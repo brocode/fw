@@ -239,9 +239,9 @@ fn write_new_config_with_projects(projects: BTreeMap<String, Project>, logger: &
     github_token: None,
     gitlab: None,
   };
-  config::write_settings(&settings, &logger)?;
+  config::write_settings(&settings, logger)?;
   for p in projects.values() {
-    config::write_project(&p)?;
+    config::write_project(p)?;
   }
   debug!(logger, "Finished"; "projects" => format!("{:?}", projects.len()));
   Ok(())
