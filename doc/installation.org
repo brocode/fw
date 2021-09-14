@@ -6,8 +6,6 @@
 
    If you are using OSX, [[https://rustup.rs/][rustup]] is recommended but you [[https://github.com/Homebrew/homebrew-core/pull/14490][should be able to use brew too]].
 
-   If you need a deb or rpm package have a look at [[https://github.com/brocode/fw/releases][fw releases]]
-
    If you're lucky enough to be an arch linux user: [[https://aur.archlinux.org/packages/fw/][AUR]]
 
    If you are running on Windows then you will have some issue compiling openssl. Please refer to compiling with rust-openssl [[https://github.com/sfackler/rust-openssl/blob/5948898e54882c0bedd12d87569eb4dbee5bbca7/README.md#windows-msvc][here]]

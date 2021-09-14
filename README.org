@@ -1,9 +1,8 @@
 [[./logo/fw_rgb.png]]
 
 * fw
-  [[https://travis-ci.org/brocode/fw][file:https://travis-ci.org/brocode/fw.svg?branch=master]]
+  [[https://github.com/brocode/fw/blob/nested-values/.github/workflows/rust.yml][file:https://github.com/brocode/fw/actions/workflows/rust.yml/badge.svg?branch=master]]
   [[https://crates.io/crates/fw][file:https://img.shields.io/crates/v/fw.svg]]
-  [[https://ci.appveyor.com/project/bomgar/fw/branch/master][Appveyor]]
 
   [[https://asciinema.org/a/222856][https://asciinema.org/a/222856.png]]
 
