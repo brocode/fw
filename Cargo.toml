@@ -13,7 +13,7 @@ include = ["src/**/*", "LICENSE", "README.org"]
 
 [dependencies]
 walkdir = "2"
-clap = "2.29"
+clap = "3.0"
 dirs = "4"
 slog-term = "2"
 sloggers = "2"
