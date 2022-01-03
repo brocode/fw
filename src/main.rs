@@ -42,7 +42,12 @@ fn _main() -> i32 {
         subcommand_matches.is_present("no-progress-bar"),
         subcommand_matches.is_present("only-new"),
         !subcommand_matches.is_present("no-fast-forward-merge"),
-        &subcommand_matches.values_of_lossy("tag").unwrap_or_default().into_iter().collect(),
+        &subcommand_matches
+          .values_of("tag")
+          .unwrap_or_default()
+          .into_iter()
+          .map(ToOwned::to_owned)
+          .collect(),
         worker,
         &subcommand_logger,
       )
@@ -64,7 +69,7 @@ fn _main() -> i32 {
       let after_workon: Option<String> = subcommand_matches.value_of("after-workon").map(str::to_string);
       let after_clone: Option<String> = subcommand_matches.value_of("after-clone").map(str::to_string);
       let override_path: Option<String> = subcommand_matches.value_of("override-path").map(str::to_string);
-      let tags: Option<BTreeSet<String>> = subcommand_matches.values_of_lossy("tag").map(|v| v.into_iter().collect());
+      let tags: Option<BTreeSet<String>> = subcommand_matches.values_of("tag").map(|v| v.into_iter().map(ToOwned::to_owned).collect());
       project::add_entry(config, name, url, after_workon, after_clone, override_path, tags, &subcommand_logger)
     }
     "remove" => project::remove_project(
@@ -128,7 +133,12 @@ fn _main() -> i32 {
     "foreach" => spawn::foreach(
       config,
       subcommand_matches.value_of("CMD").expect("argument required by clap.rs"),
-      &subcommand_matches.values_of_lossy("tag").unwrap_or_default().into_iter().collect(),
+      &subcommand_matches
+        .values_of("tag")
+        .unwrap_or_default()
+        .into_iter()
+        .map(ToOwned::to_owned)
+        .collect(),
       &subcommand_logger,
       &subcommand_matches.value_of("parallel").map(ToOwned::to_owned),
     ),
@@ -137,13 +147,21 @@ fn _main() -> i32 {
     "print-fish-setup" => crate::shell::print_fish_setup(subcommand_matches.is_present("with-fzf"), subcommand_matches.is_present("with-skim")),
     "tag" => {
       let subsubcommand_name: String = subcommand_matches.subcommand_name().expect("subcommand matches enforced by clap.rs").to_owned();
-      let subsubcommand_matches: clap::ArgMatches<'_> = subcommand_matches
+      let subsubcommand_matches: clap::ArgMatches = subcommand_matches
         .subcommand_matches(&subsubcommand_name)
         .expect("subcommand matches enforced by clap.rs")
         .to_owned();
       execute_tag_subcommand(config, &subsubcommand_name, &subsubcommand_matches, &subcommand_logger)
     }
-    "ls" => project::ls(config, &subcommand_matches.values_of_lossy("tag").unwrap_or_default().into_iter().collect()),
+    "ls" => project::ls(
+      config,
+      &subcommand_matches
+        .values_of("tag")
+        .unwrap_or_default()
+        .into_iter()
+        .map(ToOwned::to_owned)
+        .collect(),
+    ),
     _ => Err(AppError::InternalError("Command not implemented")),
   }
   .and_then(|_| now.elapsed().map_err(AppError::ClockError))
@@ -164,7 +182,7 @@ fn _main() -> i32 {
 fn execute_tag_subcommand(
   maybe_config: Result<config::Config, AppError>,
   tag_command_name: &str,
-  tag_matches: &clap::ArgMatches<'_>,
+  tag_matches: &clap::ArgMatches,
   logger: &Logger,
 ) -> Result<(), AppError> {
   match tag_command_name {

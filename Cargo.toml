@@ -13,7 +13,6 @@ include = ["src/**/*", "LICENSE", "README.org"]
 
 [dependencies]
 walkdir = "2"
-clap = "2.29"
 dirs = "4"
 slog-term = "2"
 sloggers = "2"
@@ -37,6 +36,10 @@ reqwest = { version = "0", features = ["json", "blocking"] }
 tokio = { version = "1", features = ["full"] }
 
 openssl = { version = "0.10", features = ["vendored"] }
+
+[dependencies.clap]
+version = "3"
+features = ["cargo"]
 
 [dependencies.slog]
 version = "2"
