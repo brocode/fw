@@ -36,7 +36,7 @@ For further information please have a look at our README https://github.com/broc
             .help("Filter projects by tag. More than 1 is allowed.")
             .required(false)
             .takes_value(true)
-            .multiple_values(true),
+            .multiple_occurrences(true),
         )
         .arg(
           Arg::new("no-progress-bar")
@@ -188,7 +188,7 @@ For further information please have a look at our README https://github.com/broc
             .help("Add tag to project")
             .required(false)
             .takes_value(true)
-            .multiple_values(true),
+            .multiple_occurrences(true),
         )
         .arg(
           Arg::new("after-clone")
@@ -230,7 +230,7 @@ For further information please have a look at our README https://github.com/broc
             .help("Filter projects by tag. More than 1 is allowed.")
             .required(false)
             .takes_value(true)
-            .multiple_values(true),
+            .multiple_occurrences(true),
         ),
     )
     .subcommand(
@@ -255,7 +255,7 @@ For further information please have a look at our README https://github.com/broc
           .help("Filter projects by tag. More than 1 is allowed.")
           .required(false)
           .takes_value(true)
-          .multiple_values(true),
+          .multiple_occurrences(true),
       ),
     )
     .subcommand(
