@@ -94,7 +94,7 @@ impl Error for AppError {
 
 impl From<core::num::ParseIntError> for AppError {
   fn from(err: core::num::ParseIntError) -> AppError {
-    AppError::UserError(format!("Type error: {}", err.to_string()))
+    AppError::UserError(format!("Type error: {}", err))
   }
 }
 
