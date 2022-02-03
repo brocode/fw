@@ -3,7 +3,7 @@ use man::prelude::*;
 fn main() {
   let page = Manual::new("fw")
     .about("A fast workspace manager")
-    .author(Author::new(""))
+    .author(Author::new("Brocode").email("bros@brocode.sh"))
     .flag(
       Flag::new()
         .short("-h")
