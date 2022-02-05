@@ -12,7 +12,6 @@ edition = "2018"
 include = ["src/**/*", "LICENSE", "README.org"]
 
 [dependencies]
-man = "0.3"
 walkdir = "2"
 dirs = "4"
 slog-term = "2"
