@@ -20,10 +20,8 @@ jobs:
           args: musl-strip target/x86_64-unknown-linux-musl/release/fw
       - run: cp ./target/x86_64-unknown-linux-musl/release/fw fw
       - run: sha512sum fw > fw.sha512sum
-      - uses: docker://messense/rust-musl-cross:x86_64-musl
-        with:
-          run: cd src/man
-          args: cargo run >> ../../fw.1
+      - run: cd src/man
+      - run: cargo run >> target/fw.1
       - id: github_release
         uses: actions/create-release@v1
         env:
@@ -47,7 +45,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.github_release.outputs.upload_url }}
-          asset_path: ./fw.1
+          asset_path: ./man/target/fw.1
           asset_name: fw.1
           asset_content_type: text/plain
       - uses: actions/upload-release-asset@v1
