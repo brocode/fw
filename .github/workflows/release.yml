@@ -22,6 +22,7 @@ jobs:
       - run: sha512sum fw > fw.sha512sum
       - run: cd src/man
       - run: cargo run >> target/fw.1
+      - run: cd ..
       - id: github_release
         uses: actions/create-release@v1
         env:
