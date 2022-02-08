@@ -20,7 +20,7 @@ jobs:
           args: musl-strip target/x86_64-unknown-linux-musl/release/fw
       - run: cp ./target/x86_64-unknown-linux-musl/release/fw fw
       - run: sha512sum fw > fw.sha512sum
-      - run: cd src/man
+      - run: cd man
       - run: cargo run >> fw.1
       - run: cd ..
       - id: github_release
