@@ -79,7 +79,7 @@ pub fn synchronize(
   let progress_bars = (1..=worker).map(|i| {
     let pb = m.add(ProgressBar::new(projects_count));
     pb.set_style(spinner_style.clone());
-    pb.set_prefix(format!("[{}/{}]", i, worker));
+    pb.set_prefix(format!("[{: >2}/{}]", i, worker));
     pb.set_message("initializing...");
     pb.tick();
     pb.enable_steady_tick(250);

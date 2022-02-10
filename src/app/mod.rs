@@ -64,7 +64,7 @@ For further information please have a look at our README https://github.com/broc
             .short('p')
             .number_of_values(1)
             .default_value("8")
-            .validator(|input| validate_number(input, 10))
+            .validator(|input| validate_number(input, 128))
             .help("Sets the count of worker")
             .takes_value(true),
         ),
@@ -220,7 +220,7 @@ For further information please have a look at our README https://github.com/broc
             .short('p')
             .help("Parallelism to use (default is set by rayon but probably equal to the number of cores)")
             .required(false)
-            .validator(|input| validate_number(input, 20))
+            .validator(|input| validate_number(input, 128))
             .takes_value(true),
         )
         .arg(
@@ -341,7 +341,7 @@ For further information please have a look at our README https://github.com/broc
                 .short('p')
                 .help("Parallelism to use (default is set by rayon but probably equal to the number of cores)")
                 .required(false)
-                .validator(|input| validate_number(input, 20))
+                .validator(|input| validate_number(input, 128))
                 .takes_value(true),
             ),
         )
