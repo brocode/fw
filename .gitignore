@@ -33,3 +33,5 @@ Session.vim
 ### VisualStudioCode ###
 .vscode/
 
+## generated man file
+man/fw.1
