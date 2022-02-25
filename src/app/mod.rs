@@ -1,4 +1,4 @@
-use clap::{crate_version, App, AppSettings, Arg};
+use clap::{crate_version, Command, Arg};
 
 fn validate_number(input: &str, max: i32) -> std::result::Result<(), String> {
   let i = input.parse::<i32>().map_err(|_e| format!("Expected a number. Was '{}'.", input))?;
@@ -9,15 +9,15 @@ fn validate_number(input: &str, max: i32) -> std::result::Result<(), String> {
   }
 }
 
-pub fn app<'a>() -> App<'a> {
-  App::new("fw")
+pub fn app<'a>() -> Command<'a> {
+  Command::new("fw")
     .version(crate_version!())
     .author("Brocode <bros@brocode.sh>")
     .about(
       "fast workspace manager. Config set by FW_CONFIG_DIR or default.
 For further information please have a look at our README https://github.com/brocode/fw/blob/master/README.org",
     )
-    .setting(AppSettings::SubcommandRequired)
+    .subcommand_required(true)
     .arg(
       Arg::new("v")
         .short('v')
@@ -27,7 +27,7 @@ For further information please have a look at our README https://github.com/broc
     )
     .arg(Arg::new("q").short('q').help("Make fw quiet"))
     .subcommand(
-      App::new("sync")
+      Command::new("sync")
         .about("Sync workspace. Clones projects or updates remotes for existing projects.")
         .arg(
           Arg::new("tag")
@@ -70,7 +70,7 @@ For further information please have a look at our README https://github.com/broc
         ),
     )
     .subcommand(
-      App::new("print-zsh-setup")
+      Command::new("print-zsh-setup")
         .about("Prints zsh completion code.")
         .arg(Arg::new("with-fzf").long("with-fzf").short('f').help("Integrate with fzf"))
         .arg(
@@ -82,7 +82,7 @@ For further information please have a look at our README https://github.com/broc
         ),
     )
     .subcommand(
-      App::new("print-bash-setup")
+      Command::new("print-bash-setup")
         .about("Prints bash completion code.")
         .arg(Arg::new("with-fzf").long("with-fzf").short('f').help("Integrate with fzf"))
         .arg(
@@ -94,7 +94,7 @@ For further information please have a look at our README https://github.com/broc
         ),
     )
     .subcommand(
-      App::new("print-fish-setup")
+      Command::new("print-fish-setup")
         .about("Prints fish completion code.")
         .arg(Arg::new("with-fzf").long("with-fzf").short('f').help("Integrate with fzf"))
         .arg(
@@ -106,22 +106,22 @@ For further information please have a look at our README https://github.com/broc
         ),
     )
     .subcommand(
-      App::new("setup")
+      Command::new("setup")
         .about("Setup config from existing workspace")
         .arg(Arg::new("WORKSPACE_DIR").value_name("WORKSPACE_DIR").index(1).required(true)),
     )
     .subcommand(
-      App::new("reworkon")
+      Command::new("reworkon")
         .aliases(&[".", "rw", "re", "fkbr"])
         .about("Re-run workon hooks for current dir (aliases: .|rw|re|fkbr)"),
     )
     .subcommand(
-      App::new("import")
+      Command::new("import")
         .about("Import existing git folder to fw")
         .arg(Arg::new("PROJECT_DIR").value_name("PROJECT_DIR").index(1).required(true)),
     )
     .subcommand(
-      App::new("org-import")
+      Command::new("org-import")
         .about(
           "Import all repositories from github org into fw. Token can be set in the settings file or provided via the environment variable FW_GITHUB_TOKEN",
         )
@@ -136,7 +136,7 @@ For further information please have a look at our README https://github.com/broc
         .arg(Arg::new("ORG_NAME").value_name("ORG_NAME").index(1).required(true)),
     )
     .subcommand(
-      App::new("gitlab-import")
+      Command::new("gitlab-import")
         .about("Import all owned repositories / your organizations repositories from gitlab into fw")
         .arg(
           Arg::new("include")
@@ -150,20 +150,20 @@ For further information please have a look at our README https://github.com/broc
         ),
     )
     .subcommand(
-      App::new("add-remote")
+      Command::new("add-remote")
         .about("Add remote to project")
         .arg(Arg::new("NAME").value_name("NAME").index(1).required(true))
         .arg(Arg::new("REMOTE_NAME").value_name("REMOTE_NAME").index(2).required(true))
         .arg(Arg::new("URL").value_name("URL").index(3).required(true)),
     )
     .subcommand(
-      App::new("remove-remote")
+      Command::new("remove-remote")
         .about("Removes remote from project (Only in the fw configuration. An existing remote will not be deleted by a sync)")
         .arg(Arg::new("NAME").value_name("NAME").index(1).required(true))
         .arg(Arg::new("REMOTE_NAME").value_name("REMOTE_NAME").index(2).required(true)),
     )
     .subcommand(
-      App::new("add")
+      Command::new("add")
         .about("Add project to config")
         .arg(Arg::new("NAME").value_name("NAME").index(2).required(false))
         .arg(Arg::new("URL").value_name("URL").index(1).required(true))
@@ -199,7 +199,7 @@ For further information please have a look at our README https://github.com/broc
         ),
     )
     .subcommand(
-      App::new("remove")
+      Command::new("remove")
         .alias("rm")
         .about("Remove project from config")
         .arg(Arg::new("NAME").value_name("NAME").index(1).required(true))
@@ -212,7 +212,7 @@ For further information please have a look at our README https://github.com/broc
         ),
     )
     .subcommand(
-      App::new("foreach")
+      Command::new("foreach")
         .about("Run script on each project")
         .arg(Arg::new("CMD").value_name("CMD").required(true))
         .arg(
@@ -234,13 +234,13 @@ For further information please have a look at our README https://github.com/broc
         ),
     )
     .subcommand(
-      App::new("print-path")
+      Command::new("print-path")
         .about("Print project path on stdout")
         .arg(Arg::new("PROJECT_NAME").value_name("PROJECT_NAME").index(1).required(true)),
     )
-    .subcommand(App::new("projectile").about("Write projectile bookmarks"))
+    .subcommand(Command::new("projectile").about("Write projectile bookmarks"))
     .subcommand(
-      App::new("intellij").about("Add projects to intellijs list of recent projects").arg(
+      Command::new("intellij").about("Add projects to intellijs list of recent projects").arg(
         Arg::new("no-warn")
           .long("no-warn")
           .short('n')
@@ -248,7 +248,7 @@ For further information please have a look at our README https://github.com/broc
       ),
     )
     .subcommand(
-      App::new("ls").about("List projects").arg(
+      Command::new("ls").about("List projects").arg(
         Arg::new("tag")
           .long("tag")
           .short('t')
@@ -259,7 +259,7 @@ For further information please have a look at our README https://github.com/broc
       ),
     )
     .subcommand(
-      App::new("gen-workon")
+      Command::new("gen-workon")
         .about("Generate sourceable shell code to work on project")
         .arg(Arg::new("PROJECT_NAME").value_name("PROJECT_NAME").index(1).required(true))
         .arg(
@@ -269,9 +269,9 @@ For further information please have a look at our README https://github.com/broc
             .help("Don't generate post_workon shell code, only cd into the folder"),
         ),
     )
-    .subcommand(App::new("gen-reworkon").about("Generate sourceable shell code to re-work on project"))
+    .subcommand(Command::new("gen-reworkon").about("Generate sourceable shell code to re-work on project"))
     .subcommand(
-      App::new("inspect")
+      Command::new("inspect")
         .about("Inspect project")
         .arg(Arg::new("PROJECT_NAME").value_name("PROJECT_NAME").index(1).required(true))
         .arg(
@@ -283,7 +283,7 @@ For further information please have a look at our README https://github.com/broc
         ),
     )
     .subcommand(
-      App::new("update")
+      Command::new("update")
         .about("Modifies project settings.")
         .arg(Arg::new("NAME").value_name("NAME").required(true))
         .arg(Arg::new("git").value_name("URL").long("git-url").takes_value(true).required(false))
@@ -310,29 +310,29 @@ For further information please have a look at our README https://github.com/broc
         ),
     )
     .subcommand(
-      App::new("tag")
+      Command::new("tag")
         .alias("tags")
         .about("Allows working with tags.")
         .subcommand(
-          App::new("ls")
+          Command::new("ls")
             .alias("list")
             .about("Lists tags")
             .arg(Arg::new("PROJECT_NAME").value_name("PROJECT_NAME").required(false)),
         )
         .subcommand(
-          App::new("tag-project")
+          Command::new("tag-project")
             .about("Add tag to project")
             .arg(Arg::new("PROJECT_NAME").value_name("PROJECT_NAME").required(true))
             .arg(Arg::new("tag-name").value_name("tag").required(true)),
         )
         .subcommand(
-          App::new("untag-project")
+          Command::new("untag-project")
             .about("Removes tag from project")
             .arg(Arg::new("PROJECT_NAME").value_name("PROJECT_NAME").required(true))
             .arg(Arg::new("tag-name").value_name("tag").required(true)),
         )
         .subcommand(
-          App::new("autotag")
+          Command::new("autotag")
             .about("tags projects when CMD returns exit code 0")
             .arg(Arg::new("tag-name").value_name("tag").required(true))
             .arg(Arg::new("CMD").value_name("CMD").required(true))
@@ -346,17 +346,17 @@ For further information please have a look at our README https://github.com/broc
             ),
         )
         .subcommand(
-          App::new("inspect")
+          Command::new("inspect")
             .about("Inspect a tag")
             .arg(Arg::new("tag-name").value_name("tag name").required(true)),
         )
         .subcommand(
-          App::new("rm")
+          Command::new("rm")
             .about("Deletes a tag. Will not untag projects.")
             .arg(Arg::new("tag-name").value_name("tag name").required(true)),
         )
         .subcommand(
-          App::new("add")
+          Command::new("add")
             .alias("update")
             .alias("create")
             .about("Creates a new tag. Replaces existing.")
