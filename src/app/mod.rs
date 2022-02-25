@@ -1,4 +1,4 @@
-use clap::{crate_version, Command, Arg};
+use clap::{crate_version, Arg, Command};
 
 fn validate_number(input: &str, max: i32) -> std::result::Result<(), String> {
   let i = input.parse::<i32>().map_err(|_e| format!("Expected a number. Was '{}'.", input))?;
