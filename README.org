@@ -3,6 +3,7 @@
 * fw
   [[https://github.com/brocode/fw/blob/nested-values/.github/workflows/rust.yml][file:https://github.com/brocode/fw/actions/workflows/rust.yml/badge.svg?branch=master]]
   [[https://crates.io/crates/fw][file:https://img.shields.io/crates/v/fw.svg]]
+  [[https://rawkode.chat/][file:https://img.shields.io/discord/730728064031653999.svg]]
 
   [[https://asciinema.org/a/222856][https://asciinema.org/a/222856.png]]
 
@@ -15,13 +16,13 @@
    working on a project (compile stuff, run ~make~, activate ~virtualenv~
    or ~nvm~, fire up ~sbt~ shell, etc.)
 
-   [[doc/example_config][Here's]] an example configuration that should be easy to grasp. 
-   
+   [[doc/example_config][Here's]] an example configuration that should be easy to grasp.
+
    The default configuration location is located under your system's config directory as described [[https://docs.rs/dirs/3.0.2/dirs/fn.config_dir.html][here]]. That is :
    - Linux: =~/.config/fw=
    - MacOS: =$HOME/Library/Application Support/fw=
    - Windows: ={FOLDERID_RoamingAppData}\fw=
-   
+
    The location and can be overridden by setting ~FW_CONFIG_DIR~.
 
    Per default projects are cloned into
@@ -42,6 +43,10 @@
     - ZERO overhead project switching with the ~workon~ function (need to activate ~nvm~? Run ~sbt~? Set LCD brightness to 100%? ~fw~ will do all that for you)
     - zsh completions on the project names for ~workon~
     - generate projectile configuration for all your project (no need to ~projectile-add-known-project~ every time you clone some shit, it will just work)
+
+** Discord
+   In the case you want to talk about new features or give us direct feedback,
+   you can join the [[https://rawkode.chat/][Discord]] (Thanks [[https://github.com/rawkode][@rawkode]]) in the channel ~fw~.
 
 ** [[doc/installation.org][Installation]]
 ** [[doc/usage.org][Usage]]
