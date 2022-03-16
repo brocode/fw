@@ -64,8 +64,8 @@ impl GithubApi {
   fn query<T: DeserializeOwned>(&self, query: &str) -> Result<T, AppError> {
     //escaping new lines and quotation marks for json
     let mut escaped = query.to_string();
-    escaped = escaped.replace("\n", "\\n");
-    escaped = escaped.replace("\"", "\\\"");
+    escaped = escaped.replace('\n', "\\n");
+    escaped = escaped.replace('\"', "\\\"");
 
     let mut q = String::from("{ \"query\": \"");
     q.push_str(&escaped);

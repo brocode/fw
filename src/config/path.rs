@@ -52,7 +52,7 @@ pub fn fw_path() -> Result<FwPaths, AppError> {
     .map(|s| s.to_string_lossy().to_string())
     .map(|s| format!("{}_", s))
     .unwrap_or_default()
-    .replace("/", "");
+    .replace('/', "");
 
   settings.push(format!("{}settings.toml", env));
 

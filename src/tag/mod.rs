@@ -25,12 +25,12 @@ pub fn list_tags(maybe_config: Result<Config, AppError>, maybe_project_name: Opt
 
 pub fn delete_tag(maybe_config: Result<Config, AppError>, tag_name: &str, logger: &Logger) -> Result<(), AppError> {
   let config: Config = maybe_config?;
-  let tags: BTreeMap<String, Tag> = config.settings.tags.unwrap_or_else(BTreeMap::new);
+  let tags: BTreeMap<String, Tag> = config.settings.tags.unwrap_or_default();
 
   // remove tags from projects
   for mut project in config.projects.values().cloned() {
     info!(logger, "Remove tag from project"; "tag" => &tag_name, "project" => &project.name);
-    let mut new_tags: BTreeSet<String> = project.tags.clone().unwrap_or_else(BTreeSet::new);
+    let mut new_tags: BTreeSet<String> = project.tags.clone().unwrap_or_default();
     if new_tags.remove(tag_name) {
       project.tags = Some(new_tags);
       config::write_project(&project)?;
@@ -56,9 +56,9 @@ fn list_all_tags(config: Config) {
 pub fn add_tag(config: &Config, project_name: String, tag_name: String, logger: &Logger) -> Result<(), AppError> {
   if let Some(mut project) = config.projects.get(&project_name).cloned() {
     info!(logger, "Add tag to project"; "tag" => &tag_name, "project" => &project_name);
-    let tags: BTreeMap<String, Tag> = config.settings.tags.clone().unwrap_or_else(BTreeMap::new);
+    let tags: BTreeMap<String, Tag> = config.settings.tags.clone().unwrap_or_default();
     if tags.contains_key(&tag_name) {
-      let mut new_tags: BTreeSet<String> = project.tags.clone().unwrap_or_else(BTreeSet::new);
+      let mut new_tags: BTreeSet<String> = project.tags.clone().unwrap_or_default();
       new_tags.insert(tag_name);
       project.tags = Some(new_tags);
       config::write_project(&project)?;
@@ -81,7 +81,7 @@ pub fn create_tag(
   logger: &Logger,
 ) -> Result<(), AppError> {
   let config: Config = maybe_config?;
-  let tags: BTreeMap<String, Tag> = config.settings.tags.unwrap_or_else(BTreeMap::new);
+  let tags: BTreeMap<String, Tag> = config.settings.tags.unwrap_or_default();
   info!(logger, "Create tag");
 
   if tags.contains_key(&tag_name) {
@@ -102,7 +102,7 @@ pub fn create_tag(
 
 pub fn inspect_tag(maybe_config: Result<Config, AppError>, tag_name: &str) -> Result<(), AppError> {
   let config: Config = maybe_config?;
-  let tags: BTreeMap<String, Tag> = config.settings.tags.unwrap_or_else(BTreeMap::new);
+  let tags: BTreeMap<String, Tag> = config.settings.tags.unwrap_or_default();
   if let Some(tag) = tags.get(tag_name) {
     println!("{}", Style::new().underline().bold().paint(tag_name));
     println!("{:<20}: {}", "config path", tag.tag_config_path);
@@ -129,7 +129,7 @@ pub fn remove_tag(maybe_config: Result<Config, AppError>, project_name: String, 
 
   if let Some(mut project) = config.projects.get(&project_name).cloned() {
     info!(logger, "Remove tag from project"; "tag" => &tag_name, "project" => &project_name);
-    let mut new_tags: BTreeSet<String> = project.tags.clone().unwrap_or_else(BTreeSet::new);
+    let mut new_tags: BTreeSet<String> = project.tags.clone().unwrap_or_default();
     if new_tags.remove(tag_name) {
       project.tags = Some(new_tags);
       config::write_project(&project)
@@ -157,7 +157,7 @@ fn list_project_tags(config: &Config, project_name: &str) -> Result<(), AppError
 pub fn autotag(maybe_config: Result<Config, AppError>, cmd: &str, tag_name: &str, logger: &Logger, parallel_raw: &Option<String>) -> Result<(), AppError> {
   let config = maybe_config?;
 
-  let tags: BTreeMap<String, Tag> = config.settings.tags.clone().unwrap_or_else(BTreeMap::new);
+  let tags: BTreeMap<String, Tag> = config.settings.tags.clone().unwrap_or_default();
   if tags.contains_key(tag_name) {
     init_threads(parallel_raw, logger)?;
 
