@@ -31,7 +31,7 @@ pub fn add_entry(
     )))
   } else {
     let default_after_clone = config.settings.default_after_clone.clone();
-    let default_after_workon = config.settings.default_after_clone.clone();
+    let default_after_workon = config.settings.default_after_workon.clone();
 
     let project_tags: Option<BTreeSet<String>> = if tags.is_some() && config.settings.default_tags.is_some() {
       tags.zip(config.settings.default_tags).map(|(t1, t2)| t1.union(&t2).cloned().collect())
