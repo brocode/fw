@@ -11,7 +11,7 @@ use std::fs;
 
 pub fn add_entry(
   maybe_config: Result<Config, AppError>,
-  maybe_name: Option<&str>,
+  maybe_name: Option<String>,
   url: &str,
   after_workon: Option<String>,
   after_clone: Option<String>,
@@ -21,10 +21,10 @@ pub fn add_entry(
 ) -> Result<(), AppError> {
   let name = maybe_name
     .ok_or_else(|| AppError::UserError(format!("No project name specified for {}", url)))
-    .or_else(|_| repo_name_from_url(url))?;
+    .or_else(|_| repo_name_from_url(url).map(ToOwned::to_owned))?;
   let config: Config = maybe_config?;
-  info!(logger, "Prepare new project entry"; "name" => name, "url" => url);
-  if config.projects.contains_key(name) {
+  info!(logger, "Prepare new project entry"; "name" => &name, "url" => url);
+  if config.projects.contains_key(&name) {
     Err(AppError::UserError(format!(
       "Project key {} already exists, not gonna overwrite it for you",
       name
@@ -41,7 +41,7 @@ pub fn add_entry(
 
     config::write_project(&Project {
       git: url.to_owned(),
-      name: name.to_owned(),
+      name,
       after_clone: after_clone.or(default_after_clone),
       after_workon: after_workon.or(default_after_workon),
       override_path,

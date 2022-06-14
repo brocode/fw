@@ -1,9 +1,9 @@
 use crate::errors::AppError;
 use crate::util::logger_from_verbosity;
+use setup::ProjectState;
 use slog::Logger;
 use slog::{crit, debug, o, warn};
 use std::collections::BTreeSet;
-use std::str::FromStr;
 use std::time::SystemTime;
 
 fn main() {
@@ -15,7 +15,7 @@ fn main() {
 fn _main() -> i32 {
   let matches = crate::app::app().get_matches();
 
-  let logger = logger_from_verbosity(matches.occurrences_of("v"), matches.is_present("q"));
+  let logger = logger_from_verbosity(matches.get_one::<u8>("v").copied().unwrap_or_default().into(), matches.contains_id("q"));
 
   let config = config::read_config(&logger);
   if config.is_err() {
@@ -32,18 +32,15 @@ fn _main() -> i32 {
   let now = SystemTime::now();
   let result: Result<String, AppError> = match subcommand_name.as_ref() {
     "sync" => {
-      let worker = subcommand_matches
-        .value_of("parallelism")
-        .and_then(|i| i.parse::<i32>().ok())
-        .expect("enforced by clap.rs");
+      let worker = subcommand_matches.get_one::<i32>("parallelism").expect("enforced by clap.rs").to_owned();
 
       sync::synchronize(
         config,
-        subcommand_matches.is_present("no-progress-bar"),
-        subcommand_matches.is_present("only-new"),
-        !subcommand_matches.is_present("no-fast-forward-merge"),
+        subcommand_matches.contains_id("no-progress-bar"),
+        subcommand_matches.contains_id("only-new"),
+        !subcommand_matches.contains_id("no-fast-forward-merge"),
         &subcommand_matches
-          .values_of("tag")
+          .get_many::<String>("tag")
           .unwrap_or_default()
           .into_iter()
           .map(ToOwned::to_owned)
@@ -53,98 +50,96 @@ fn _main() -> i32 {
       )
     }
     "add-remote" => {
-      let name: &str = subcommand_matches.value_of("NAME").expect("argument required by clap.rs");
-      let remote_name: &str = subcommand_matches.value_of("REMOTE_NAME").expect("argument required by clap.rs");
-      let url: &str = subcommand_matches.value_of("URL").expect("argument required by clap.rs");
+      let name: &str = subcommand_matches.get_one::<String>("NAME").expect("argument required by clap.rs");
+      let remote_name: &str = subcommand_matches.get_one::<String>("REMOTE_NAME").expect("argument required by clap.rs");
+      let url: &str = subcommand_matches.get_one::<String>("URL").expect("argument required by clap.rs");
       project::add_remote(config, name, remote_name.to_string(), url.to_string())
     }
     "remove-remote" => {
-      let name: &str = subcommand_matches.value_of("NAME").expect("argument required by clap.rs");
-      let remote_name: &str = subcommand_matches.value_of("REMOTE_NAME").expect("argument required by clap.rs");
+      let name: &str = subcommand_matches.get_one::<String>("NAME").expect("argument required by clap.rs");
+      let remote_name: &str = subcommand_matches.get_one::<String>("REMOTE_NAME").expect("argument required by clap.rs");
       project::remove_remote(config, name, remote_name.to_string(), &subcommand_logger)
     }
     "add" => {
-      let name: Option<&str> = subcommand_matches.value_of("NAME");
-      let url: &str = subcommand_matches.value_of("URL").expect("argument required by clap.rs");
-      let after_workon: Option<String> = subcommand_matches.value_of("after-workon").map(str::to_string);
-      let after_clone: Option<String> = subcommand_matches.value_of("after-clone").map(str::to_string);
-      let override_path: Option<String> = subcommand_matches.value_of("override-path").map(str::to_string);
-      let tags: Option<BTreeSet<String>> = subcommand_matches.values_of("tag").map(|v| v.into_iter().map(ToOwned::to_owned).collect());
+      let name: Option<String> = subcommand_matches.get_one::<String>("NAME").map(ToOwned::to_owned);
+      let url: &str = subcommand_matches.get_one::<String>("URL").expect("argument required by clap.rs");
+      let after_workon: Option<String> = subcommand_matches.get_one::<String>("after-workon").map(ToOwned::to_owned);
+      let after_clone: Option<String> = subcommand_matches.get_one::<String>("after-clone").map(ToOwned::to_owned);
+      let override_path: Option<String> = subcommand_matches.get_one::<String>("override-path").map(ToOwned::to_owned);
+      let tags: Option<BTreeSet<String>> = subcommand_matches
+        .get_many::<String>("tag")
+        .map(|v| v.into_iter().map(ToOwned::to_owned).collect());
       project::add_entry(config, name, url, after_workon, after_clone, override_path, tags, &subcommand_logger)
     }
     "remove" => project::remove_project(
       config,
-      subcommand_matches.value_of("NAME").expect("argument required by clap.rs"),
-      subcommand_matches.is_present("purge-directory"),
+      subcommand_matches.get_one::<String>("NAME").expect("argument required by clap.rs"),
+      subcommand_matches.contains_id("purge-directory"),
       &subcommand_logger,
     ),
     "update" => {
-      let name: &str = subcommand_matches.value_of("NAME").expect("argument required by clap.rs");
-      let git: Option<String> = subcommand_matches.value_of("git").map(str::to_string);
-      let after_workon: Option<String> = subcommand_matches.value_of("after-workon").map(str::to_string);
-      let after_clone: Option<String> = subcommand_matches.value_of("after-clone").map(str::to_string);
-      let override_path: Option<String> = subcommand_matches.value_of("override-path").map(str::to_string);
+      let name: &str = subcommand_matches.get_one::<String>("NAME").expect("argument required by clap.rs");
+      let git: Option<String> = subcommand_matches.get_one::<String>("git").map(ToOwned::to_owned);
+      let after_workon: Option<String> = subcommand_matches.get_one::<String>("after-workon").map(ToOwned::to_owned);
+      let after_clone: Option<String> = subcommand_matches.get_one::<String>("after-clone").map(ToOwned::to_owned);
+      let override_path: Option<String> = subcommand_matches.get_one::<String>("override-path").map(ToOwned::to_owned);
       project::update_entry(config, name, git, after_workon, after_clone, override_path, &subcommand_logger)
     }
     "setup" => setup::setup(
-      subcommand_matches.value_of("WORKSPACE_DIR").expect("argument required by clap.rs"),
+      subcommand_matches.get_one::<String>("WORKSPACE_DIR").expect("argument required by clap.rs"),
       &subcommand_logger,
     ),
     "import" => setup::import(
       config,
-      subcommand_matches.value_of("PROJECT_DIR").expect("argument required by clap.rs"),
+      subcommand_matches.get_one::<String>("PROJECT_DIR").expect("argument required by clap.rs"),
       &subcommand_logger,
     ),
     "org-import" => setup::org_import(
       config,
-      subcommand_matches.value_of("ORG_NAME").expect("argument required by clap.rs"),
-      subcommand_matches.is_present("include-archived"),
+      subcommand_matches.get_one::<String>("ORG_NAME").expect("argument required by clap.rs"),
+      subcommand_matches.contains_id("include-archived"),
       &subcommand_logger,
     ),
     "gitlab-import" => {
-      let state = subcommand_matches
-        .value_of("include")
-        .expect("argument required by clap.rs")
-        .parse()
-        .expect("argument values restricted by clap.rs");
+      let state = *subcommand_matches.get_one::<ProjectState>("include").expect("argument required by clap.rs");
       setup::gitlab_import(config, state, &subcommand_logger)
     }
     "gen-workon" => workon::gen(
-      subcommand_matches.value_of("PROJECT_NAME").expect("argument required by clap.rs"),
+      subcommand_matches.get_one::<String>("PROJECT_NAME").expect("argument required by clap.rs"),
       config,
-      subcommand_matches.is_present("quick"),
+      subcommand_matches.contains_id("quick"),
       &subcommand_logger,
     ),
     "gen-reworkon" => workon::gen_reworkon(config, &subcommand_logger),
     "reworkon" => workon::reworkon(config, &subcommand_logger),
     "inspect" => project::inspect(
-      subcommand_matches.value_of("PROJECT_NAME").expect("argument required by clap.rs"),
+      subcommand_matches.get_one::<String>("PROJECT_NAME").expect("argument required by clap.rs"),
       config,
-      subcommand_matches.is_present("json"),
+      subcommand_matches.contains_id("json"),
       &subcommand_logger,
     ),
     "projectile" => projectile::projectile(config, &subcommand_logger),
-    "intellij" => intellij::intellij(config, &subcommand_logger, !subcommand_matches.is_present("no-warn")),
+    "intellij" => intellij::intellij(config, &subcommand_logger, !subcommand_matches.contains_id("no-warn")),
     "print-path" => project::print_path(
       config,
-      subcommand_matches.value_of("PROJECT_NAME").expect("argument required by clap.rs"),
+      subcommand_matches.get_one::<String>("PROJECT_NAME").expect("argument required by clap.rs"),
       &subcommand_logger,
     ),
     "foreach" => spawn::foreach(
       config,
-      subcommand_matches.value_of("CMD").expect("argument required by clap.rs"),
+      subcommand_matches.get_one::<String>("CMD").expect("argument required by clap.rs"),
       &subcommand_matches
-        .values_of("tag")
+        .get_many::<String>("tag")
         .unwrap_or_default()
         .into_iter()
         .map(ToOwned::to_owned)
         .collect(),
       &subcommand_logger,
-      &subcommand_matches.value_of("parallel").map(ToOwned::to_owned),
+      &subcommand_matches.get_one::<String>("parallel").map(ToOwned::to_owned),
     ),
-    "print-zsh-setup" => crate::shell::print_zsh_setup(subcommand_matches.is_present("with-fzf"), subcommand_matches.is_present("with-skim")),
-    "print-bash-setup" => crate::shell::print_bash_setup(subcommand_matches.is_present("with-fzf"), subcommand_matches.is_present("with-skim")),
-    "print-fish-setup" => crate::shell::print_fish_setup(subcommand_matches.is_present("with-fzf"), subcommand_matches.is_present("with-skim")),
+    "print-zsh-setup" => crate::shell::print_zsh_setup(subcommand_matches.contains_id("with-fzf"), subcommand_matches.contains_id("with-skim")),
+    "print-bash-setup" => crate::shell::print_bash_setup(subcommand_matches.contains_id("with-fzf"), subcommand_matches.contains_id("with-skim")),
+    "print-fish-setup" => crate::shell::print_fish_setup(subcommand_matches.contains_id("with-fzf"), subcommand_matches.contains_id("with-skim")),
     "tag" => {
       let subsubcommand_name: String = subcommand_matches.subcommand_name().expect("subcommand matches enforced by clap.rs").to_owned();
       let subsubcommand_matches: clap::ArgMatches = subcommand_matches
@@ -156,7 +151,7 @@ fn _main() -> i32 {
     "ls" => project::ls(
       config,
       &subcommand_matches
-        .values_of("tag")
+        .get_many::<String>("tag")
         .unwrap_or_default()
         .into_iter()
         .map(ToOwned::to_owned)
@@ -187,44 +182,65 @@ fn execute_tag_subcommand(
 ) -> Result<(), AppError> {
   match tag_command_name {
     "ls" => {
-      let maybe_project_name: Option<String> = tag_matches.value_of("PROJECT_NAME").map(str::to_string);
+      let maybe_project_name: Option<String> = tag_matches.get_one::<String>("PROJECT_NAME").map(ToOwned::to_owned);
       tag::list_tags(maybe_config, maybe_project_name, logger)
     }
     "tag-project" => {
-      let project_name: String = tag_matches.value_of("PROJECT_NAME").map(str::to_string).expect("argument enforced by clap.rs");
-      let tag_name: String = tag_matches.value_of("tag-name").map(str::to_string).expect("argument enforced by clap.rs");
+      let project_name: String = tag_matches
+        .get_one::<String>("PROJECT_NAME")
+        .map(ToOwned::to_owned)
+        .expect("argument enforced by clap.rs");
+      let tag_name: String = tag_matches
+        .get_one::<String>("tag-name")
+        .map(ToOwned::to_owned)
+        .expect("argument enforced by clap.rs");
       tag::add_tag(&maybe_config?, project_name, tag_name, logger)
     }
     "untag-project" => {
-      let project_name: String = tag_matches.value_of("PROJECT_NAME").map(str::to_string).expect("argument enforced by clap.rs");
-      let tag_name: String = tag_matches.value_of("tag-name").map(str::to_string).expect("argument enforced by clap.rs");
+      let project_name: String = tag_matches
+        .get_one::<String>("PROJECT_NAME")
+        .map(ToOwned::to_owned)
+        .expect("argument enforced by clap.rs");
+      let tag_name: String = tag_matches
+        .get_one::<String>("tag-name")
+        .map(ToOwned::to_owned)
+        .expect("argument enforced by clap.rs");
       tag::remove_tag(maybe_config, project_name, &tag_name, logger)
     }
     "inspect" => {
-      let tag_name: String = tag_matches.value_of("tag-name").map(str::to_string).expect("argument enforced by clap.rs");
+      let tag_name: String = tag_matches
+        .get_one::<String>("tag-name")
+        .map(ToOwned::to_owned)
+        .expect("argument enforced by clap.rs");
       tag::inspect_tag(maybe_config, &tag_name)
     }
     "rm" => {
-      let tag_name: String = tag_matches.value_of("tag-name").map(str::to_string).expect("argument enforced by clap.rs");
+      let tag_name: String = tag_matches
+        .get_one::<String>("tag-name")
+        .map(ToOwned::to_owned)
+        .expect("argument enforced by clap.rs");
       tag::delete_tag(maybe_config, &tag_name, logger)
     }
     "add" => {
-      let tag_name: String = tag_matches.value_of("tag-name").map(str::to_string).expect("argument enforced by clap.rs");
-      let after_workon: Option<String> = tag_matches.value_of("after-workon").map(str::to_string);
-      let after_clone: Option<String> = tag_matches.value_of("after-clone").map(str::to_string);
-      let tag_workspace: Option<String> = tag_matches.value_of("workspace").map(str::to_string);
-      let priority: Option<u8> = tag_matches
-        .value_of("priority")
-        .map(u8::from_str)
-        .map(|p| p.expect("invalid tag priority value, must be an u8"));
+      let tag_name: String = tag_matches
+        .get_one::<String>("tag-name")
+        .map(ToOwned::to_owned)
+        .expect("argument enforced by clap.rs");
+      let after_workon: Option<String> = tag_matches.get_one::<String>("after-workon").map(ToOwned::to_owned);
+      let after_clone: Option<String> = tag_matches.get_one::<String>("after-clone").map(ToOwned::to_owned);
+      let tag_workspace: Option<String> = tag_matches.get_one::<String>("workspace").map(ToOwned::to_owned);
+      let priority: Option<u8> = tag_matches.get_one::<u8>("priority").map(ToOwned::to_owned);
       tag::create_tag(maybe_config, tag_name, after_workon, after_clone, priority, tag_workspace, logger)
     }
     "autotag" => tag::autotag(
       maybe_config,
-      tag_matches.value_of("CMD").expect("argument required by clap.rs"),
-      &tag_matches.value_of("tag-name").map(str::to_string).expect("argument enforced by clap.rs"),
+      tag_matches.get_one::<String>("CMD").expect("argument required by clap.rs"),
+      &tag_matches
+        .get_one::<String>("tag-name")
+        .map(ToOwned::to_owned)
+        .expect("argument enforced by clap.rs"),
       logger,
-      &tag_matches.value_of("parallel").map(ToOwned::to_owned),
+      &tag_matches.get_one::<String>("parallel").map(ToOwned::to_owned),
     ),
     _ => Result::Err(AppError::InternalError("Command not implemented")),
   }

@@ -1,13 +1,6 @@
-use clap::{crate_version, Arg, Command};
+use clap::{builder::EnumValueParser, crate_version, value_parser, Arg, ArgAction, Command};
 
-fn validate_number(input: &str, max: i32) -> std::result::Result<(), String> {
-  let i = input.parse::<i32>().map_err(|_e| format!("Expected a number. Was '{}'.", input))?;
-  if i > 0 && i <= max {
-    Ok(())
-  } else {
-    Err(format!("Number must be between 1 and {}. Was {}.", max, input))
-  }
-}
+use crate::setup::ProjectState;
 
 pub fn app<'a>() -> Command<'a> {
   Command::new("fw")
@@ -22,7 +15,7 @@ For further information please have a look at our README https://github.com/broc
       Arg::new("v")
         .short('v')
         .takes_value(false)
-        .multiple_occurrences(true)
+        .action(ArgAction::Count)
         .help("Sets the level of verbosity"),
     )
     .arg(Arg::new("q").short('q').help("Make fw quiet"))
@@ -36,7 +29,7 @@ For further information please have a look at our README https://github.com/broc
             .help("Filter projects by tag. More than 1 is allowed.")
             .required(false)
             .takes_value(true)
-            .multiple_occurrences(true),
+            .action(ArgAction::Append),
         )
         .arg(
           Arg::new("no-progress-bar")
@@ -64,7 +57,7 @@ For further information please have a look at our README https://github.com/broc
             .short('p')
             .number_of_values(1)
             .default_value("8")
-            .validator(|input| validate_number(input, 128))
+            .value_parser(clap::builder::RangedI64ValueParser::<i32>::new().range(0..=128))
             .help("Sets the count of worker")
             .takes_value(true),
         ),
@@ -145,7 +138,7 @@ For further information please have a look at our README https://github.com/broc
             .short('a')
             .takes_value(true)
             .value_name("state")
-            .possible_values(&["active", "archived", "both"])
+            .value_parser(EnumValueParser::<ProjectState>::new())
             .default_value("active"),
         ),
     )
@@ -188,7 +181,7 @@ For further information please have a look at our README https://github.com/broc
             .help("Add tag to project")
             .required(false)
             .takes_value(true)
-            .multiple_occurrences(true),
+            .action(ArgAction::Append),
         )
         .arg(
           Arg::new("after-clone")
@@ -220,7 +213,7 @@ For further information please have a look at our README https://github.com/broc
             .short('p')
             .help("Parallelism to use (default is set by rayon but probably equal to the number of cores)")
             .required(false)
-            .validator(|input| validate_number(input, 128))
+            .value_parser(clap::builder::RangedI64ValueParser::<i32>::new().range(0..=128))
             .takes_value(true),
         )
         .arg(
@@ -230,7 +223,7 @@ For further information please have a look at our README https://github.com/broc
             .help("Filter projects by tag. More than 1 is allowed.")
             .required(false)
             .takes_value(true)
-            .multiple_occurrences(true),
+            .action(ArgAction::Append),
         ),
     )
     .subcommand(
@@ -255,7 +248,7 @@ For further information please have a look at our README https://github.com/broc
           .help("Filter projects by tag. More than 1 is allowed.")
           .required(false)
           .takes_value(true)
-          .multiple_occurrences(true),
+          .action(ArgAction::Append),
       ),
     )
     .subcommand(
@@ -341,7 +334,7 @@ For further information please have a look at our README https://github.com/broc
                 .short('p')
                 .help("Parallelism to use (default is set by rayon but probably equal to the number of cores)")
                 .required(false)
-                .validator(|input| validate_number(input, 128))
+                .value_parser(clap::builder::RangedI64ValueParser::<i32>::new().range(0..=128))
                 .takes_value(true),
             ),
         )
@@ -368,7 +361,14 @@ For further information please have a look at our README https://github.com/broc
                 .takes_value(true)
                 .required(false),
             )
-            .arg(Arg::new("priority").value_name("priority").long("priority").takes_value(true).required(false))
+            .arg(
+              Arg::new("priority")
+                .value_name("priority")
+                .long("priority")
+                .value_parser(value_parser!(u8))
+                .takes_value(true)
+                .required(false),
+            )
             .arg(
               Arg::new("workspace")
                 .value_name("workspace")
