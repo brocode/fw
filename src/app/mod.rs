@@ -306,6 +306,7 @@ For further information please have a look at our README https://github.com/broc
       Command::new("tag")
         .alias("tags")
         .about("Allows working with tags.")
+        .subcommand_required(true)
         .subcommand(
           Command::new("ls")
             .alias("list")
