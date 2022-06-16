@@ -17,6 +17,20 @@ pub enum ProjectState {
   Both,
 }
 
+impl clap::ValueEnum for ProjectState {
+  fn value_variants<'a>() -> &'a [Self] {
+    &[Self::Active, Self::Archived, Self::Both]
+  }
+
+  fn to_possible_value<'a>(&self) -> Option<clap::PossibleValue<'a>> {
+    match self {
+      Self::Active => Some(clap::PossibleValue::new("active")),
+      Self::Archived => Some(clap::PossibleValue::new("archived")),
+      Self::Both => Some(clap::PossibleValue::new("both")),
+    }
+  }
+}
+
 impl std::str::FromStr for ProjectState {
   type Err = AppError;
 
