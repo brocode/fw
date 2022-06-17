@@ -39,7 +39,7 @@ openssl = { version = "0.10", features = ["vendored"] }
 
 [dependencies.clap]
 version = "3"
-features = ["cargo"]
+features = ["cargo", "deprecated"]
 
 [dependencies.slog]
 version = "2"
