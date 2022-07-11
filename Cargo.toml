@@ -31,7 +31,7 @@ spectral = "0.6"
 crossbeam = "0"
 indicatif = "0"
 openssl-probe = "0.1"
-gitlab = "0.1500"
+gitlab = "0.1501"
 reqwest = { version = "0", features = ["json", "blocking"] }
 tokio = { version = "1", features = ["full"] }
 
