@@ -11,7 +11,7 @@ use indicatif::{MultiProgress, ProgressBar, ProgressDrawTarget, ProgressStyle};
 
 use slog::Drain;
 use slog::Logger;
-use slog::{o, warn, info};
+use slog::{info, o, warn};
 use std::borrow::ToOwned;
 
 use std::sync::Arc;
