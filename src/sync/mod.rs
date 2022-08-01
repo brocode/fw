@@ -1,6 +1,7 @@
 use crate::config::{project::Project, Config};
 use crate::errors::AppError;
 use std::collections::BTreeSet;
+use std::time::Duration;
 
 use crate::git::{clone_project, update_project_remotes};
 
@@ -10,7 +11,7 @@ use indicatif::{MultiProgress, ProgressBar, ProgressDrawTarget, ProgressStyle};
 
 use slog::Drain;
 use slog::Logger;
-use slog::{o, warn};
+use slog::{o, warn, info};
 use std::borrow::ToOwned;
 
 use std::sync::Arc;
@@ -66,7 +67,8 @@ pub fn synchronize(
 
   let spinner_style = ProgressStyle::default_spinner()
     .tick_chars("⣾⣽⣻⢿⡿⣟⣯⣷⣿")
-    .template("{prefix:.bold.dim} {spinner} {wide_msg}");
+    .template("{prefix:.bold.dim} {spinner} {wide_msg}")
+    .map_err(|e| AppError::RuntimeError(format!("Invalid Template: {}", e)))?;
 
   let m = MultiProgress::new();
   m.set_draw_target(if no_progress_bar {
@@ -82,35 +84,48 @@ pub fn synchronize(
     pb.set_prefix(format!("[{: >2}/{}]", i, worker));
     pb.set_message("initializing...");
     pb.tick();
-    pb.enable_steady_tick(250);
+    pb.enable_steady_tick(Duration::from_millis(250));
     pb
   });
+  let mut thread_handles: Vec<thread::JoinHandle<()>> = Vec::new();
   for pb in progress_bars {
     let job_q = Arc::clone(&q);
     let job_config = Arc::clone(&config);
     let job_logger = logger.clone();
     let job_result_queue = Arc::clone(&job_results);
-    thread::spawn(move || {
+    thread_handles.push(thread::spawn(move || {
       let mut job_result: Result<(), AppError> = Result::Ok(());
       loop {
         if let Some(project) = job_q.pop() {
           pb.set_message(project.name.to_string());
           let sync_result = sync_project(&job_config, &project, &job_logger, only_new, ff_merge);
+          let msg = match sync_result {
+            Ok(_) => format!("DONE: {}", project.name.to_string()),
+            Err(ref e) => format!("FAILED: {} - {}", project.name.to_string(), e),
+          };
+          pb.println(format!("{}", msg));
+          info!(job_logger, "{}", msg);
           job_result = job_result.and(sync_result);
         } else {
-          pb.finish_with_message("waiting...");
+          pb.finish_and_clear();
           break;
         }
       }
       job_result_queue.push(job_result);
-    });
+    }));
   }
-  m.join_and_clear().unwrap();
+
+  while let Some(cur_thread) = thread_handles.pop() {
+    cur_thread.join().unwrap();
+  }
 
   let mut synchronize_result: Result<(), AppError> = Result::Ok(());
   while let Some(result) = job_results.pop() {
     synchronize_result = synchronize_result.and(result);
   }
+
+  m.clear().unwrap();
+
   synchronize_result
 }
 

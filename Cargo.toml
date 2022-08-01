@@ -20,7 +20,7 @@ toml = "0.5"
 slog-async = "2"
 serde_json = "1.0.3"
 serde = {version = "1", features = ["derive"] }
-git2 = "0.14"
+git2 = "0.15"
 maplit = "1.0"
 rayon = "1"
 regex = "1"
@@ -31,7 +31,7 @@ spectral = "0.6"
 crossbeam = "0"
 indicatif = "0"
 openssl-probe = "0.1"
-gitlab = "0.1501"
+gitlab = "0.1502"
 reqwest = { version = "0", features = ["json", "blocking"] }
 tokio = { version = "1", features = ["full"] }
 

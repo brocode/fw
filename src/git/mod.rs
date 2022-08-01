@@ -9,7 +9,7 @@ use git2::{AutotagOption, Branch, Direction, FetchOptions, MergeAnalysis, ProxyO
 
 use regex::Regex;
 use slog::Logger;
-use slog::{debug, warn};
+use slog::{debug, info, warn};
 use std::borrow::ToOwned;
 
 use std::env;
@@ -80,12 +80,12 @@ fn update_remote(project: &Project, remote: &mut Remote<'_>, project_logger: &Lo
   remote
     .connect_auth(Direction::Fetch, Some(remote_callbacks), Some(proxy_options))
     .map_err(|error| {
-      warn!(project_logger, "Error connecting remote"; "error" => format!("{}", error), "project" => &project.name);
+      info!(project_logger, "Error connecting remote"; "error" => format!("{}", error), "project" => &project.name);
       AppError::GitError(error)
     })?;
   let mut options = agent_fetch_options(&git_user);
   remote.download::<String>(&[], Some(&mut options)).map_err(|error| {
-    warn!(project_logger, "Error downloading for remote"; "error" => format!("{}", error), "project" => &project.name);
+    info!(project_logger, "Error downloading for remote"; "error" => format!("{}", error), "project" => &project.name);
     AppError::GitError(error)
   })?;
   remote.disconnect()?;
