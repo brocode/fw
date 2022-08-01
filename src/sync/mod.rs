@@ -100,10 +100,10 @@ pub fn synchronize(
           pb.set_message(project.name.to_string());
           let sync_result = sync_project(&job_config, &project, &job_logger, only_new, ff_merge);
           let msg = match sync_result {
-            Ok(_) => format!("DONE: {}", project.name.to_string()),
-            Err(ref e) => format!("FAILED: {} - {}", project.name.to_string(), e),
+            Ok(_) => format!("DONE: {}", project.name),
+            Err(ref e) => format!("FAILED: {} - {}", project.name, e),
           };
-          pb.println(format!("{}", msg));
+          pb.println(&msg);
           info!(job_logger, "{}", msg);
           job_result = job_result.and(sync_result);
         } else {
