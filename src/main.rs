@@ -69,7 +69,8 @@ fn _main() -> i32 {
       let tags: Option<BTreeSet<String>> = subcommand_matches
         .get_many::<String>("tag")
         .map(|v| v.into_iter().map(ToOwned::to_owned).collect());
-      project::add_entry(config, name, url, after_workon, after_clone, override_path, tags, &subcommand_logger)
+      let trusted = subcommand_matches.contains_id("trusted");
+      project::add_entry(config, name, url, after_workon, after_clone, override_path, tags, trusted, &subcommand_logger)
     }
     "remove" => project::remove_project(
       config,

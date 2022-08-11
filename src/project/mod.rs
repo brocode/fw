@@ -17,6 +17,7 @@ pub fn add_entry(
   after_clone: Option<String>,
   override_path: Option<String>,
   tags: Option<BTreeSet<String>>,
+  trusted: bool,
   logger: &Logger,
 ) -> Result<(), AppError> {
   let name = maybe_name
@@ -48,6 +49,7 @@ pub fn add_entry(
       tags: project_tags,
       bare: None,
       additional_remotes: None,
+      trusted,
       project_config_path: "default".to_string(),
     })?;
     Ok(())
@@ -140,6 +142,7 @@ pub fn update_entry(
       override_path: override_path.or(old_project_config.override_path),
       tags: old_project_config.tags,
       bare: old_project_config.bare,
+      trusted: old_project_config.trusted,
       additional_remotes: old_project_config.additional_remotes,
       project_config_path: old_project_config.project_config_path,
     })?;

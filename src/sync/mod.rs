@@ -1,6 +1,10 @@
+use crate::config;
+use crate::config::metadata::Metadata;
 use crate::config::{project::Project, Config};
 use crate::errors::AppError;
 use std::collections::BTreeSet;
+use std::fs::read_to_string;
+use std::path::Path;
 use std::time::Duration;
 
 use crate::git::{clone_project, update_project_remotes};
@@ -32,12 +36,34 @@ fn sync_project(config: &Config, project: &Project, logger: &Logger, only_new: b
     if only_new {
       Ok(())
     } else {
-      update_project_remotes(project, &path, &project_logger, ff_merge)
+      update_project_remotes(project, &path, &project_logger, ff_merge).and_then(|_| synchronize_metadata_if_trusted(project, &path))
     }
   } else {
-    clone_project(config, project, &path, &project_logger)
+    clone_project(config, project, &path, &project_logger).and_then(|_| synchronize_metadata_if_trusted(project, &path))
   };
   result.map_err(|e| AppError::RuntimeError(format!("Failed to sync {}: {}", project.name, e)))
+}
+
+pub fn synchronize_metadata_if_trusted(project: &Project, path: &Path) -> Result<(), AppError> {
+  if !project.trusted {
+    Ok(())
+  } else {
+    let metadata_file = path.join("fw.toml");
+
+    if metadata_file.exists() {
+      let content = read_to_string(metadata_file)?;
+      let metadata = toml::from_str::<Metadata>(&content)?;
+
+      let new_project = Project {
+        tags: metadata.tags,
+        ..project.to_owned()
+      };
+
+      config::write_project(&new_project)
+    } else {
+      Ok(())
+    }
+  }
 }
 
 pub fn synchronize(
