@@ -189,7 +189,8 @@ For further information please have a look at our README https://github.com/broc
             .long("after-clone")
             .takes_value(true)
             .required(false),
-        ),
+        )
+        .arg(Arg::new("trusted").long("trusted").takes_value(false).required(false)),
     )
     .subcommand(
       Command::new("remove")

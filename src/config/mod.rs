@@ -9,6 +9,7 @@ use walkdir::WalkDir;
 
 static CONF_MODE_HEADER: &str = "# -*- mode: Conf; -*-\n";
 
+pub mod metadata;
 mod path;
 pub mod project;
 pub mod settings;
@@ -373,6 +374,7 @@ mod tests {
       override_path: None,
       additional_remotes: None,
       bare: None,
+      trusted: false,
       project_config_path: "".to_string(),
     };
     let project2 = Project {
@@ -384,6 +386,7 @@ mod tests {
       override_path: None,
       additional_remotes: None,
       bare: None,
+      trusted: false,
       project_config_path: "".to_string(),
     };
     let project3 = Project {
@@ -395,6 +398,7 @@ mod tests {
       override_path: None,
       additional_remotes: None,
       bare: None,
+      trusted: false,
       project_config_path: "".to_string(),
     };
     let project4 = Project {
@@ -406,6 +410,7 @@ mod tests {
       override_path: None,
       additional_remotes: None,
       bare: None,
+      trusted: false,
       project_config_path: "".to_string(),
     };
     let project5 = Project {
@@ -417,6 +422,7 @@ mod tests {
       override_path: None,
       additional_remotes: None,
       bare: None,
+      trusted: false,
       project_config_path: "".to_string(),
     };
     let tag1 = Tag {

@@ -145,6 +145,7 @@ pub fn gitlab_import(maybe_config: Result<Config, AppError>, state: ProjectState
       tags: tags.clone(),
       additional_remotes: None,
       bare: None,
+      trusted: false,
       project_config_path: "gitlab".to_string(),
     };
 
@@ -190,6 +191,7 @@ pub fn org_import(maybe_config: Result<Config, AppError>, org_name: &str, includ
       tags: tags.clone(),
       additional_remotes: None,
       bare: None,
+      trusted: false,
       project_config_path: org_name.to_string(),
     };
 
@@ -240,6 +242,7 @@ fn load_project(maybe_settings: Option<Settings>, path_to_repo: PathBuf, name: &
     additional_remotes: None, // TODO: use remotes
     tags: maybe_settings.and_then(|s| s.default_tags),
     bare: None,
+    trusted: false,
     project_config_path: "default".to_string(),
   })
 }

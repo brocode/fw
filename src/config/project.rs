@@ -13,6 +13,9 @@ pub struct Project {
   #[serde(skip)]
   pub name: String,
 
+  #[serde(default)]
+  pub trusted: bool,
+
   pub git: String,
   pub after_clone: Option<String>,
   pub after_workon: Option<String>,
@@ -39,6 +42,7 @@ impl Project {
         git: "git@...".to_string(),
       }]),
       bare: Some(false),
+      trusted: false,
       project_config_path: "".to_string(), // ignored
     }
   }
