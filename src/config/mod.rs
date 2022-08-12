@@ -9,7 +9,7 @@ use walkdir::WalkDir;
 
 static CONF_MODE_HEADER: &str = "# -*- mode: Conf; -*-\n";
 
-pub mod metadata;
+pub mod metadata_from_repository;
 mod path;
 pub mod project;
 pub mod settings;

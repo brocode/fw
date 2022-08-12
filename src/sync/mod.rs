@@ -1,5 +1,5 @@
 use crate::config;
-use crate::config::metadata::Metadata;
+use crate::config::metadata_from_repository::MetadataFromRepository;
 use crate::config::{project::Project, Config};
 use crate::errors::AppError;
 use std::collections::BTreeSet;
@@ -52,10 +52,10 @@ pub fn synchronize_metadata_if_trusted(project: &Project, path: &Path) -> Result
 
     if metadata_file.exists() {
       let content = read_to_string(metadata_file)?;
-      let metadata = toml::from_str::<Metadata>(&content)?;
+      let metadata_from_repository = toml::from_str::<MetadataFromRepository>(&content)?;
 
       let new_project = Project {
-        tags: metadata.tags,
+        tags: metadata_from_repository.tags,
         ..project.to_owned()
       };
 
