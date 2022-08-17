@@ -40,7 +40,14 @@ pub fn read_config(logger: &Logger) -> Result<Config, AppError> {
       let project_file = maybe_project_file?;
       if project_file.metadata()?.is_file() && !project_file.file_name().to_os_string().eq(".DS_Store") {
         let raw_project = read_to_string(project_file.path())?;
-        let mut project: Project = toml::from_str(&raw_project)?;
+        let mut project: Project = match toml::from_str(&raw_project) {
+          Ok(x) => Ok(x),
+          Err(e) => {
+            eprintln!("There is an issue in your config for project {}", project_file.file_name().to_string_lossy());
+            Err(e)
+          },
+        }?;
+
         project.name = project_file
           .file_name()
           .to_str()
