@@ -38,7 +38,7 @@ pub fn read_config(logger: &Logger) -> Result<Config, AppError> {
   if paths.projects.exists() {
     for maybe_project_file in WalkDir::new(&paths.projects).follow_links(true) {
       let project_file = maybe_project_file?;
-      if project_file.metadata()?.is_file() {
+      if project_file.metadata()?.is_file() && !project_file.file_name().to_os_string().eq(".DS_Store") {
         let raw_project = read_to_string(project_file.path())?;
         let mut project: Project = toml::from_str(&raw_project)?;
         project.name = project_file
@@ -67,7 +67,8 @@ pub fn read_config(logger: &Logger) -> Result<Config, AppError> {
   if paths.tags.exists() {
     for maybe_tag_file in WalkDir::new(&paths.tags).follow_links(true) {
       let tag_file = maybe_tag_file?;
-      if tag_file.metadata()?.is_file() {
+
+      if tag_file.metadata()?.is_file() && !tag_file.file_name().to_os_string().eq(".DS_Store") {
         let raw_tag = read_to_string(tag_file.path())?;
         let mut tag: Tag = toml::from_str(&raw_tag)?;
         let tag_name: String = tag_file
