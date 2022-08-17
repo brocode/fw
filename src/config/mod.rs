@@ -45,7 +45,7 @@ pub fn read_config(logger: &Logger) -> Result<Config, AppError> {
           Err(e) => {
             eprintln!("There is an issue in your config for project {}", project_file.file_name().to_string_lossy());
             Err(e)
-          },
+          }
         }?;
 
         project.name = project_file
