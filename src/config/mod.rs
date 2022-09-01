@@ -299,77 +299,76 @@ conscious choice and set the value."#;
 mod tests {
   use super::*;
   use maplit::btreeset;
-  use spectral::prelude::*;
 
   #[test]
   fn test_workon_from_tags() {
     let config = a_config();
     let logger = a_logger();
     let resolved = config.resolve_after_workon(&logger, config.projects.get("test1").unwrap());
-    assert_that(&resolved).is_equal_to(vec!["workon1".to_string(), "workon2".to_string()]);
+    assert_eq!(resolved, vec!["workon1".to_string(), "workon2".to_string()]);
   }
   #[test]
   fn test_workon_from_tags_prioritized() {
     let config = a_config();
     let logger = a_logger();
     let resolved = config.resolve_after_workon(&logger, config.projects.get("test5").unwrap());
-    assert_that(&resolved).is_equal_to(vec!["workon4".to_string(), "workon3".to_string()]);
+    assert_eq!(resolved, vec!["workon4".to_string(), "workon3".to_string()]);
   }
   #[test]
   fn test_after_clone_from_tags() {
     let config = a_config();
     let logger = a_logger();
     let resolved = config.resolve_after_clone(&logger, config.projects.get("test1").unwrap());
-    assert_that(&resolved).is_equal_to(vec!["clone1".to_string(), "clone2".to_string()]);
+    assert_eq!(resolved, vec!["clone1".to_string(), "clone2".to_string()]);
   }
   #[test]
   fn test_after_clone_from_tags_prioritized() {
     let config = a_config();
     let logger = a_logger();
     let resolved = config.resolve_after_clone(&logger, config.projects.get("test5").unwrap());
-    assert_that(&resolved).is_equal_to(vec!["clone4".to_string(), "clone3".to_string()]);
+    assert_eq!(resolved, vec!["clone4".to_string(), "clone3".to_string()]);
   }
   #[test]
   fn test_workon_from_tags_missing_one_tag_graceful() {
     let config = a_config();
     let logger = a_logger();
     let resolved = config.resolve_after_workon(&logger, config.projects.get("test2").unwrap());
-    assert_that(&resolved).is_equal_to(vec!["workon1".to_owned()]);
+    assert_eq!(resolved, vec!["workon1".to_owned()]);
   }
   #[test]
   fn test_workon_from_tags_missing_all_tags_graceful() {
     let config = a_config();
     let logger = a_logger();
     let resolved = config.resolve_after_workon(&logger, config.projects.get("test4").unwrap());
-    assert_that(&resolved).is_equal_to(vec![]);
+    assert_eq!(resolved, Vec::<String>::new());
   }
   #[test]
   fn test_after_clone_from_tags_missing_all_tags_graceful() {
     let config = a_config();
     let logger = a_logger();
     let resolved = config.resolve_after_clone(&logger, config.projects.get("test4").unwrap());
-    assert_that(&resolved).is_equal_to(vec![]);
+    assert_eq!(resolved, Vec::<String>::new());
   }
   #[test]
   fn test_after_clone_from_tags_missing_one_tag_graceful() {
     let config = a_config();
     let logger = a_logger();
     let resolved = config.resolve_after_clone(&logger, config.projects.get("test2").unwrap());
-    assert_that(&resolved).is_equal_to(vec!["clone1".to_owned()]);
+    assert_eq!(resolved, vec!["clone1".to_owned()]);
   }
   #[test]
   fn test_workon_override_from_project() {
     let config = a_config();
     let logger = a_logger();
     let resolved = config.resolve_after_workon(&logger, config.projects.get("test3").unwrap());
-    assert_that(&resolved).is_equal_to(vec!["workon1".to_string(), "workon override in project".to_owned()]);
+    assert_eq!(resolved, vec!["workon1".to_string(), "workon override in project".to_owned()]);
   }
   #[test]
   fn test_after_clone_override_from_project() {
     let config = a_config();
     let logger = a_logger();
     let resolved = config.resolve_after_clone(&logger, config.projects.get("test3").unwrap());
-    assert_that(&resolved).is_equal_to(vec!["clone1".to_string(), "clone override in project".to_owned()]);
+    assert_eq!(resolved, vec!["clone1".to_string(), "clone override in project".to_owned()]);
   }
 
   fn a_config() -> Config {

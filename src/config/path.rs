@@ -73,17 +73,16 @@ pub fn fw_path() -> Result<FwPaths, AppError> {
 #[cfg(test)]
 mod tests {
   use super::*;
-  use spectral::prelude::*;
 
   #[test]
   fn test_do_not_expand_path_without_tilde() {
     let path = PathBuf::from("/foo/bar");
-    assert_that(&expand_path(path.clone())).is_equal_to(&path);
+    assert_eq!(expand_path(path.clone()), path);
   }
   #[test]
   fn test_do_expand_path() {
     let path = PathBuf::from("~/foo/bar");
     let home = PathBuf::from("/my/home");
-    assert_that(&do_expand(path, Some(home))).is_equal_to(PathBuf::from("/my/home/foo/bar"));
+    assert_eq!(do_expand(path, Some(home)), PathBuf::from("/my/home/foo/bar"));
   }
 }

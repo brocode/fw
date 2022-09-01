@@ -191,38 +191,37 @@ fn init_additional_remotes(project: &Project, repository: Repository, project_lo
 #[cfg(test)]
 mod tests {
   use super::*;
-  use spectral::prelude::*;
 
   #[test]
   fn test_username_from_git_url() {
     let user = env::var("USER").unwrap();
-    assert_that(&username_from_git_url("git+ssh://git@fkbr.org:sxoe.git")).is_equal_to("git".to_string());
-    assert_that(&username_from_git_url("ssh://aur@aur.archlinux.org/fw.git")).is_equal_to("aur".to_string());
-    assert_that(&username_from_git_url("aur@github.com:21re/fkbr.git")).is_equal_to("aur".to_string());
-    assert_that(&username_from_git_url("aur_fkbr_1@github.com:21re/fkbr.git")).is_equal_to("aur_fkbr_1".to_string());
-    assert_that(&username_from_git_url("github.com:21re/fkbr.git")).is_equal_to(user.to_string());
-    assert_that(&username_from_git_url("git://fkbr.org/sxoe.git")).is_equal_to(user.to_string());
+    assert_eq!(username_from_git_url("git+ssh://git@fkbr.org:sxoe.git"), "git".to_string());
+    assert_eq!(username_from_git_url("ssh://aur@aur.archlinux.org/fw.git"), "aur".to_string());
+    assert_eq!(username_from_git_url("aur@github.com:21re/fkbr.git"), "aur".to_string());
+    assert_eq!(username_from_git_url("aur_fkbr_1@github.com:21re/fkbr.git"), "aur_fkbr_1".to_string());
+    assert_eq!(username_from_git_url("github.com:21re/fkbr.git"), user.to_string());
+    assert_eq!(username_from_git_url("git://fkbr.org/sxoe.git"), user.to_string());
 
-    assert_that(&username_from_git_url("https://github.com/brocode/fw.git")).is_equal_to(user);
-    assert_that(&username_from_git_url("https://kuci@github.com/brocode/fw.git")).is_equal_to("kuci".to_string());
+    assert_eq!(username_from_git_url("https://github.com/brocode/fw.git"), user);
+    assert_eq!(username_from_git_url("https://kuci@github.com/brocode/fw.git"), "kuci".to_string());
   }
 
   #[test]
   fn test_repo_name_from_url() {
     let https_url = "https://github.com/mriehl/fw";
     let name = repo_name_from_url(https_url).unwrap().to_owned();
-    assert_that(&name).is_equal_to("fw".to_owned());
+    assert_eq!(name, "fw".to_owned());
   }
   #[test]
   fn test_repo_name_from_ssh_pragma() {
     let ssh_pragma = "git@github.com:mriehl/fw.git";
     let name = repo_name_from_url(ssh_pragma).unwrap().to_owned();
-    assert_that(&name).is_equal_to("fw".to_owned());
+    assert_eq!(name, "fw".to_owned());
   }
   #[test]
   fn test_repo_name_from_ssh_pragma_with_multiple_git_endings() {
     let ssh_pragma = "git@github.com:mriehl/fw.git.git";
     let name = repo_name_from_url(ssh_pragma).unwrap().to_owned();
-    assert_that(&name).is_equal_to("fw.git".to_owned());
+    assert_eq!(name, "fw.git".to_owned());
   }
 }
