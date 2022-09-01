@@ -45,5 +45,3 @@ features = ["cargo", "deprecated"]
 version = "2"
 features = ["release_max_level_trace", "max_level_trace"]
 
-[dev-dependencies]
-spectral = "0.6"
