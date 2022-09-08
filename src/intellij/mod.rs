@@ -60,6 +60,6 @@ fn get_recent_projects_candidates() -> Result<Vec<PathBuf>, AppError> {
 fn print_number_of_projects_warning(number_of_projects: usize) {
   print!("WARNING: {} ", number_of_projects);
   print!("projects were added to the list. Intellij only lists 50 projects by default. You can change this in Intellij by going to ");
-  print!(r#""Help -> Find Action -> Registry -> ide.max.recent.projects" "#);
-  println!("and adjusting the number accordingly. A high number is recommended since it won't do any harm to the system.");
+  print!(r#"Settings -> Search for "recent" -> Pick the "Advanced Settings" -> adjust "Maximum number of recent projects"."#);
+  println!("A high number is recommended since it won't do any harm to the system.");
 }
