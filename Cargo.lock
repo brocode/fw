@@ -524,7 +524,7 @@ dependencies = [
 
 [[package]]
 name = "fw"
-version = "2.16.1-alpha.0"
+version = "2.16.1"
 dependencies = [
  "ansi_term",
  "atty",
