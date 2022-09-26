@@ -4,12 +4,12 @@ use crate::config::{project::Project, Config};
 use crate::errors::AppError;
 use crate::spawn::init_threads;
 use crate::spawn::spawn_maybe;
-use crate::util::random_colour;
-use ansi_term::Style;
+use crate::util::random_color;
 use rayon::prelude::*;
 use slog::Logger;
 use slog::{debug, info, o};
 use std::collections::{BTreeMap, BTreeSet};
+use yansi::Paint;
 
 pub fn list_tags(maybe_config: Result<Config, AppError>, maybe_project_name: Option<String>, logger: &Logger) -> Result<(), AppError> {
   let config: Config = maybe_config?;
@@ -104,7 +104,7 @@ pub fn inspect_tag(maybe_config: Result<Config, AppError>, tag_name: &str) -> Re
   let config: Config = maybe_config?;
   let tags: BTreeMap<String, Tag> = config.settings.tags.unwrap_or_default();
   if let Some(tag) = tags.get(tag_name) {
-    println!("{}", Style::new().underline().bold().paint(tag_name));
+    println!("{}", Paint::new(tag_name).bold().underline());
     println!("{:<20}: {}", "config path", tag.tag_config_path);
     println!("{:<20}: {}", "after workon", tag.after_workon.clone().unwrap_or_else(|| "".to_string()));
     println!("{:<20}: {}", "after clone", tag.after_clone.clone().unwrap_or_else(|| "".to_string()));
@@ -112,7 +112,7 @@ pub fn inspect_tag(maybe_config: Result<Config, AppError>, tag_name: &str) -> Re
     println!("{:<20}: {}", "workspace", tag.workspace.clone().unwrap_or_else(|| "".to_string()));
     println!("{:<20}: {}", "default", tag.default.map(|n| n.to_string()).unwrap_or_else(|| "".to_string()));
     println!();
-    println!("{}", Style::new().underline().bold().paint("projects".to_string()));
+    println!("{}", Paint::new("projects".to_string()).bold().underline());
     for project in config.projects.values().cloned() {
       if project.tags.unwrap_or_default().contains(tag_name) {
         println!("{}", project.name)
@@ -170,7 +170,7 @@ pub fn autotag(maybe_config: Result<Config, AppError>, cmd: &str, tag_name: &str
         let project_logger = logger.new(o!("project" => p.name.clone()));
         let path = &config.actual_path_to_project(p, &project_logger);
         info!(project_logger, "Entering");
-        spawn_maybe(&shell, cmd, path, &p.name, random_colour(), &project_logger)
+        spawn_maybe(&shell, cmd, path, &p.name, random_color(), &project_logger)
       })
       .collect::<Vec<Result<(), AppError>>>();
 

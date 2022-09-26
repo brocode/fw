@@ -1,4 +1,4 @@
-use ansi_term::Colour;
+use yansi::Color;
 
 use rand::seq::SliceRandom;
 
@@ -10,26 +10,26 @@ use sloggers::terminal::{Destination, TerminalLoggerBuilder};
 use sloggers::types::{Format, Severity};
 use sloggers::Build;
 
-pub static COLOURS: [Colour; 14] = [
-  Colour::Green,
-  Colour::Cyan,
-  Colour::Blue,
-  Colour::Yellow,
-  Colour::RGB(255, 165, 0),
-  Colour::RGB(255, 99, 71),
-  Colour::RGB(0, 153, 255),
-  Colour::RGB(102, 0, 102),
-  Colour::RGB(102, 0, 0),
-  Colour::RGB(153, 102, 51),
-  Colour::RGB(102, 153, 0),
-  Colour::RGB(0, 0, 102),
-  Colour::RGB(255, 153, 255),
-  Colour::Purple,
+pub static COLOURS: [Color; 14] = [
+  Color::Green,
+  Color::Cyan,
+  Color::Blue,
+  Color::Yellow,
+  Color::RGB(255, 165, 0),
+  Color::RGB(255, 99, 71),
+  Color::RGB(0, 153, 255),
+  Color::RGB(102, 0, 102),
+  Color::RGB(102, 0, 0),
+  Color::RGB(153, 102, 51),
+  Color::RGB(102, 153, 0),
+  Color::RGB(0, 0, 102),
+  Color::RGB(255, 153, 255),
+  Color::Magenta,
 ];
 
-pub fn random_colour() -> Colour {
+pub fn random_color() -> Color {
   let mut rng = rand::thread_rng();
-  COLOURS.choose(&mut rng).map(ToOwned::to_owned).unwrap_or(Colour::Black)
+  COLOURS.choose(&mut rng).map(ToOwned::to_owned).unwrap_or(Color::Black)
 }
 
 pub fn logger_from_verbosity(verbosity: u64, quiet: bool) -> Logger {
