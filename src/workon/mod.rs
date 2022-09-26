@@ -3,11 +3,11 @@ use crate::config::project::Project;
 use crate::errors::AppError;
 use crate::spawn::spawn_maybe;
 
-use ansi_term::Colour;
 use slog::debug;
 use slog::Logger;
 use std::borrow::ToOwned;
 use std::env;
+use yansi::Color;
 
 pub fn gen_reworkon(maybe_config: Result<config::Config, AppError>, logger: &Logger) -> Result<(), AppError> {
   let config = maybe_config?;
@@ -36,7 +36,7 @@ pub fn reworkon(maybe_config: Result<config::Config, AppError>, logger: &Logger)
 
   debug!(logger, "Reworkon match: {:?} with command {:?}", project, commands);
   let shell = config.settings.get_shell_or_default();
-  spawn_maybe(&shell, &commands.join(" && "), &path, &project.name, Colour::Yellow, logger)
+  spawn_maybe(&shell, &commands.join(" && "), &path, &project.name, Color::Yellow, logger)
 }
 
 pub fn gen(name: &str, maybe_config: Result<config::Config, AppError>, quick: bool, logger: &Logger) -> Result<(), AppError> {

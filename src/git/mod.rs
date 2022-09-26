@@ -2,7 +2,7 @@ use crate::config::{project::Project, Config};
 use crate::errors::AppError;
 
 use crate::spawn::spawn_maybe;
-use crate::util::random_colour;
+use crate::util::random_color;
 
 use git2::build::RepoBuilder;
 use git2::{AutotagOption, Branch, Direction, FetchOptions, MergeAnalysis, ProxyOptions, Remote, RemoteCallbacks, Repository};
@@ -169,7 +169,7 @@ pub fn clone_project(config: &Config, project: &Project, path: &Path, project_lo
       let after_clone = config.resolve_after_clone(project_logger, project);
       if !after_clone.is_empty() {
         debug!(project_logger, "Handling post hooks"; "after_clone" => format!("{:?}", after_clone));
-        spawn_maybe(&shell, &after_clone.join(" && "), path, &project.name, random_colour(), project_logger)
+        spawn_maybe(&shell, &after_clone.join(" && "), path, &project.name, random_color(), project_logger)
           .map_err(|error| AppError::UserError(format!("Post-clone hook failed (nonzero exit code). Cause: {:?}", error)))
       } else {
         Ok(())

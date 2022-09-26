@@ -1,15 +1,15 @@
 use crate::config::{project::Project, Config};
 use crate::errors::AppError;
 
-use ansi_term::Colour;
 use rayon::prelude::*;
 use std::collections::BTreeSet;
+use yansi::{Color, Paint};
 
 use slog::Logger;
 use slog::{error, info};
 use std::borrow::ToOwned;
 
-use crate::util::random_colour;
+use crate::util::random_color;
 use slog::{debug, o};
 use std::io::{BufRead, BufReader};
 use std::path::Path;
@@ -17,7 +17,7 @@ use std::process::{Child, Command, Stdio};
 
 use std::thread;
 
-fn forward_process_output_to_stdout<T: std::io::Read>(read: T, prefix: &str, colour: Colour, atty: bool, mark_err: bool) -> Result<(), AppError> {
+fn forward_process_output_to_stdout<T: std::io::Read>(read: T, prefix: &str, color: Color, atty: bool, mark_err: bool) -> Result<(), AppError> {
   let mut buf = BufReader::new(read);
   loop {
     let mut line = String::new();
@@ -28,14 +28,14 @@ fn forward_process_output_to_stdout<T: std::io::Read>(read: T, prefix: &str, col
     if mark_err {
       let prefix = format!("{:>21.21} |", prefix);
       if atty {
-        print!("{} {} {}", Colour::Red.paint("ERR"), colour.paint(prefix), line);
+        print!("{} {} {}", Paint::red("ERR"), color.paint(prefix), line);
       } else {
         print!("ERR {} {}", prefix, line);
       };
     } else {
       let prefix = format!("{:>25.25} |", prefix);
       if atty {
-        print!("{} {}", colour.paint(prefix), line);
+        print!("{} {}", color.paint(prefix), line);
       } else {
         print!("{} {}", prefix, line);
       };
@@ -52,7 +52,7 @@ fn is_stderr_a_tty() -> bool {
   atty::is(atty::Stream::Stderr)
 }
 
-pub fn spawn_maybe(shell: &[String], cmd: &str, workdir: &Path, project_name: &str, colour: Colour, logger: &Logger) -> Result<(), AppError> {
+pub fn spawn_maybe(shell: &[String], cmd: &str, workdir: &Path, project_name: &str, color: Color, logger: &Logger) -> Result<(), AppError> {
   let program: &str = shell
     .first()
     .ok_or_else(|| AppError::UserError("shell entry in project settings must have at least one element".to_owned()))?;
@@ -71,7 +71,7 @@ pub fn spawn_maybe(shell: &[String], cmd: &str, workdir: &Path, project_name: &s
     let project_name = project_name.to_owned();
     Some(thread::spawn(move || {
       let atty: bool = is_stdout_a_tty();
-      forward_process_output_to_stdout(stdout, &project_name, colour, atty, false)
+      forward_process_output_to_stdout(stdout, &project_name, color, atty, false)
     }))
   } else {
     None
@@ -80,7 +80,7 @@ pub fn spawn_maybe(shell: &[String], cmd: &str, workdir: &Path, project_name: &s
   // stream stderr in this thread. no need to spawn another one.
   if let Some(stderr) = result.stderr.take() {
     let atty: bool = is_stderr_a_tty();
-    forward_process_output_to_stdout(stderr, project_name, colour, atty, true)?
+    forward_process_output_to_stdout(stderr, project_name, color, atty, true)?
   }
 
   if let Some(child) = stdout_child {
@@ -127,7 +127,7 @@ pub fn foreach(
       let project_logger = logger.new(o!("project" => p.name.clone()));
       let path = config.actual_path_to_project(p, &project_logger);
       info!(project_logger, "Entering");
-      spawn_maybe(&shell, cmd, &path, &p.name, random_colour(), &project_logger)
+      spawn_maybe(&shell, cmd, &path, &p.name, random_color(), &project_logger)
     })
     .collect::<Vec<Result<(), AppError>>>();
 

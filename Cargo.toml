@@ -24,7 +24,7 @@ git2 = "0.15"
 maplit = "1.0"
 rayon = "1"
 regex = "1"
-ansi_term = "0.12"
+yansi = "0.5.1"
 atty = "0.2"
 rand = "0.8"
 crossbeam = "0"
@@ -43,4 +43,3 @@ features = ["cargo", "deprecated"]
 [dependencies.slog]
 version = "2"
 features = ["release_max_level_trace", "max_level_trace"]
-

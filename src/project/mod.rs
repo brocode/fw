@@ -3,11 +3,11 @@ use crate::config::Config;
 use crate::config::{project::Project, project::Remote};
 use crate::errors::AppError;
 use crate::git::repo_name_from_url;
-use ansi_term::Style;
 use slog::Logger;
 use slog::{debug, info};
 use std::collections::BTreeSet;
 use std::fs;
+use yansi::Paint;
 
 pub fn add_entry(
   maybe_config: Result<Config, AppError>,
@@ -188,7 +188,7 @@ pub fn inspect(name: &str, maybe_config: Result<Config, AppError>, json: bool, l
   let path = canonical_project_path
     .to_str()
     .ok_or(AppError::InternalError("project path is not valid unicode"))?;
-  println!("{}", Style::new().underline().bold().paint(project.name.clone()));
+  println!("{}", Paint::new(project.name.to_owned()).bold().underline());
   println!("{:<20}: {}", "Path", path);
   println!("{:<20}: {}", "config path", project.project_config_path);
   let tags = project
