@@ -106,11 +106,11 @@ pub fn inspect_tag(maybe_config: Result<Config, AppError>, tag_name: &str) -> Re
   if let Some(tag) = tags.get(tag_name) {
     println!("{}", Paint::new(tag_name).bold().underline());
     println!("{:<20}: {}", "config path", tag.tag_config_path);
-    println!("{:<20}: {}", "after workon", tag.after_workon.clone().unwrap_or_else(|| "".to_string()));
-    println!("{:<20}: {}", "after clone", tag.after_clone.clone().unwrap_or_else(|| "".to_string()));
-    println!("{:<20}: {}", "priority", tag.priority.map(|n| n.to_string()).unwrap_or_else(|| "".to_string()));
-    println!("{:<20}: {}", "workspace", tag.workspace.clone().unwrap_or_else(|| "".to_string()));
-    println!("{:<20}: {}", "default", tag.default.map(|n| n.to_string()).unwrap_or_else(|| "".to_string()));
+    println!("{:<20}: {}", "after workon", tag.after_workon.clone().unwrap_or_default());
+    println!("{:<20}: {}", "after clone", tag.after_clone.clone().unwrap_or_default());
+    println!("{:<20}: {}", "priority", tag.priority.map(|n| n.to_string()).unwrap_or_default());
+    println!("{:<20}: {}", "workspace", tag.workspace.clone().unwrap_or_default());
+    println!("{:<20}: {}", "default", tag.default.map(|n| n.to_string()).unwrap_or_default());
     println!();
     println!("{}", Paint::new("projects".to_string()).bold().underline());
     for project in config.projects.values().cloned() {

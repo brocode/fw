@@ -17,7 +17,7 @@ pub fn gen_reworkon(maybe_config: Result<config::Config, AppError>, logger: &Log
 
 fn current_project(config: &config::Config, logger: &Logger) -> Result<Project, AppError> {
   let os_current_dir = env::current_dir()?;
-  let current_dir = os_current_dir.to_string_lossy().to_owned();
+  let current_dir = os_current_dir.to_string_lossy().into_owned();
   let maybe_match = config
     .projects
     .values()

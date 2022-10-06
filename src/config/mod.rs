@@ -145,7 +145,7 @@ pub fn write_tag(tag_name: &str, tag: &Tag) -> Result<(), AppError> {
     .map_err(|e| AppError::RuntimeError(format!("Failed to create tag config path '{}'. {}", tag_path.to_string_lossy(), e)))?;
 
   let mut tag_file_path = tag_path;
-  tag_file_path.push(&tag_name);
+  tag_file_path.push(tag_name);
 
   let mut buffer = File::create(&tag_file_path)
     .map_err(|e| AppError::RuntimeError(format!("Failed to create project config file '{}'. {}", tag_file_path.to_string_lossy(), e)))?;

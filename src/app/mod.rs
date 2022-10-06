@@ -100,7 +100,7 @@ For further information please have a look at our README https://github.com/broc
     )
     .subcommand(
       Command::new("reworkon")
-        .aliases(&[".", "rw", "re", "fkbr"])
+        .aliases([".", "rw", "re", "fkbr"])
         .about("Re-run workon hooks for current dir (aliases: .|rw|re|fkbr)"),
     )
     .subcommand(

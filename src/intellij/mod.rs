@@ -8,7 +8,7 @@ use std::path::PathBuf;
 
 pub fn intellij(maybe_config: Result<Config, AppError>, logger: &Logger, warn: bool) -> Result<(), AppError> {
   let config: Config = maybe_config?;
-  let projects_paths: Vec<PathBuf> = config.projects.iter().map(|(_, p)| config.actual_path_to_project(p, logger)).collect();
+  let projects_paths: Vec<PathBuf> = config.projects.values().map(|p| config.actual_path_to_project(p, logger)).collect();
   let recent_projects_candidates = get_recent_projects_candidates()?;
   for candidate in recent_projects_candidates {
     let mut writer = fs::File::create(candidate)?;
