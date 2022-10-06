@@ -3,6 +3,14 @@ use clap::{builder::EnumValueParser, crate_version, value_parser, Arg, ArgAction
 use crate::setup::ProjectState;
 
 pub fn app() -> Command {
+  let arg_with_fzf = Arg::new("with-fzf").long("with-fzf").short('f').num_args(0).help("Integrate with fzf");
+  let arg_with_skim = Arg::new("with-skim")
+    .long("with-skim")
+    .short('s')
+    .help("Integrate with skim")
+    .conflicts_with("with-fzf")
+    .num_args(0);
+
   Command::new("fw")
     .version(crate_version!())
     .author("Brocode <bros@brocode.sh>")
@@ -36,7 +44,8 @@ For further information please have a look at our README https://github.com/broc
             .long("no-progress-bar")
             .short('q')
             .help("Progress bars are automatically disabled with -vv")
-            .num_args(0),
+            .num_args(0)
+            .action(ArgAction::SetTrue),
         )
         .arg(Arg::new("no-fast-forward-merge").long("no-ff-merge").help("No fast forward merge").num_args(0))
         .arg(
@@ -44,7 +53,8 @@ For further information please have a look at our README https://github.com/broc
             .long("only-new")
             .short('n')
             .help("Only clones projects. Skips all actions for projects already on your machine.")
-            .num_args(0),
+            .num_args(0)
+            .action(ArgAction::SetTrue),
         )
         .arg(
           Arg::new("parallelism")
@@ -60,38 +70,20 @@ For further information please have a look at our README https://github.com/broc
     .subcommand(
       Command::new("print-zsh-setup")
         .about("Prints zsh completion code.")
-        .arg(Arg::new("with-fzf").long("with-fzf").short('f').help("Integrate with fzf"))
-        .arg(
-          Arg::new("with-skim")
-            .long("with-skim")
-            .short('s')
-            .help("Integrate with skim")
-            .conflicts_with("with-fzf"),
-        ),
+        .arg(arg_with_fzf.clone())
+        .arg(arg_with_skim.clone()),
     )
     .subcommand(
       Command::new("print-bash-setup")
         .about("Prints bash completion code.")
-        .arg(Arg::new("with-fzf").long("with-fzf").short('f').help("Integrate with fzf"))
-        .arg(
-          Arg::new("with-skim")
-            .long("with-skim")
-            .short('s')
-            .help("Integrate with skim")
-            .conflicts_with("with-fzf"),
-        ),
+        .arg(arg_with_fzf.clone())
+        .arg(arg_with_skim.clone()),
     )
     .subcommand(
       Command::new("print-fish-setup")
         .about("Prints fish completion code.")
-        .arg(Arg::new("with-fzf").long("with-fzf").short('f').help("Integrate with fzf"))
-        .arg(
-          Arg::new("with-skim")
-            .long("with-skim")
-            .short('s')
-            .help("Integrate with skim")
-            .conflicts_with("with-fzf"),
-        ),
+        .arg(arg_with_fzf.clone())
+        .arg(arg_with_skim.clone()),
     )
     .subcommand(
       Command::new("setup")
@@ -119,6 +111,7 @@ For further information please have a look at our README https://github.com/broc
             .long("include-archived")
             .short('a')
             .num_args(0)
+            .action(ArgAction::SetTrue)
             .required(false),
         )
         .arg(Arg::new("ORG_NAME").value_name("ORG_NAME").index(1).required(true)),
@@ -197,7 +190,8 @@ For further information please have a look at our README https://github.com/broc
             .long("purge-directory")
             .short('p')
             .help("Purges the project directory")
-            .num_args(0),
+            .num_args(0)
+            .action(ArgAction::SetTrue),
         ),
     )
     .subcommand(
