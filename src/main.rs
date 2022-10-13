@@ -138,8 +138,7 @@ fn _main() -> i32 {
       &subcommand_logger,
       &subcommand_matches.get_one::<String>("parallel").map(ToOwned::to_owned),
     ),
-    "print-zsh-setup" => crate::shell::print_zsh_setup(subcommand_matches.get_flag("with-fzf"), 
-    subcommand_matches.get_flag("with-skim")),
+    "print-zsh-setup" => crate::shell::print_zsh_setup(subcommand_matches.get_flag("with-fzf"), subcommand_matches.get_flag("with-skim")),
     "print-bash-setup" => crate::shell::print_bash_setup(subcommand_matches.get_flag("with-fzf"), subcommand_matches.get_flag("with-skim")),
     "print-fish-setup" => crate::shell::print_fish_setup(subcommand_matches.get_flag("with-fzf"), subcommand_matches.get_flag("with-skim")),
     "tag" => {
