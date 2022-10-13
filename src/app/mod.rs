@@ -32,7 +32,7 @@ For further information please have a look at our README https://github.com/broc
         .action(ArgAction::Count)
         .help("Sets the level of verbosity"),
     )
-    .arg(Arg::new("q").short('q').help("Make fw quiet"))
+    .arg(Arg::new("q").short('q').help("Make fw quiet").action(ArgAction::SetTrue).num_args(0))
     .subcommand(
       Command::new("sync")
         .about("Sync workspace. Clones projects or updates remotes for existing projects.")

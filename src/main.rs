@@ -15,7 +15,7 @@ fn main() {
 fn _main() -> i32 {
   let matches = crate::app::app().get_matches();
 
-  let logger = logger_from_verbosity(matches.get_count("v").into(), matches.contains_id("q"));
+  let logger = logger_from_verbosity(matches.get_count("v").into(), matches.get_flag("q"));
 
   let config = config::read_config(&logger);
   if config.is_err() {
