@@ -36,7 +36,7 @@ For further information please have a look at our README https://github.com/broc
             .short('t')
             .help("Filter projects by tag. More than 1 is allowed.")
             .required(false)
-            .num_args(1..)
+            .num_args(1)
             .action(ArgAction::Append),
         )
         .arg(
@@ -64,7 +64,7 @@ For further information please have a look at our README https://github.com/broc
             .default_value("8")
             .value_parser(clap::builder::RangedI64ValueParser::<i32>::new().range(0..=128))
             .help("Sets the count of worker")
-            .num_args(1..),
+            .num_args(1),
         ),
     )
     .subcommand(
@@ -124,7 +124,7 @@ For further information please have a look at our README https://github.com/broc
             .help("Filter projects to import by state")
             .long("include")
             .short('a')
-            .num_args(1..)
+            .num_args(1)
             .value_name("state")
             .value_parser(EnumValueParser::<ProjectState>::new())
             .default_value("active"),
@@ -152,14 +152,14 @@ For further information please have a look at our README https://github.com/broc
           Arg::new("override-path")
             .value_name("override-path")
             .long("override-path")
-            .num_args(1..)
+            .num_args(1)
             .required(false),
         )
         .arg(
           Arg::new("after-workon")
             .value_name("after-workon")
             .long("after-workon")
-            .num_args(1..)
+            .num_args(1)
             .required(false),
         )
         .arg(
@@ -168,14 +168,14 @@ For further information please have a look at our README https://github.com/broc
             .short('t')
             .help("Add tag to project")
             .required(false)
-            .num_args(1..)
+            .num_args(1)
             .action(ArgAction::Append),
         )
         .arg(
           Arg::new("after-clone")
             .value_name("after-clone")
             .long("after-clone")
-            .num_args(1..)
+            .num_args(1)
             .required(false),
         )
         .arg(Arg::new("trusted").long("trusted").num_args(0).required(false)),
@@ -204,7 +204,7 @@ For further information please have a look at our README https://github.com/broc
             .help("Parallelism to use (default is set by rayon but probably equal to the number of cores)")
             .required(false)
             .value_parser(clap::builder::RangedI64ValueParser::<i32>::new().range(0..=128))
-            .num_args(1..),
+            .num_args(1),
         )
         .arg(
           Arg::new("tag")
@@ -212,7 +212,7 @@ For further information please have a look at our README https://github.com/broc
             .short('t')
             .help("Filter projects by tag. More than 1 is allowed.")
             .required(false)
-            .num_args(1..)
+            .num_args(1)
             .action(ArgAction::Append),
         ),
     )
@@ -237,7 +237,7 @@ For further information please have a look at our README https://github.com/broc
           .short('t')
           .help("Filter projects by tag. More than 1 is allowed.")
           .required(false)
-          .num_args(1..)
+          .num_args(1)
           .action(ArgAction::Append),
       ),
     )
@@ -269,26 +269,26 @@ For further information please have a look at our README https://github.com/broc
       Command::new("update")
         .about("Modifies project settings.")
         .arg(Arg::new("NAME").value_name("NAME").required(true))
-        .arg(Arg::new("git").value_name("URL").long("git-url").num_args(1..).required(false))
+        .arg(Arg::new("git").value_name("URL").long("git-url").num_args(1).required(false))
         .arg(
           Arg::new("override-path")
             .value_name("override-path")
             .long("override-path")
-            .num_args(1..)
+            .num_args(1)
             .required(false),
         )
         .arg(
           Arg::new("after-workon")
             .value_name("after-workon")
             .long("after-workon")
-            .num_args(1..)
+            .num_args(1)
             .required(false),
         )
         .arg(
           Arg::new("after-clone")
             .value_name("after-clone")
             .long("after-clone")
-            .num_args(1..)
+            .num_args(1)
             .required(false),
         ),
     )
@@ -326,7 +326,7 @@ For further information please have a look at our README https://github.com/broc
                 .help("Parallelism to use (default is set by rayon but probably equal to the number of cores)")
                 .required(false)
                 .value_parser(clap::builder::RangedI64ValueParser::<i32>::new().range(0..=128))
-                .num_args(1..),
+                .num_args(1),
             ),
         )
         .subcommand(
@@ -349,7 +349,7 @@ For further information please have a look at our README https://github.com/broc
               Arg::new("after-workon")
                 .value_name("after-workon")
                 .long("after-workon")
-                .num_args(1..)
+                .num_args(1)
                 .required(false),
             )
             .arg(
@@ -357,15 +357,15 @@ For further information please have a look at our README https://github.com/broc
                 .value_name("priority")
                 .long("priority")
                 .value_parser(value_parser!(u8))
-                .num_args(1..)
+                .num_args(1)
                 .required(false),
             )
-            .arg(Arg::new("workspace").value_name("workspace").long("workspace").num_args(1..).required(false))
+            .arg(Arg::new("workspace").value_name("workspace").long("workspace").num_args(1).required(false))
             .arg(
               Arg::new("after-clone")
                 .value_name("after-clone")
                 .long("after-clone")
-                .num_args(1..)
+                .num_args(1)
                 .required(false),
             ),
         ),
