@@ -82,8 +82,8 @@ For further information please have a look at our README https://github.com/broc
     .subcommand(
       Command::new("print-fish-setup")
         .about("Prints fish completion code.")
-        .arg(arg_with_fzf.clone())
-        .arg(arg_with_skim.clone()),
+        .arg(arg_with_fzf)
+        .arg(arg_with_skim),
     )
     .subcommand(
       Command::new("setup")

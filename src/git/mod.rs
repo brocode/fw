@@ -199,8 +199,8 @@ mod tests {
     assert_eq!(username_from_git_url("ssh://aur@aur.archlinux.org/fw.git"), "aur".to_string());
     assert_eq!(username_from_git_url("aur@github.com:21re/fkbr.git"), "aur".to_string());
     assert_eq!(username_from_git_url("aur_fkbr_1@github.com:21re/fkbr.git"), "aur_fkbr_1".to_string());
-    assert_eq!(username_from_git_url("github.com:21re/fkbr.git"), user.to_string());
-    assert_eq!(username_from_git_url("git://fkbr.org/sxoe.git"), user.to_string());
+    assert_eq!(username_from_git_url("github.com:21re/fkbr.git"), user);
+    assert_eq!(username_from_git_url("git://fkbr.org/sxoe.git"), user);
 
     assert_eq!(username_from_git_url("https://github.com/brocode/fw.git"), user);
     assert_eq!(username_from_git_url("https://kuci@github.com/brocode/fw.git"), "kuci".to_string());
