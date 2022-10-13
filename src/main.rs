@@ -15,7 +15,7 @@ fn main() {
 fn _main() -> i32 {
   let matches = crate::app::app().get_matches();
 
-  let logger = logger_from_verbosity(matches.get_one::<u8>("v").copied().unwrap_or_default().into(), matches.contains_id("q"));
+  let logger = logger_from_verbosity(matches.get_count("v").into(), matches.contains_id("q"));
 
   let config = config::read_config(&logger);
   if config.is_err() {
@@ -36,9 +36,9 @@ fn _main() -> i32 {
 
       sync::synchronize(
         config,
-        subcommand_matches.contains_id("no-progress-bar"),
-        subcommand_matches.contains_id("only-new"),
-        !subcommand_matches.contains_id("no-fast-forward-merge"),
+        subcommand_matches.get_flag("no-progress-bar"),
+        subcommand_matches.get_flag("only-new"),
+        !subcommand_matches.get_flag("no-fast-forward-merge"),
         &subcommand_matches
           .get_many::<String>("tag")
           .unwrap_or_default()
@@ -69,13 +69,13 @@ fn _main() -> i32 {
       let tags: Option<BTreeSet<String>> = subcommand_matches
         .get_many::<String>("tag")
         .map(|v| v.into_iter().map(ToOwned::to_owned).collect());
-      let trusted = subcommand_matches.contains_id("trusted");
+      let trusted = subcommand_matches.get_flag("trusted");
       project::add_entry(config, name, url, after_workon, after_clone, override_path, tags, trusted, &subcommand_logger)
     }
     "remove" => project::remove_project(
       config,
       subcommand_matches.get_one::<String>("NAME").expect("argument required by clap.rs"),
-      subcommand_matches.contains_id("purge-directory"),
+      subcommand_matches.get_flag("purge-directory"),
       &subcommand_logger,
     ),
     "update" => {
@@ -98,7 +98,7 @@ fn _main() -> i32 {
     "org-import" => setup::org_import(
       config,
       subcommand_matches.get_one::<String>("ORG_NAME").expect("argument required by clap.rs"),
-      subcommand_matches.contains_id("include-archived"),
+      subcommand_matches.get_flag("include-archived"),
       &subcommand_logger,
     ),
     "gitlab-import" => {
@@ -108,7 +108,7 @@ fn _main() -> i32 {
     "gen-workon" => workon::gen(
       subcommand_matches.get_one::<String>("PROJECT_NAME").expect("argument required by clap.rs"),
       config,
-      subcommand_matches.contains_id("quick"),
+      subcommand_matches.get_flag("quick"),
       &subcommand_logger,
     ),
     "gen-reworkon" => workon::gen_reworkon(config, &subcommand_logger),
@@ -116,11 +116,11 @@ fn _main() -> i32 {
     "inspect" => project::inspect(
       subcommand_matches.get_one::<String>("PROJECT_NAME").expect("argument required by clap.rs"),
       config,
-      subcommand_matches.contains_id("json"),
+      subcommand_matches.get_flag("json"),
       &subcommand_logger,
     ),
     "projectile" => projectile::projectile(config, &subcommand_logger),
-    "intellij" => intellij::intellij(config, &subcommand_logger, !subcommand_matches.contains_id("no-warn")),
+    "intellij" => intellij::intellij(config, &subcommand_logger, !subcommand_matches.get_flag("no-warn")),
     "print-path" => project::print_path(
       config,
       subcommand_matches.get_one::<String>("PROJECT_NAME").expect("argument required by clap.rs"),
@@ -138,9 +138,9 @@ fn _main() -> i32 {
       &subcommand_logger,
       &subcommand_matches.get_one::<String>("parallel").map(ToOwned::to_owned),
     ),
-    "print-zsh-setup" => crate::shell::print_zsh_setup(subcommand_matches.contains_id("with-fzf"), subcommand_matches.contains_id("with-skim")),
-    "print-bash-setup" => crate::shell::print_bash_setup(subcommand_matches.contains_id("with-fzf"), subcommand_matches.contains_id("with-skim")),
-    "print-fish-setup" => crate::shell::print_fish_setup(subcommand_matches.contains_id("with-fzf"), subcommand_matches.contains_id("with-skim")),
+    "print-zsh-setup" => crate::shell::print_zsh_setup(subcommand_matches.get_flag("with-fzf"), subcommand_matches.get_flag("with-skim")),
+    "print-bash-setup" => crate::shell::print_bash_setup(subcommand_matches.get_flag("with-fzf"), subcommand_matches.get_flag("with-skim")),
+    "print-fish-setup" => crate::shell::print_fish_setup(subcommand_matches.get_flag("with-fzf"), subcommand_matches.get_flag("with-skim")),
     "tag" => {
       let subsubcommand_name: String = subcommand_matches.subcommand_name().expect("subcommand matches enforced by clap.rs").to_owned();
       let subsubcommand_matches: clap::ArgMatches = subcommand_matches

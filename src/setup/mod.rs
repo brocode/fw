@@ -1,6 +1,7 @@
 use crate::config::{self, project::Project, settings::Settings, Config};
 use crate::errors::AppError;
 use crate::ws::github;
+use clap::builder::PossibleValue;
 use git2::Repository;
 use slog::Logger;
 use slog::{debug, info, o, warn};
@@ -22,11 +23,11 @@ impl clap::ValueEnum for ProjectState {
     &[Self::Active, Self::Archived, Self::Both]
   }
 
-  fn to_possible_value<'a>(&self) -> Option<clap::PossibleValue<'a>> {
+  fn to_possible_value(&self) -> Option<PossibleValue> {
     match self {
-      Self::Active => Some(clap::PossibleValue::new("active")),
-      Self::Archived => Some(clap::PossibleValue::new("archived")),
-      Self::Both => Some(clap::PossibleValue::new("both")),
+      Self::Active => Some(PossibleValue::new("active")),
+      Self::Archived => Some(PossibleValue::new("archived")),
+      Self::Both => Some(PossibleValue::new("both")),
     }
   }
 }

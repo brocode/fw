@@ -37,8 +37,8 @@ tokio = { version = "1", features = ["full"] }
 openssl = { version = "0.10", features = ["vendored"] }
 
 [dependencies.clap]
-version = "3"
-features = ["cargo", "deprecated"]
+version = "4"
+features = ["cargo"]
 
 [dependencies.slog]
 version = "2"

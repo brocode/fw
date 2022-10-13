@@ -60,7 +60,7 @@ pub fn spawn_maybe(shell: &[String], cmd: &str, workdir: &Path, project_name: &s
   let mut result: Child = Command::new(program)
     .args(rest)
     .arg(cmd)
-    .current_dir(&workdir)
+    .current_dir(workdir)
     .env("FW_PROJECT", project_name)
     .stdout(Stdio::piped())
     .stderr(Stdio::piped())

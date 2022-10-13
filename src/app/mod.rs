@@ -2,7 +2,21 @@ use clap::{builder::EnumValueParser, crate_version, value_parser, Arg, ArgAction
 
 use crate::setup::ProjectState;
 
-pub fn app<'a>() -> Command<'a> {
+pub fn app() -> Command {
+  let arg_with_fzf = Arg::new("with-fzf")
+    .long("with-fzf")
+    .short('f')
+    .num_args(0)
+    .action(ArgAction::SetTrue)
+    .help("Integrate with fzf");
+  let arg_with_skim = Arg::new("with-skim")
+    .long("with-skim")
+    .short('s')
+    .help("Integrate with skim")
+    .conflicts_with("with-fzf")
+    .action(ArgAction::SetTrue)
+    .num_args(0);
+
   Command::new("fw")
     .version(crate_version!())
     .author("Brocode <bros@brocode.sh>")
@@ -14,7 +28,7 @@ For further information please have a look at our README https://github.com/broc
     .arg(
       Arg::new("v")
         .short('v')
-        .takes_value(false)
+        .num_args(0)
         .action(ArgAction::Count)
         .help("Sets the level of verbosity"),
     )
@@ -28,7 +42,7 @@ For further information please have a look at our README https://github.com/broc
             .short('t')
             .help("Filter projects by tag. More than 1 is allowed.")
             .required(false)
-            .takes_value(true)
+            .num_args(1)
             .action(ArgAction::Append),
         )
         .arg(
@@ -36,67 +50,51 @@ For further information please have a look at our README https://github.com/broc
             .long("no-progress-bar")
             .short('q')
             .help("Progress bars are automatically disabled with -vv")
-            .takes_value(false),
+            .num_args(0)
+            .action(ArgAction::SetTrue),
         )
         .arg(
           Arg::new("no-fast-forward-merge")
             .long("no-ff-merge")
             .help("No fast forward merge")
-            .takes_value(false),
+            .action(ArgAction::SetTrue)
+            .num_args(0),
         )
         .arg(
           Arg::new("only-new")
             .long("only-new")
             .short('n')
             .help("Only clones projects. Skips all actions for projects already on your machine.")
-            .takes_value(false),
+            .num_args(0)
+            .action(ArgAction::SetTrue),
         )
         .arg(
           Arg::new("parallelism")
             .long("parallelism")
             .short('p')
-            .number_of_values(1)
             .default_value("8")
             .value_parser(clap::builder::RangedI64ValueParser::<i32>::new().range(0..=128))
             .help("Sets the count of worker")
-            .takes_value(true),
+            .num_args(1),
         ),
     )
     .subcommand(
       Command::new("print-zsh-setup")
         .about("Prints zsh completion code.")
-        .arg(Arg::new("with-fzf").long("with-fzf").short('f').help("Integrate with fzf"))
-        .arg(
-          Arg::new("with-skim")
-            .long("with-skim")
-            .short('s')
-            .help("Integrate with skim")
-            .conflicts_with("with-fzf"),
-        ),
+        .arg(arg_with_fzf.clone())
+        .arg(arg_with_skim.clone()),
     )
     .subcommand(
       Command::new("print-bash-setup")
         .about("Prints bash completion code.")
-        .arg(Arg::new("with-fzf").long("with-fzf").short('f').help("Integrate with fzf"))
-        .arg(
-          Arg::new("with-skim")
-            .long("with-skim")
-            .short('s')
-            .help("Integrate with skim")
-            .conflicts_with("with-fzf"),
-        ),
+        .arg(arg_with_fzf.clone())
+        .arg(arg_with_skim.clone()),
     )
     .subcommand(
       Command::new("print-fish-setup")
         .about("Prints fish completion code.")
-        .arg(Arg::new("with-fzf").long("with-fzf").short('f').help("Integrate with fzf"))
-        .arg(
-          Arg::new("with-skim")
-            .long("with-skim")
-            .short('s')
-            .help("Integrate with skim")
-            .conflicts_with("with-fzf"),
-        ),
+        .arg(arg_with_fzf)
+        .arg(arg_with_skim),
     )
     .subcommand(
       Command::new("setup")
@@ -105,7 +103,7 @@ For further information please have a look at our README https://github.com/broc
     )
     .subcommand(
       Command::new("reworkon")
-        .aliases(&[".", "rw", "re", "fkbr"])
+        .aliases([".", "rw", "re", "fkbr"])
         .about("Re-run workon hooks for current dir (aliases: .|rw|re|fkbr)"),
     )
     .subcommand(
@@ -123,7 +121,8 @@ For further information please have a look at our README https://github.com/broc
             .value_name("include-archived")
             .long("include-archived")
             .short('a')
-            .takes_value(false)
+            .num_args(0)
+            .action(ArgAction::SetTrue)
             .required(false),
         )
         .arg(Arg::new("ORG_NAME").value_name("ORG_NAME").index(1).required(true)),
@@ -136,7 +135,7 @@ For further information please have a look at our README https://github.com/broc
             .help("Filter projects to import by state")
             .long("include")
             .short('a')
-            .takes_value(true)
+            .num_args(1)
             .value_name("state")
             .value_parser(EnumValueParser::<ProjectState>::new())
             .default_value("active"),
@@ -164,14 +163,14 @@ For further information please have a look at our README https://github.com/broc
           Arg::new("override-path")
             .value_name("override-path")
             .long("override-path")
-            .takes_value(true)
+            .num_args(1)
             .required(false),
         )
         .arg(
           Arg::new("after-workon")
             .value_name("after-workon")
             .long("after-workon")
-            .takes_value(true)
+            .num_args(1)
             .required(false),
         )
         .arg(
@@ -180,17 +179,17 @@ For further information please have a look at our README https://github.com/broc
             .short('t')
             .help("Add tag to project")
             .required(false)
-            .takes_value(true)
+            .num_args(1)
             .action(ArgAction::Append),
         )
         .arg(
           Arg::new("after-clone")
             .value_name("after-clone")
             .long("after-clone")
-            .takes_value(true)
+            .num_args(1)
             .required(false),
         )
-        .arg(Arg::new("trusted").long("trusted").takes_value(false).required(false)),
+        .arg(Arg::new("trusted").long("trusted").num_args(0).required(false).action(ArgAction::SetTrue)),
     )
     .subcommand(
       Command::new("remove")
@@ -202,7 +201,8 @@ For further information please have a look at our README https://github.com/broc
             .long("purge-directory")
             .short('p')
             .help("Purges the project directory")
-            .takes_value(false),
+            .num_args(0)
+            .action(ArgAction::SetTrue),
         ),
     )
     .subcommand(
@@ -215,7 +215,7 @@ For further information please have a look at our README https://github.com/broc
             .help("Parallelism to use (default is set by rayon but probably equal to the number of cores)")
             .required(false)
             .value_parser(clap::builder::RangedI64ValueParser::<i32>::new().range(0..=128))
-            .takes_value(true),
+            .num_args(1),
         )
         .arg(
           Arg::new("tag")
@@ -223,7 +223,7 @@ For further information please have a look at our README https://github.com/broc
             .short('t')
             .help("Filter projects by tag. More than 1 is allowed.")
             .required(false)
-            .takes_value(true)
+            .num_args(1)
             .action(ArgAction::Append),
         ),
     )
@@ -248,7 +248,7 @@ For further information please have a look at our README https://github.com/broc
           .short('t')
           .help("Filter projects by tag. More than 1 is allowed.")
           .required(false)
-          .takes_value(true)
+          .num_args(1)
           .action(ArgAction::Append),
       ),
     )
@@ -280,26 +280,26 @@ For further information please have a look at our README https://github.com/broc
       Command::new("update")
         .about("Modifies project settings.")
         .arg(Arg::new("NAME").value_name("NAME").required(true))
-        .arg(Arg::new("git").value_name("URL").long("git-url").takes_value(true).required(false))
+        .arg(Arg::new("git").value_name("URL").long("git-url").num_args(1).required(false))
         .arg(
           Arg::new("override-path")
             .value_name("override-path")
             .long("override-path")
-            .takes_value(true)
+            .num_args(1)
             .required(false),
         )
         .arg(
           Arg::new("after-workon")
             .value_name("after-workon")
             .long("after-workon")
-            .takes_value(true)
+            .num_args(1)
             .required(false),
         )
         .arg(
           Arg::new("after-clone")
             .value_name("after-clone")
             .long("after-clone")
-            .takes_value(true)
+            .num_args(1)
             .required(false),
         ),
     )
@@ -337,7 +337,7 @@ For further information please have a look at our README https://github.com/broc
                 .help("Parallelism to use (default is set by rayon but probably equal to the number of cores)")
                 .required(false)
                 .value_parser(clap::builder::RangedI64ValueParser::<i32>::new().range(0..=128))
-                .takes_value(true),
+                .num_args(1),
             ),
         )
         .subcommand(
@@ -360,7 +360,7 @@ For further information please have a look at our README https://github.com/broc
               Arg::new("after-workon")
                 .value_name("after-workon")
                 .long("after-workon")
-                .takes_value(true)
+                .num_args(1)
                 .required(false),
             )
             .arg(
@@ -368,21 +368,15 @@ For further information please have a look at our README https://github.com/broc
                 .value_name("priority")
                 .long("priority")
                 .value_parser(value_parser!(u8))
-                .takes_value(true)
+                .num_args(1)
                 .required(false),
             )
-            .arg(
-              Arg::new("workspace")
-                .value_name("workspace")
-                .long("workspace")
-                .takes_value(true)
-                .required(false),
-            )
+            .arg(Arg::new("workspace").value_name("workspace").long("workspace").num_args(1).required(false))
             .arg(
               Arg::new("after-clone")
                 .value_name("after-clone")
                 .long("after-clone")
-                .takes_value(true)
+                .num_args(1)
                 .required(false),
             ),
         ),
