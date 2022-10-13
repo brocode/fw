@@ -60,7 +60,6 @@ For further information please have a look at our README https://github.com/broc
           Arg::new("parallelism")
             .long("parallelism")
             .short('p')
-            .num_args(1)
             .default_value("8")
             .value_parser(clap::builder::RangedI64ValueParser::<i32>::new().range(0..=128))
             .help("Sets the count of worker")
