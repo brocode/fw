@@ -238,6 +238,8 @@ For further information please have a look at our README https://github.com/broc
         Arg::new("no-warn")
           .long("no-warn")
           .short('n')
+          .action(ArgAction::SetTrue)
+          .num_args(0)
           .help("Disables warning message if more than 50 projects would be added"),
       ),
     )
@@ -260,6 +262,8 @@ For further information please have a look at our README https://github.com/broc
           Arg::new("quick")
             .required(false)
             .short('x')
+            .action(ArgAction::SetTrue)
+            .num_args(0)
             .help("Don't generate post_workon shell code, only cd into the folder"),
         ),
     )
@@ -273,6 +277,8 @@ For further information please have a look at our README https://github.com/broc
             .help("output json instead of cool text")
             .short('j')
             .long("json")
+            .action(ArgAction::SetTrue)
+            .num_args(0)
             .required(false),
         ),
     )
