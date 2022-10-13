@@ -3,12 +3,18 @@ use clap::{builder::EnumValueParser, crate_version, value_parser, Arg, ArgAction
 use crate::setup::ProjectState;
 
 pub fn app() -> Command {
-  let arg_with_fzf = Arg::new("with-fzf").long("with-fzf").short('f').num_args(0).help("Integrate with fzf");
+  let arg_with_fzf = Arg::new("with-fzf")
+    .long("with-fzf")
+    .short('f')
+    .num_args(0)
+    .action(ArgAction::SetTrue)
+    .help("Integrate with fzf");
   let arg_with_skim = Arg::new("with-skim")
     .long("with-skim")
     .short('s')
     .help("Integrate with skim")
     .conflicts_with("with-fzf")
+    .action(ArgAction::SetTrue)
     .num_args(0);
 
   Command::new("fw")
@@ -47,7 +53,13 @@ For further information please have a look at our README https://github.com/broc
             .num_args(0)
             .action(ArgAction::SetTrue),
         )
-        .arg(Arg::new("no-fast-forward-merge").long("no-ff-merge").help("No fast forward merge").num_args(0))
+        .arg(
+          Arg::new("no-fast-forward-merge")
+            .long("no-ff-merge")
+            .help("No fast forward merge")
+            .action(ArgAction::SetTrue)
+            .num_args(0),
+        )
         .arg(
           Arg::new("only-new")
             .long("only-new")
@@ -177,7 +189,7 @@ For further information please have a look at our README https://github.com/broc
             .num_args(1)
             .required(false),
         )
-        .arg(Arg::new("trusted").long("trusted").num_args(0).required(false)),
+        .arg(Arg::new("trusted").long("trusted").num_args(0).required(false).action(ArgAction::SetTrue)),
     )
     .subcommand(
       Command::new("remove")
