@@ -7,12 +7,9 @@ use crate::util::random_color;
 use git2::build::RepoBuilder;
 use git2::{AutotagOption, Branch, Direction, FetchOptions, MergeAnalysis, ProxyOptions, Remote, RemoteCallbacks, Repository};
 
-use regex::Regex;
 use slog::Logger;
 use slog::{debug, info, warn};
 use std::borrow::ToOwned;
-
-use std::env;
 
 use std::path::Path;
 
@@ -33,29 +30,14 @@ pub fn repo_name_from_url(url: &str) -> Result<&str, AppError> {
   })
 }
 
-fn username_from_git_url(url: &str) -> String {
-  let url_regex = Regex::new(r"([^:]+://)?((?P<user>[a-z_][a-z0-9_]{0,30})@)?").unwrap();
-  if let Some(caps) = url_regex.captures(url) {
-    if let Some(user) = caps.name("user") {
-      return user.as_str().to_string();
-    }
-  }
-  if let Ok(user) = env::var("USER") {
-    if !user.is_empty() {
-      return user;
-    }
-  }
-  "git".to_string()
-}
-
-fn agent_callbacks(git_user: &str) -> git2::RemoteCallbacks<'_> {
+fn agent_callbacks() -> git2::RemoteCallbacks<'static> {
   let mut remote_callbacks = RemoteCallbacks::new();
-  remote_callbacks.credentials(move |_, _, _| git2::Cred::ssh_key_from_agent(git_user));
+  remote_callbacks.credentials(move |_url, username_from_url, _allowed_types| git2::Cred::ssh_key_from_agent(username_from_url.unwrap_or("git")));
   remote_callbacks
 }
 
-fn agent_fetch_options(git_user: &str) -> git2::FetchOptions<'_> {
-  let remote_callbacks = agent_callbacks(git_user);
+fn agent_fetch_options() -> git2::FetchOptions<'static> {
+  let remote_callbacks = agent_callbacks();
   let mut proxy_options = ProxyOptions::new();
   proxy_options.auto();
   let mut fetch_options = FetchOptions::new();
@@ -65,16 +47,15 @@ fn agent_fetch_options(git_user: &str) -> git2::FetchOptions<'_> {
   fetch_options
 }
 
-fn builder(git_user: &str) -> RepoBuilder<'_> {
-  let options = agent_fetch_options(git_user);
+fn builder() -> RepoBuilder<'static> {
+  let options = agent_fetch_options();
   let mut repo_builder = RepoBuilder::new();
   repo_builder.fetch_options(options);
   repo_builder
 }
 
 fn update_remote(project: &Project, remote: &mut Remote<'_>, project_logger: &Logger) -> Result<(), AppError> {
-  let git_user = username_from_git_url(&project.git);
-  let remote_callbacks = agent_callbacks(&git_user);
+  let remote_callbacks = agent_callbacks();
   let mut proxy_options = ProxyOptions::new();
   proxy_options.auto();
   remote
@@ -83,7 +64,7 @@ fn update_remote(project: &Project, remote: &mut Remote<'_>, project_logger: &Lo
       info!(project_logger, "Error connecting remote"; "error" => format!("{}", error), "project" => &project.name);
       AppError::GitError(error)
     })?;
-  let mut options = agent_fetch_options(&git_user);
+  let mut options = agent_fetch_options();
   remote.download::<String>(&[], Some(&mut options)).map_err(|error| {
     info!(project_logger, "Error downloading for remote"; "error" => format!("{}", error), "project" => &project.name);
     AppError::GitError(error)
@@ -154,8 +135,7 @@ fn fast_forward_merge(local: &Repository, project_logger: &Logger) -> Result<(),
 
 pub fn clone_project(config: &Config, project: &Project, path: &Path, project_logger: &Logger) -> Result<(), AppError> {
   let shell = config.settings.get_shell_or_default();
-  let git_user = username_from_git_url(&project.git);
-  let mut repo_builder = builder(&git_user);
+  let mut repo_builder = builder();
   debug!(project_logger, "Cloning project");
   repo_builder
     .bare(project.bare.unwrap_or_default())
@@ -191,20 +171,6 @@ fn init_additional_remotes(project: &Project, repository: Repository, project_lo
 #[cfg(test)]
 mod tests {
   use super::*;
-
-  #[test]
-  fn test_username_from_git_url() {
-    let user = env::var("USER").unwrap();
-    assert_eq!(username_from_git_url("git+ssh://git@fkbr.org:sxoe.git"), "git".to_string());
-    assert_eq!(username_from_git_url("ssh://aur@aur.archlinux.org/fw.git"), "aur".to_string());
-    assert_eq!(username_from_git_url("aur@github.com:21re/fkbr.git"), "aur".to_string());
-    assert_eq!(username_from_git_url("aur_fkbr_1@github.com:21re/fkbr.git"), "aur_fkbr_1".to_string());
-    assert_eq!(username_from_git_url("github.com:21re/fkbr.git"), user);
-    assert_eq!(username_from_git_url("git://fkbr.org/sxoe.git"), user);
-
-    assert_eq!(username_from_git_url("https://github.com/brocode/fw.git"), user);
-    assert_eq!(username_from_git_url("https://kuci@github.com/brocode/fw.git"), "kuci".to_string());
-  }
 
   #[test]
   fn test_repo_name_from_url() {
