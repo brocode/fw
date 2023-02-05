@@ -26,18 +26,18 @@ fn forward_process_output_to_stdout<T: std::io::Read>(read: T, prefix: &str, col
       break;
     }
     if mark_err {
-      let prefix = format!("{:>21.21} |", prefix);
+      let prefix = format!("{prefix:>21.21} |");
       if atty {
         print!("{} {} {}", Paint::red("ERR"), color.paint(prefix), line);
       } else {
-        print!("ERR {} {}", prefix, line);
+        print!("ERR {prefix} {line}");
       };
     } else {
-      let prefix = format!("{:>25.25} |", prefix);
+      let prefix = format!("{prefix:>25.25} |");
       if atty {
         print!("{} {}", color.paint(prefix), line);
       } else {
-        print!("{} {}", prefix, line);
+        print!("{prefix} {line}");
       };
     }
   }

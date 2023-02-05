@@ -30,7 +30,7 @@ fn sync_project(config: &Config, project: &Project, logger: &Logger, only_new: b
   let project_logger = logger.new(o!(
     "git" => project.git.clone(),
     "exists" => exists,
-    "path" => format!("{:?}", path),
+    "path" => format!("{path:?}"),
   ));
   let result = if exists {
     if only_new {
@@ -94,7 +94,7 @@ pub fn synchronize(
   let spinner_style = ProgressStyle::default_spinner()
     .tick_chars("⣾⣽⣻⢿⡿⣟⣯⣷⣿")
     .template("{prefix:.bold.dim} {spinner} {wide_msg}")
-    .map_err(|e| AppError::RuntimeError(format!("Invalid Template: {}", e)))?;
+    .map_err(|e| AppError::RuntimeError(format!("Invalid Template: {e}")))?;
 
   let m = MultiProgress::new();
   m.set_draw_target(if no_progress_bar {
@@ -107,7 +107,7 @@ pub fn synchronize(
   let progress_bars = (1..=worker).map(|i| {
     let pb = m.add(ProgressBar::new(projects_count));
     pb.set_style(spinner_style.clone());
-    pb.set_prefix(format!("[{: >2}/{}]", i, worker));
+    pb.set_prefix(format!("[{i: >2}/{worker}]"));
     pb.set_message("initializing...");
     pb.tick();
     pb.enable_steady_tick(Duration::from_millis(250));

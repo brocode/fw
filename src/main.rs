@@ -169,7 +169,7 @@ fn _main() -> i32 {
       0
     }
     Err(error) => {
-      crit!(subcommand_logger, "Error running command"; "error" => format!("{:?}", error));
+      crit!(subcommand_logger, "Error running command"; "error" => format!("{error:?}"));
       1
     }
   }

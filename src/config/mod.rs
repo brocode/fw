@@ -55,7 +55,7 @@ pub fn read_config(logger: &Logger) -> Result<Config, AppError> {
           .ok_or(AppError::InternalError("Failed to get project name"))?;
         project.project_config_path = PathBuf::from(project_file.path().parent().ok_or(AppError::InternalError("Expected file to have a parent"))?)
           .strip_prefix(paths.projects.as_path())
-          .map_err(|e| AppError::RuntimeError(format!("Failed to strip prefix: {}", e)))?
+          .map_err(|e| AppError::RuntimeError(format!("Failed to strip prefix: {e}")))?
           .to_string_lossy()
           .to_string();
         if projects.contains_key(&project.name) {
@@ -85,7 +85,7 @@ pub fn read_config(logger: &Logger) -> Result<Config, AppError> {
           .ok_or(AppError::InternalError("Failed to get tag name"))?;
         tag.tag_config_path = PathBuf::from(tag_file.path().parent().ok_or(AppError::InternalError("Expected file to have a parent"))?)
           .strip_prefix(paths.tags.as_path())
-          .map_err(|e| AppError::RuntimeError(format!("Failed to strip prefix: {}", e)))?
+          .map_err(|e| AppError::RuntimeError(format!("Failed to strip prefix: {e}")))?
           .to_string_lossy()
           .to_string();
         if tags.contains_key(&tag_name) {
@@ -127,7 +127,7 @@ pub fn write_settings(settings: &PersistedSettings, logger: &Logger) -> Result<(
 
   let mut buffer = File::create(&paths.settings)?;
   let serialized = toml::to_string_pretty(settings)?;
-  write!(buffer, "{}", serialized)?;
+  write!(buffer, "{serialized}")?;
   write_example(&mut buffer, PersistedSettings::example())?;
 
   debug!(logger, "Wrote settings file to {:?}", paths.settings);
@@ -150,8 +150,8 @@ pub fn write_tag(tag_name: &str, tag: &Tag) -> Result<(), AppError> {
   let mut buffer = File::create(&tag_file_path)
     .map_err(|e| AppError::RuntimeError(format!("Failed to create project config file '{}'. {}", tag_file_path.to_string_lossy(), e)))?;
   let serialized = toml::to_string_pretty(&tag)?;
-  write!(buffer, "{}", CONF_MODE_HEADER)?;
-  write!(buffer, "{}", serialized)?;
+  write!(buffer, "{CONF_MODE_HEADER}")?;
+  write!(buffer, "{serialized}")?;
   write_example(&mut buffer, Tag::example())?;
   Ok(())
 }
@@ -164,7 +164,7 @@ pub fn delete_tag_config(tag_name: &str, tag: &Tag) -> Result<(), AppError> {
   tag_file_path.push(PathBuf::from(&tag.tag_config_path));
   tag_file_path.push(tag_name);
 
-  fs::remove_file(&tag_file_path).map_err(|e| AppError::RuntimeError(format!("Failed to delete tag config from '{:?}': {}", tag_file_path, e)))?;
+  fs::remove_file(&tag_file_path).map_err(|e| AppError::RuntimeError(format!("Failed to delete tag config from '{tag_file_path:?}': {e}")))?;
   Ok(())
 }
 
@@ -176,7 +176,7 @@ pub fn delete_project_config(project: &Project) -> Result<(), AppError> {
   project_file_path.push(PathBuf::from(&project.project_config_path));
   project_file_path.push(&project.name);
 
-  fs::remove_file(project_file_path).map_err(|e| AppError::RuntimeError(format!("Failed to delete project config: {}", e)))?;
+  fs::remove_file(project_file_path).map_err(|e| AppError::RuntimeError(format!("Failed to delete project config: {e}")))?;
   Ok(())
 }
 
@@ -188,7 +188,7 @@ where
   writeln!(buffer, "\n# Example:")?;
   for line in example_toml.split('\n') {
     if line.trim() != "" {
-      writeln!(buffer, "# {}", line)?;
+      writeln!(buffer, "# {line}")?;
     }
   }
   Ok(())
@@ -210,8 +210,8 @@ pub fn write_project(project: &Project) -> Result<(), AppError> {
     .map_err(|e| AppError::RuntimeError(format!("Failed to create project config file '{}'. {}", project_file_path.to_string_lossy(), e)))?;
   let serialized = toml::to_string_pretty(&project)?;
 
-  write!(buffer, "{}", CONF_MODE_HEADER)?;
-  write!(buffer, "{}", serialized)?;
+  write!(buffer, "{CONF_MODE_HEADER}")?;
+  write!(buffer, "{serialized}")?;
   write_example(&mut buffer, Project::example())?;
   Ok(())
 }
@@ -261,7 +261,7 @@ impl Config {
 Tags with low priority are applied first and if they all have the same priority
 they will be applied in alphabetical name order so it is recommended you make a
 conscious choice and set the value."#;
-            "tag_name" => name, "tag_def" => format!("{:?}", tag));
+            "tag_name" => name, "tag_def" => format!("{tag:?}"));
         50
       }
       Some(p) => p,
@@ -272,7 +272,7 @@ conscious choice and set the value."#;
   where
     F: Fn(&Tag) -> Option<String>,
   {
-    let tag_logger = logger.new(o!("tags" => format!("{:?}", maybe_tags)));
+    let tag_logger = logger.new(o!("tags" => format!("{maybe_tags:?}")));
     trace!(tag_logger, "Resolving");
     if let (Some(tags), Some(settings_tags)) = (maybe_tags, self.clone().settings.tags) {
       let mut resolved_with_priority: Vec<(String, u8)> = tags
@@ -285,9 +285,9 @@ conscious choice and set the value."#;
           Some(actual_tag) => resolver(actual_tag).map(|val| (val, self.tag_priority_or_fallback(t, actual_tag, logger))),
         })
         .collect();
-      trace!(logger, "before sort"; "tags" => format!("{:?}", resolved_with_priority));
+      trace!(logger, "before sort"; "tags" => format!("{resolved_with_priority:?}"));
       resolved_with_priority.sort_by_key(|resolved_and_priority| resolved_and_priority.1);
-      trace!(logger, "after sort"; "tags" => format!("{:?}", resolved_with_priority));
+      trace!(logger, "after sort"; "tags" => format!("{resolved_with_priority:?}"));
       resolved_with_priority.into_iter().map(|r| r.0).collect()
     } else {
       vec![]

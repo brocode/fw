@@ -16,9 +16,8 @@ use std::path::Path;
 pub fn repo_name_from_url(url: &str) -> Result<&str, AppError> {
   let last_fragment = url.rsplit('/').next().ok_or_else(|| {
     AppError::UserError(format!(
-      "Given URL {} does not have path fragments so cannot determine project name. Please give \
-       one.",
-      url
+      "Given URL {url} does not have path fragments so cannot determine project name. Please give \
+       one."
     ))
   })?;
 
@@ -61,12 +60,12 @@ fn update_remote(project: &Project, remote: &mut Remote<'_>, project_logger: &Lo
   remote
     .connect_auth(Direction::Fetch, Some(remote_callbacks), Some(proxy_options))
     .map_err(|error| {
-      info!(project_logger, "Error connecting remote"; "error" => format!("{}", error), "project" => &project.name);
+      info!(project_logger, "Error connecting remote"; "error" => format!("{error}"), "project" => &project.name);
       AppError::GitError(error)
     })?;
   let mut options = agent_fetch_options();
   remote.download::<String>(&[], Some(&mut options)).map_err(|error| {
-    info!(project_logger, "Error downloading for remote"; "error" => format!("{}", error), "project" => &project.name);
+    info!(project_logger, "Error downloading for remote"; "error" => format!("{error}"), "project" => &project.name);
     AppError::GitError(error)
   })?;
   remote.disconnect()?;
@@ -77,7 +76,7 @@ fn update_remote(project: &Project, remote: &mut Remote<'_>, project_logger: &Lo
 pub fn update_project_remotes(project: &Project, path: &Path, project_logger: &Logger, ff_merge: bool) -> Result<(), AppError> {
   debug!(project_logger, "Update project remotes");
   let local: Repository = Repository::open(path).map_err(|error| {
-    warn!(project_logger, "Error opening local repo"; "error" => format!("{}", error));
+    warn!(project_logger, "Error opening local repo"; "error" => format!("{error}"));
     AppError::GitError(error)
   })?;
   for desired_remote in project.additional_remotes.clone().unwrap_or_default().into_iter().chain(
@@ -141,16 +140,16 @@ pub fn clone_project(config: &Config, project: &Project, path: &Path, project_lo
     .bare(project.bare.unwrap_or_default())
     .clone(project.git.as_str(), path)
     .map_err(|error| {
-      warn!(project_logger, "Error cloning repo"; "error" => format!("{}", error));
+      warn!(project_logger, "Error cloning repo"; "error" => format!("{error}"));
       AppError::GitError(error)
     })
     .and_then(|repo| init_additional_remotes(project, repo, project_logger))
     .and_then(|_| {
       let after_clone = config.resolve_after_clone(project_logger, project);
       if !after_clone.is_empty() {
-        debug!(project_logger, "Handling post hooks"; "after_clone" => format!("{:?}", after_clone));
+        debug!(project_logger, "Handling post hooks"; "after_clone" => format!("{after_clone:?}"));
         spawn_maybe(&shell, &after_clone.join(" && "), path, &project.name, random_color(), project_logger)
-          .map_err(|error| AppError::UserError(format!("Post-clone hook failed (nonzero exit code). Cause: {:?}", error)))
+          .map_err(|error| AppError::UserError(format!("Post-clone hook failed (nonzero exit code). Cause: {error:?}")))
       } else {
         Ok(())
       }

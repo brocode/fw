@@ -49,6 +49,6 @@ pub fn logger_from_verbosity(verbosity: u64, quiet: bool) -> Logger {
 
   let logger = logger_builder.build().unwrap();
 
-  debug!(logger, "Logger ready" ; "level" => format!("{:?}", log_level));
+  debug!(logger, "Logger ready" ; "level" => format!("{log_level:?}"));
   logger
 }

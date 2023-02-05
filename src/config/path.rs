@@ -12,7 +12,7 @@ pub struct FwPaths {
 
 impl FwPaths {
   pub fn ensure_base_exists(&self) -> Result<(), AppError> {
-    std::fs::create_dir_all(&self.base).map_err(|e| AppError::RuntimeError(format!("Failed to create fw config base directory. {}", e)))?;
+    std::fs::create_dir_all(&self.base).map_err(|e| AppError::RuntimeError(format!("Failed to create fw config base directory. {e}")))?;
     Ok(())
   }
 }
@@ -50,11 +50,11 @@ pub fn fw_path() -> Result<FwPaths, AppError> {
 
   let env: String = env::var_os("FW_ENV")
     .map(|s| s.to_string_lossy().to_string())
-    .map(|s| format!("{}_", s))
+    .map(|s| format!("{s}_"))
     .unwrap_or_default()
     .replace('/', "");
 
-  settings.push(format!("{}settings.toml", env));
+  settings.push(format!("{env}settings.toml"));
 
   let mut projects = base.clone();
   projects.push("projects");

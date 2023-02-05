@@ -52,7 +52,7 @@ pub fn setup(workspace_dir: &str, logger: &Logger) -> Result<(), AppError> {
   let maybe_path = if path.exists() {
     Ok(path)
   } else {
-    Err(AppError::UserError(format!("Given workspace path {} does not exist", workspace_dir)))
+    Err(AppError::UserError(format!("Given workspace path {workspace_dir} does not exist")))
   };
 
   maybe_path
@@ -60,7 +60,7 @@ pub fn setup(workspace_dir: &str, logger: &Logger) -> Result<(), AppError> {
       if path.is_absolute() {
         Ok(path)
       } else {
-        Err(AppError::UserError(format!("Workspace path {} needs to be absolute", workspace_dir)))
+        Err(AppError::UserError(format!("Workspace path {workspace_dir} needs to be absolute")))
       }
     })
     .and_then(|path| determine_projects(path, logger))
@@ -84,7 +84,7 @@ fn determine_projects(path: PathBuf, logger: &Logger) -> Result<BTreeMap<String,
             Ok(project) => {
               projects.insert(project.name.clone(), project);
             }
-            Err(e) => warn!(logger, "Error while importing folder. Skipping it."; "entry" => name, "error" => format!("{}", e)),
+            Err(e) => warn!(logger, "Error while importing folder. Skipping it."; "entry" => name, "error" => format!("{e}")),
           }
         }
         Err(_) => warn!(logger, "Failed to parse directory name as unicode. Skipping it."),
@@ -107,7 +107,7 @@ pub fn gitlab_import(maybe_config: Result<Config, AppError>, state: ProjectState
   })?;
 
   let gitlab_client =
-    gitlab::Gitlab::new(gitlab_config.host, gitlab_config.token).map_err(|e| AppError::RuntimeError(format!("Failed to create gitlab client: {}", e)))?;
+    gitlab::Gitlab::new(gitlab_config.host, gitlab_config.token).map_err(|e| AppError::RuntimeError(format!("Failed to create gitlab client: {e}")))?;
 
   let mut builder = gitlab::api::projects::Projects::builder();
   builder.owned(true);
@@ -124,7 +124,7 @@ pub fn gitlab_import(maybe_config: Result<Config, AppError>, state: ProjectState
   // owned repos and your organizations repositories
   let owned_projects: Vec<gitlab::Project> = gitlab::api::paged(builder.build().unwrap(), gitlab::api::Pagination::All)
     .query(&gitlab_client)
-    .map_err(|e| AppError::RuntimeError(format!("Failed to query gitlab: {}", e)))?;
+    .map_err(|e| AppError::RuntimeError(format!("Failed to query gitlab: {e}")))?;
 
   let names_and_urls: Vec<(String, String)> = owned_projects
     .iter()
@@ -171,8 +171,7 @@ pub fn org_import(maybe_config: Result<Config, AppError>, org_name: &str, includ
     .or_else(|| current_config.settings.github_token.clone())
     .ok_or_else(|| {
       AppError::UserError(format!(
-        "Can't call GitHub API for org {} because no github oauth token (settings.github_token) specified in the configuration.",
-        org_name
+        "Can't call GitHub API for org {org_name} because no github oauth token (settings.github_token) specified in the configuration."
       ))
     })?;
   let mut api = github::github_api(&token)?;
@@ -185,7 +184,7 @@ pub fn org_import(maybe_config: Result<Config, AppError>, org_name: &str, includ
   for name in org_repository_names {
     let p = Project {
       name: name.clone(),
-      git: format!("git@github.com:{}/{}.git", org_name, name),
+      git: format!("git@github.com:{org_name}/{name}.git"),
       after_clone: after_clone.clone(),
       after_workon: after_workon.clone(),
       override_path: None,
