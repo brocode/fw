@@ -42,7 +42,6 @@ fn _main() -> i32 {
         &subcommand_matches
           .get_many::<String>("tag")
           .unwrap_or_default()
-          .into_iter()
           .map(ToOwned::to_owned)
           .collect(),
         worker,
@@ -132,7 +131,6 @@ fn _main() -> i32 {
       &subcommand_matches
         .get_many::<String>("tag")
         .unwrap_or_default()
-        .into_iter()
         .map(ToOwned::to_owned)
         .collect(),
       &subcommand_logger,
@@ -154,7 +152,6 @@ fn _main() -> i32 {
       &subcommand_matches
         .get_many::<String>("tag")
         .unwrap_or_default()
-        .into_iter()
         .map(ToOwned::to_owned)
         .collect(),
     ),
