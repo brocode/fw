@@ -56,21 +56,6 @@ impl fmt::Display for AppError {
 }
 
 impl Error for AppError {
-  #[allow(deprecated)]
-  fn description(&self) -> &str {
-    match *self {
-      AppError::Io(ref err) => err.description(),
-      AppError::UserError(ref str) | AppError::RuntimeError(ref str) => str.as_ref(),
-      AppError::BadJson(ref err) => err.description(),
-      AppError::InternalError(str) => str,
-      AppError::GitError(ref err) => err.description(),
-      AppError::Regex(ref err) => err.description(),
-      AppError::TomlSerError(ref err) => err.description(),
-      AppError::TomlDeError(ref err) => err.description(),
-      AppError::WalkdirError(ref err) => err.description(),
-      AppError::ReqwestError(ref err) => err.description(),
-    }
-  }
 
   fn cause(&self) -> Option<&dyn Error> {
     match *self {
