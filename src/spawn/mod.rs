@@ -14,6 +14,7 @@ use slog::{debug, o};
 use std::io::{BufRead, BufReader};
 use std::path::Path;
 use std::process::{Child, Command, Stdio};
+use std::io::IsTerminal;
 
 use std::thread;
 
@@ -45,11 +46,11 @@ fn forward_process_output_to_stdout<T: std::io::Read>(read: T, prefix: &str, col
 }
 
 fn is_stdout_a_tty() -> bool {
-  atty::is(atty::Stream::Stdout)
+  std::io::stdout().is_terminal()
 }
 
 fn is_stderr_a_tty() -> bool {
-  atty::is(atty::Stream::Stderr)
+  std::io::stderr().is_terminal()
 }
 
 pub fn spawn_maybe(shell: &[String], cmd: &str, workdir: &Path, project_name: &str, color: Color, logger: &Logger) -> Result<(), AppError> {

@@ -659,7 +659,6 @@ dependencies = [
 name = "fw"
 version = "2.16.1"
 dependencies = [
- "atty",
  "clap",
  "crossbeam",
  "dirs",
