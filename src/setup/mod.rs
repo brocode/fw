@@ -59,7 +59,7 @@ pub fn setup(workspace_dir: &str) -> Result<(), AppError> {
         Err(AppError::UserError(format!("Workspace path {} needs to be absolute", workspace_dir)))
       }
     })
-    .and_then(|path| determine_projects(path))
+    .and_then(determine_projects)
     .and_then(|projects| write_new_config_with_projects(projects, workspace_dir))
 }
 

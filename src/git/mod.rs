@@ -58,16 +58,16 @@ fn update_remote(remote: &mut Remote<'_>) -> Result<(), AppError> {
   proxy_options.auto();
   remote
     .connect_auth(Direction::Fetch, Some(remote_callbacks), Some(proxy_options))
-    .map_err(|error| AppError::GitError(error))?;
+    .map_err(AppError::GitError)?;
   let mut options = agent_fetch_options();
-  remote.download::<String>(&[], Some(&mut options)).map_err(|error| AppError::GitError(error))?;
+  remote.download::<String>(&[], Some(&mut options)).map_err(AppError::GitError)?;
   remote.disconnect()?;
   remote.update_tips(None, true, AutotagOption::Unspecified, None)?;
   Ok(())
 }
 
 pub fn update_project_remotes(project: &Project, path: &Path, ff_merge: bool) -> Result<(), AppError> {
-  let local: Repository = Repository::open(path).map_err(|error| AppError::GitError(error))?;
+  let local: Repository = Repository::open(path).map_err(AppError::GitError)?;
   for desired_remote in project.additional_remotes.clone().unwrap_or_default().into_iter().chain(
     vec![crate::config::project::Remote {
       name: "origin".to_string(),
@@ -91,9 +91,9 @@ pub fn update_project_remotes(project: &Project, path: &Path, ff_merge: bool) ->
   }
 
   if ff_merge {
-    if let Err(_) = fast_forward_merge(&local) {
-      // does not matter. fast forward not possible
-    }
+    // error does not matter. fast forward not possible
+    let _ = fast_forward_merge(&local);
+
   }
 
   Ok(())
@@ -122,7 +122,7 @@ pub fn clone_project(config: &Config, project: &Project, path: &Path) -> Result<
   repo_builder
     .bare(project.bare.unwrap_or_default())
     .clone(project.git.as_str(), path)
-    .map_err(|error| AppError::GitError(error))
+    .map_err(AppError::GitError)
     .and_then(|repo| init_additional_remotes(project, repo))
     .and_then(|_| {
       let after_clone = config.resolve_after_clone(project);

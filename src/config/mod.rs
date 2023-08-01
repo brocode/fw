@@ -221,8 +221,8 @@ impl Config {
 
   fn resolve_workspace(&self, project: &Project) -> String {
     let mut x = self.resolve_from_tags(|tag| tag.workspace.clone(), project.tags.clone());
-    let workspace = x.pop().unwrap_or_else(|| self.settings.workspace.clone());
-    workspace
+    
+    x.pop().unwrap_or_else(|| self.settings.workspace.clone())
   }
   pub fn resolve_after_clone(&self, project: &Project) -> Vec<String> {
     let mut commands: Vec<String> = vec![];
@@ -247,10 +247,7 @@ impl Config {
   }
 
   fn tag_priority_or_fallback(&self, tag: &Tag) -> u8 {
-    match tag.priority {
-      None => 50,
-      Some(p) => p,
-    }
+    tag.priority.unwrap_or(50)
   }
 
   fn resolve_from_tags<F>(&self, resolver: F, maybe_tags: Option<BTreeSet<String>>) -> Vec<String>
