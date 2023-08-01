@@ -56,7 +56,6 @@ impl fmt::Display for AppError {
 }
 
 impl Error for AppError {
-
   fn cause(&self) -> Option<&dyn Error> {
     match *self {
       AppError::Io(ref err) => Some(err),

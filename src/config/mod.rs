@@ -221,7 +221,7 @@ impl Config {
 
   fn resolve_workspace(&self, project: &Project) -> String {
     let mut x = self.resolve_from_tags(|tag| tag.workspace.clone(), project.tags.clone());
-    
+
     x.pop().unwrap_or_else(|| self.settings.workspace.clone())
   }
   pub fn resolve_after_clone(&self, project: &Project) -> Vec<String> {

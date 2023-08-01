@@ -93,7 +93,6 @@ pub fn update_project_remotes(project: &Project, path: &Path, ff_merge: bool) ->
   if ff_merge {
     // error does not matter. fast forward not possible
     let _ = fast_forward_merge(&local);
-
   }
 
   Ok(())
