@@ -52,28 +52,22 @@ fn builder() -> RepoBuilder<'static> {
   repo_builder
 }
 
-fn update_remote(project: &Project, remote: &mut Remote<'_>) -> Result<(), AppError> {
+fn update_remote(remote: &mut Remote<'_>) -> Result<(), AppError> {
   let remote_callbacks = agent_callbacks();
   let mut proxy_options = ProxyOptions::new();
   proxy_options.auto();
   remote
     .connect_auth(Direction::Fetch, Some(remote_callbacks), Some(proxy_options))
-    .map_err(|error| {
-      AppError::GitError(error)
-    })?;
+    .map_err(|error| AppError::GitError(error))?;
   let mut options = agent_fetch_options();
-  remote.download::<String>(&[], Some(&mut options)).map_err(|error| {
-    AppError::GitError(error)
-  })?;
+  remote.download::<String>(&[], Some(&mut options)).map_err(|error| AppError::GitError(error))?;
   remote.disconnect()?;
   remote.update_tips(None, true, AutotagOption::Unspecified, None)?;
   Ok(())
 }
 
 pub fn update_project_remotes(project: &Project, path: &Path, ff_merge: bool) -> Result<(), AppError> {
-  let local: Repository = Repository::open(path).map_err(|error| {
-    AppError::GitError(error)
-  })?;
+  let local: Repository = Repository::open(path).map_err(|error| AppError::GitError(error))?;
   for desired_remote in project.additional_remotes.clone().unwrap_or_default().into_iter().chain(
     vec![crate::config::project::Remote {
       name: "origin".to_string(),
@@ -93,12 +87,12 @@ pub fn update_project_remotes(project: &Project, path: &Path, ff_merge: bool) ->
       }
     };
 
-    update_remote(project, &mut remote)?;
+    update_remote(&mut remote)?;
   }
 
   if ff_merge {
-    if let Err(error) = fast_forward_merge(&local) {
-      // does not matter
+    if let Err(_) = fast_forward_merge(&local) {
+      // does not matter. fast forward not possible
     }
   }
 
@@ -111,7 +105,6 @@ fn fast_forward_merge(local: &Repository) -> Result<(), AppError> {
     let branch = Branch::wrap(head_ref);
     let upstream = branch.upstream()?;
     let upstream_commit = local.reference_to_annotated_commit(upstream.get())?;
-
 
     let (analysis_result, _) = local.merge_analysis(&[&upstream_commit])?;
     if MergeAnalysis::is_fast_forward(&analysis_result) {
@@ -129,9 +122,7 @@ pub fn clone_project(config: &Config, project: &Project, path: &Path) -> Result<
   repo_builder
     .bare(project.bare.unwrap_or_default())
     .clone(project.git.as_str(), path)
-    .map_err(|error| {
-      AppError::GitError(error)
-    })
+    .map_err(|error| AppError::GitError(error))
     .and_then(|repo| init_additional_remotes(project, repo))
     .and_then(|_| {
       let after_clone = config.resolve_after_clone(project);
@@ -148,7 +139,7 @@ fn init_additional_remotes(project: &Project, repository: Repository) -> Result<
   if let Some(additional_remotes) = &project.additional_remotes {
     for remote in additional_remotes {
       let mut git_remote = repository.remote(&remote.name, &remote.git)?;
-      update_remote(project, &mut git_remote)?;
+      update_remote(&mut git_remote)?;
     }
   }
   Ok(())

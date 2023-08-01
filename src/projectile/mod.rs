@@ -15,10 +15,10 @@ pub fn projectile(maybe_config: Result<Config, AppError>) -> Result<(), AppError
   projectile_bookmarks.push(".emacs.d");
   projectile_bookmarks.push("projectile-bookmarks.eld");
   let writer = fs::File::create(projectile_bookmarks)?;
-  persist( &home_dir, writer, projects_paths)
+  persist(&home_dir, writer, projects_paths)
 }
 
-fn persist<W>( home_dir: &Path, writer: W, paths: Vec<PathBuf>) -> Result<(), AppError>
+fn persist<W>(home_dir: &Path, writer: W, paths: Vec<PathBuf>) -> Result<(), AppError>
 where
   W: io::Write,
 {
@@ -55,7 +55,7 @@ mod tests {
     let paths = vec![PathBuf::from("/home/mriehl/test"), PathBuf::from("/home/mriehl/go/src/github.com/test2")];
 
     let home_dir = Path::new("/home/blubb").to_path_buf();
-    persist( &home_dir, &mut buffer, paths).unwrap();
+    persist(&home_dir, &mut buffer, paths).unwrap();
 
     assert_eq!(
       str::from_utf8(buffer.get_ref()).unwrap(),
@@ -70,5 +70,4 @@ mod tests {
     let replaced_string = replace_path_with_tilde("/home/blubb/moep/home/blubb/test.txt", home_dir).expect("should succeed");
     assert_eq!(replaced_string, "~/moep/home/blubb/test.txt".to_string());
   }
-
 }

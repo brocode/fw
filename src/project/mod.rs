@@ -55,11 +55,9 @@ pub fn add_entry(
 pub fn remove_project(maybe_config: Result<Config, AppError>, project_name: &str, purge_directory: bool) -> Result<(), AppError> {
   let config: Config = maybe_config?;
 
-
   if !config.projects.contains_key(project_name) {
     Err(AppError::UserError(format!("Project key {} does not exist in config", project_name)))
   } else if let Some(project) = config.projects.get(&project_name.to_owned()).cloned() {
-
     if purge_directory {
       let path = config.actual_path_to_project(&project);
 

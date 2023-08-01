@@ -1,7 +1,6 @@
 use crate::errors::AppError;
 use setup::ProjectState;
 use std::collections::BTreeSet;
-use std::time::SystemTime;
 
 fn main() {
   openssl_probe::init_ssl_cert_env_vars();
@@ -12,19 +11,18 @@ fn main() {
 fn _main() -> i32 {
   let matches = crate::app::app().get_matches();
 
-
   let config = config::read_config();
   if config.is_err() {
     eprintln!(
-      "Could not read v2.0 config: {:?}. If you are running the setup right now this is expected.", config
+      "Could not read v2.0 config: {:?}. If you are running the setup right now this is expected.",
+      config
     );
   };
 
   let subcommand_name = matches.subcommand_name().expect("subcommand required by clap.rs").to_owned();
   let subcommand_matches = matches.subcommand_matches(&subcommand_name).expect("subcommand matches enforced by clap.rs");
 
-  let now = SystemTime::now();
-  let result: Result<String, AppError> = match subcommand_name.as_ref() {
+  let result: Result<(), AppError> = match subcommand_name.as_ref() {
     "sync" => {
       let worker = subcommand_matches.get_one::<i32>("parallelism").expect("enforced by clap.rs").to_owned();
 
@@ -76,9 +74,7 @@ fn _main() -> i32 {
       let override_path: Option<String> = subcommand_matches.get_one::<String>("override-path").map(ToOwned::to_owned);
       project::update_entry(config, name, git, after_workon, after_clone, override_path)
     }
-    "setup" => setup::setup(
-      subcommand_matches.get_one::<String>("WORKSPACE_DIR").expect("argument required by clap.rs"),
-    ),
+    "setup" => setup::setup(subcommand_matches.get_one::<String>("WORKSPACE_DIR").expect("argument required by clap.rs")),
     "import" => setup::import(
       config,
       subcommand_matches.get_one::<String>("PROJECT_DIR").expect("argument required by clap.rs"),
@@ -141,13 +137,10 @@ fn _main() -> i32 {
     ),
     _ => Err(AppError::InternalError("Command not implemented")),
   }
-  .and_then(|_| now.elapsed().map_err(AppError::ClockError))
-  .map(|duration| format!("{}sec", duration.as_secs()));
+  .map(|_| ());
 
   match result {
-    Ok(time) => {
-      0
-    }
+    Ok(()) => 0,
     Err(error) => {
       eprintln!("Error running command: error {}", error);
       1
@@ -155,11 +148,7 @@ fn _main() -> i32 {
   }
 }
 
-fn execute_tag_subcommand(
-  maybe_config: Result<config::Config, AppError>,
-  tag_command_name: &str,
-  tag_matches: &clap::ArgMatches,
-) -> Result<(), AppError> {
+fn execute_tag_subcommand(maybe_config: Result<config::Config, AppError>, tag_command_name: &str, tag_matches: &clap::ArgMatches) -> Result<(), AppError> {
   match tag_command_name {
     "ls" => {
       let maybe_project_name: Option<String> = tag_matches.get_one::<String>("PROJECT_NAME").map(ToOwned::to_owned);

@@ -21,7 +21,7 @@ use std::thread;
 #[cfg(unix)]
 use std::os::unix::fs::FileTypeExt;
 
-fn sync_project(config: &Config, project: &Project,  only_new: bool, ff_merge: bool) -> Result<(), AppError> {
+fn sync_project(config: &Config, project: &Project, only_new: bool, ff_merge: bool) -> Result<(), AppError> {
   let path = config.actual_path_to_project(project);
   let exists = path.exists();
   let result = if exists {
@@ -58,13 +58,7 @@ pub fn synchronize_metadata_if_trusted(project: &Project, path: &Path) -> Result
   }
 }
 
-pub fn synchronize(
-  maybe_config: Result<Config, AppError>,
-  only_new: bool,
-  ff_merge: bool,
-  tags: &BTreeSet<String>,
-  worker: i32,
-) -> Result<(), AppError> {
+pub fn synchronize(maybe_config: Result<Config, AppError>, only_new: bool, ff_merge: bool, tags: &BTreeSet<String>, worker: i32) -> Result<(), AppError> {
   eprintln!("Synchronizing everything");
   if !ssh_agent_running() {
     eprintln!("SSH Agent not running. Process may hang.")
@@ -86,7 +80,7 @@ pub fn synchronize(
     .map_err(|e| AppError::RuntimeError(format!("Invalid Template: {}", e)))?;
 
   let m = MultiProgress::new();
-  m.set_draw_target( ProgressDrawTarget::stderr());
+  m.set_draw_target(ProgressDrawTarget::stderr());
 
   let job_results: Arc<SegQueue<Result<(), AppError>>> = Arc::new(SegQueue::new());
   let progress_bars = (1..=worker).map(|i| {
@@ -108,7 +102,7 @@ pub fn synchronize(
       loop {
         if let Some(project) = job_q.pop() {
           pb.set_message(project.name.to_string());
-          let sync_result = sync_project(&job_config, &project,  only_new, ff_merge);
+          let sync_result = sync_project(&job_config, &project, only_new, ff_merge);
           let msg = match sync_result {
             Ok(_) => format!("DONE: {}", project.name),
             Err(ref e) => format!("FAILED: {} - {}", project.name, e),

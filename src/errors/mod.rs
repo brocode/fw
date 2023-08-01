@@ -1,7 +1,6 @@
 use std::error::Error;
 use std::fmt;
 use std::io;
-use std::time::SystemTimeError;
 
 #[derive(Debug)]
 pub enum AppError {
@@ -10,7 +9,6 @@ pub enum AppError {
   RuntimeError(String),
   BadJson(serde_json::Error),
   InternalError(&'static str),
-  ClockError(SystemTimeError),
   GitError(git2::Error),
   Regex(regex::Error),
   TomlSerError(toml::ser::Error),
@@ -47,7 +45,6 @@ impl fmt::Display for AppError {
       AppError::RuntimeError(ref str) => write!(f, "Runtime error: {}", str),
       AppError::BadJson(ref err) => write!(f, "JSON error: {}", err),
       AppError::InternalError(str) => write!(f, "Internal error: {}", str),
-      AppError::ClockError(ref err) => write!(f, "System clock error: {}", err),
       AppError::GitError(ref err) => write!(f, "Git error: {}", err),
       AppError::Regex(ref err) => write!(f, "Regex error: {}", err),
       AppError::TomlSerError(ref err) => write!(f, "toml serialization error: {}", err),
@@ -66,7 +63,6 @@ impl Error for AppError {
       AppError::UserError(ref str) | AppError::RuntimeError(ref str) => str.as_ref(),
       AppError::BadJson(ref err) => err.description(),
       AppError::InternalError(str) => str,
-      AppError::ClockError(ref err) => err.description(),
       AppError::GitError(ref err) => err.description(),
       AppError::Regex(ref err) => err.description(),
       AppError::TomlSerError(ref err) => err.description(),
@@ -81,7 +77,6 @@ impl Error for AppError {
       AppError::Io(ref err) => Some(err),
       AppError::UserError(_) | AppError::RuntimeError(_) | AppError::InternalError(_) => None,
       AppError::BadJson(ref err) => Some(err),
-      AppError::ClockError(ref err) => Some(err),
       AppError::GitError(ref err) => Some(err),
       AppError::Regex(ref err) => Some(err),
       AppError::TomlSerError(ref err) => Some(err),

@@ -144,7 +144,7 @@ fn list_project_tags(config: &Config, project_name: &str) -> Result<(), AppError
   }
 }
 
-pub fn autotag(maybe_config: Result<Config, AppError>, cmd: &str, tag_name: &str,  parallel_raw: &Option<String>) -> Result<(), AppError> {
+pub fn autotag(maybe_config: Result<Config, AppError>, cmd: &str, tag_name: &str, parallel_raw: &Option<String>) -> Result<(), AppError> {
   let config = maybe_config?;
 
   let tags: BTreeMap<String, Tag> = config.settings.tags.clone().unwrap_or_default();

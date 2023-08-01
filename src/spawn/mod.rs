@@ -103,12 +103,7 @@ pub fn init_threads(parallel_raw: &Option<String>) -> Result<(), AppError> {
   Ok(())
 }
 
-pub fn foreach(
-  maybe_config: Result<Config, AppError>,
-  cmd: &str,
-  tags: &BTreeSet<String>,
-  parallel_raw: &Option<String>,
-) -> Result<(), AppError> {
+pub fn foreach(maybe_config: Result<Config, AppError>, cmd: &str, tags: &BTreeSet<String>, parallel_raw: &Option<String>) -> Result<(), AppError> {
   let config = maybe_config?;
   init_threads(parallel_raw)?;
 

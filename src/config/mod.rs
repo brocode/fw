@@ -31,7 +31,6 @@ pub fn read_config() -> Result<Config, AppError> {
 
   let settings: PersistedSettings = toml::from_str(&settings_raw)?;
 
-
   let mut projects: BTreeMap<String, Project> = BTreeMap::new();
   if paths.projects.exists() {
     for maybe_project_file in WalkDir::new(&paths.projects).follow_links(true) {
@@ -58,7 +57,8 @@ pub fn read_config() -> Result<Config, AppError> {
           .to_string();
         if projects.contains_key(&project.name) {
           eprintln!(
-            "Inconsistency found: project {} defined more than once. Will use the project that is found last. Results might be inconsistent.", project.name
+            "Inconsistency found: project {} defined more than once. Will use the project that is found last. Results might be inconsistent.",
+            project.name
           );
         }
         projects.insert(project.name.clone(), project);
@@ -86,7 +86,8 @@ pub fn read_config() -> Result<Config, AppError> {
           .to_string();
         if tags.contains_key(&tag_name) {
           eprintln!(
-            "Inconsistency found: tag {} defined more than once. Will use the project that is found last. Results might be inconsistent.", tag_name
+            "Inconsistency found: tag {} defined more than once. Will use the project that is found last. Results might be inconsistent.",
+            tag_name
           );
         }
         tags.insert(tag_name, tag);
@@ -123,7 +124,6 @@ pub fn write_settings(settings: &PersistedSettings) -> Result<(), AppError> {
   let serialized = toml::to_string_pretty(settings)?;
   write!(buffer, "{}", serialized)?;
   write_example(&mut buffer, PersistedSettings::example())?;
-
 
   Ok(())
 }
@@ -219,12 +219,12 @@ impl Config {
     expand_path(path)
   }
 
-  fn resolve_workspace(&self,  project: &Project) -> String {
+  fn resolve_workspace(&self, project: &Project) -> String {
     let mut x = self.resolve_from_tags(|tag| tag.workspace.clone(), project.tags.clone());
     let workspace = x.pop().unwrap_or_else(|| self.settings.workspace.clone());
     workspace
   }
-  pub fn resolve_after_clone(&self,  project: &Project) -> Vec<String> {
+  pub fn resolve_after_clone(&self, project: &Project) -> Vec<String> {
     let mut commands: Vec<String> = vec![];
     commands.extend_from_slice(&self.resolve_after_clone_from_tags(project.tags.clone()));
     let commands_from_project: Vec<String> = project.after_clone.clone().into_iter().collect();
@@ -246,7 +246,7 @@ impl Config {
     self.resolve_from_tags(|t| t.clone().after_clone, maybe_tags)
   }
 
-  fn tag_priority_or_fallback(&self, name: &str, tag: &Tag) -> u8 {
+  fn tag_priority_or_fallback(&self, tag: &Tag) -> u8 {
     match tag.priority {
       None => 50,
       Some(p) => p,
@@ -265,7 +265,7 @@ impl Config {
             eprintln!("Ignoring tag since it was not found in the config. missing_tag {}", t.clone());
             None
           }
-          Some(actual_tag) => resolver(actual_tag).map(|val| (val, self.tag_priority_or_fallback(t, actual_tag))),
+          Some(actual_tag) => resolver(actual_tag).map(|val| (val, self.tag_priority_or_fallback(actual_tag))),
         })
         .collect();
       resolved_with_priority.sort_by_key(|resolved_and_priority| resolved_and_priority.1);
@@ -284,61 +284,61 @@ mod tests {
   #[test]
   fn test_workon_from_tags() {
     let config = a_config();
-    let resolved = config.resolve_after_workon( config.projects.get("test1").unwrap());
+    let resolved = config.resolve_after_workon(config.projects.get("test1").unwrap());
     assert_eq!(resolved, vec!["workon1".to_string(), "workon2".to_string()]);
   }
   #[test]
   fn test_workon_from_tags_prioritized() {
     let config = a_config();
-    let resolved = config.resolve_after_workon( config.projects.get("test5").unwrap());
+    let resolved = config.resolve_after_workon(config.projects.get("test5").unwrap());
     assert_eq!(resolved, vec!["workon4".to_string(), "workon3".to_string()]);
   }
   #[test]
   fn test_after_clone_from_tags() {
     let config = a_config();
-    let resolved = config.resolve_after_clone( config.projects.get("test1").unwrap());
+    let resolved = config.resolve_after_clone(config.projects.get("test1").unwrap());
     assert_eq!(resolved, vec!["clone1".to_string(), "clone2".to_string()]);
   }
   #[test]
   fn test_after_clone_from_tags_prioritized() {
     let config = a_config();
-    let resolved = config.resolve_after_clone( config.projects.get("test5").unwrap());
+    let resolved = config.resolve_after_clone(config.projects.get("test5").unwrap());
     assert_eq!(resolved, vec!["clone4".to_string(), "clone3".to_string()]);
   }
   #[test]
   fn test_workon_from_tags_missing_one_tag_graceful() {
     let config = a_config();
-    let resolved = config.resolve_after_workon( config.projects.get("test2").unwrap());
+    let resolved = config.resolve_after_workon(config.projects.get("test2").unwrap());
     assert_eq!(resolved, vec!["workon1".to_owned()]);
   }
   #[test]
   fn test_workon_from_tags_missing_all_tags_graceful() {
     let config = a_config();
-    let resolved = config.resolve_after_workon( config.projects.get("test4").unwrap());
+    let resolved = config.resolve_after_workon(config.projects.get("test4").unwrap());
     assert_eq!(resolved, Vec::<String>::new());
   }
   #[test]
   fn test_after_clone_from_tags_missing_all_tags_graceful() {
     let config = a_config();
-    let resolved = config.resolve_after_clone( config.projects.get("test4").unwrap());
+    let resolved = config.resolve_after_clone(config.projects.get("test4").unwrap());
     assert_eq!(resolved, Vec::<String>::new());
   }
   #[test]
   fn test_after_clone_from_tags_missing_one_tag_graceful() {
     let config = a_config();
-    let resolved = config.resolve_after_clone( config.projects.get("test2").unwrap());
+    let resolved = config.resolve_after_clone(config.projects.get("test2").unwrap());
     assert_eq!(resolved, vec!["clone1".to_owned()]);
   }
   #[test]
   fn test_workon_override_from_project() {
     let config = a_config();
-    let resolved = config.resolve_after_workon( config.projects.get("test3").unwrap());
+    let resolved = config.resolve_after_workon(config.projects.get("test3").unwrap());
     assert_eq!(resolved, vec!["workon1".to_string(), "workon override in project".to_owned()]);
   }
   #[test]
   fn test_after_clone_override_from_project() {
     let config = a_config();
-    let resolved = config.resolve_after_clone( config.projects.get("test3").unwrap());
+    let resolved = config.resolve_after_clone(config.projects.get("test3").unwrap());
     assert_eq!(resolved, vec!["clone1".to_string(), "clone override in project".to_owned()]);
   }
 
@@ -458,5 +458,4 @@ mod tests {
     };
     Config { projects, settings }
   }
-
 }

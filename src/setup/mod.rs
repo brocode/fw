@@ -147,7 +147,7 @@ pub fn gitlab_import(maybe_config: Result<Config, AppError>, state: ProjectState
     };
 
     if current_projects.contains_key(&p.name) {
-          //Skipping new project from Gitlab import because it already exists in the current fw config
+      //Skipping new project from Gitlab import because it already exists in the current fw config
     } else {
       config::write_project(&p)?; // TODO not sure if this should be default or gitlab subfolder? or even user specified?
       current_projects.insert(p.name.clone(), p); // to ensure no duplicated name encountered during processing
@@ -190,7 +190,7 @@ pub fn org_import(maybe_config: Result<Config, AppError>, org_name: &str, includ
     };
 
     if current_projects.contains_key(&p.name) {
-     //     "Skipping new project from Github import because it already exists in the current fw config
+      //     "Skipping new project from Github import because it already exists in the current fw config
     } else {
       config::write_project(&p)?;
       current_projects.insert(p.name.clone(), p); // to ensure no duplicated name encountered during processing
@@ -216,7 +216,6 @@ pub fn import(maybe_config: Result<Config, AppError>, path: &str) -> Result<(), 
 
 fn load_project(maybe_settings: Option<Settings>, path_to_repo: PathBuf, name: &str) -> Result<Project, AppError> {
   let repo: Repository = Repository::open(path_to_repo)?;
-  let all = repo.remotes()?;
   let remote = repo.find_remote("origin")?;
   let url = remote
     .url()
