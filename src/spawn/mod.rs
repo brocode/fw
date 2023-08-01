@@ -11,10 +11,10 @@ use std::borrow::ToOwned;
 
 use crate::util::random_color;
 use slog::{debug, o};
+use std::io::IsTerminal;
 use std::io::{BufRead, BufReader};
 use std::path::Path;
 use std::process::{Child, Command, Stdio};
-use std::io::IsTerminal;
 
 use std::thread;
 
