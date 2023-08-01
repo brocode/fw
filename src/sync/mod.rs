@@ -13,9 +13,6 @@ use crossbeam::queue::SegQueue;
 
 use indicatif::{MultiProgress, ProgressBar, ProgressDrawTarget, ProgressStyle};
 
-use slog::Drain;
-use slog::Logger;
-use slog::{info, o, warn};
 use std::borrow::ToOwned;
 
 use std::sync::Arc;
@@ -24,22 +21,17 @@ use std::thread;
 #[cfg(unix)]
 use std::os::unix::fs::FileTypeExt;
 
-fn sync_project(config: &Config, project: &Project, logger: &Logger, only_new: bool, ff_merge: bool) -> Result<(), AppError> {
-  let path = config.actual_path_to_project(project, logger);
+fn sync_project(config: &Config, project: &Project,  only_new: bool, ff_merge: bool) -> Result<(), AppError> {
+  let path = config.actual_path_to_project(project);
   let exists = path.exists();
-  let project_logger = logger.new(o!(
-    "git" => project.git.clone(),
-    "exists" => exists,
-    "path" => format!("{:?}", path),
-  ));
   let result = if exists {
     if only_new {
       Ok(())
     } else {
-      update_project_remotes(project, &path, &project_logger, ff_merge).and_then(|_| synchronize_metadata_if_trusted(project, &path))
+      update_project_remotes(project, &path, ff_merge).and_then(|_| synchronize_metadata_if_trusted(project, &path))
     }
   } else {
-    clone_project(config, project, &path, &project_logger).and_then(|_| synchronize_metadata_if_trusted(project, &path))
+    clone_project(config, project, &path).and_then(|_| synchronize_metadata_if_trusted(project, &path))
   };
   result.map_err(|e| AppError::RuntimeError(format!("Failed to sync {}: {}", project.name, e)))
 }
@@ -68,18 +60,15 @@ pub fn synchronize_metadata_if_trusted(project: &Project, path: &Path) -> Result
 
 pub fn synchronize(
   maybe_config: Result<Config, AppError>,
-  no_progress_bar: bool,
   only_new: bool,
   ff_merge: bool,
   tags: &BTreeSet<String>,
   worker: i32,
-  logger: &Logger,
 ) -> Result<(), AppError> {
   eprintln!("Synchronizing everything");
   if !ssh_agent_running() {
-    warn!(logger, "SSH Agent not running. Process may hang.")
+    eprintln!("SSH Agent not running. Process may hang.")
   }
-  let no_progress_bar = no_progress_bar || logger.is_debug_enabled();
   let config = Arc::new(maybe_config?);
 
   let projects: Vec<Project> = config.projects.values().map(ToOwned::to_owned).collect();
@@ -97,11 +86,7 @@ pub fn synchronize(
     .map_err(|e| AppError::RuntimeError(format!("Invalid Template: {}", e)))?;
 
   let m = MultiProgress::new();
-  m.set_draw_target(if no_progress_bar {
-    ProgressDrawTarget::hidden()
-  } else {
-    ProgressDrawTarget::stderr()
-  });
+  m.set_draw_target( ProgressDrawTarget::stderr());
 
   let job_results: Arc<SegQueue<Result<(), AppError>>> = Arc::new(SegQueue::new());
   let progress_bars = (1..=worker).map(|i| {
@@ -117,20 +102,18 @@ pub fn synchronize(
   for pb in progress_bars {
     let job_q = Arc::clone(&q);
     let job_config = Arc::clone(&config);
-    let job_logger = logger.clone();
     let job_result_queue = Arc::clone(&job_results);
     thread_handles.push(thread::spawn(move || {
       let mut job_result: Result<(), AppError> = Result::Ok(());
       loop {
         if let Some(project) = job_q.pop() {
           pb.set_message(project.name.to_string());
-          let sync_result = sync_project(&job_config, &project, &job_logger, only_new, ff_merge);
+          let sync_result = sync_project(&job_config, &project,  only_new, ff_merge);
           let msg = match sync_result {
             Ok(_) => format!("DONE: {}", project.name),
             Err(ref e) => format!("FAILED: {} - {}", project.name, e),
           };
           pb.println(&msg);
-          info!(job_logger, "{}", msg);
           job_result = job_result.and(sync_result);
         } else {
           pb.finish_and_clear();

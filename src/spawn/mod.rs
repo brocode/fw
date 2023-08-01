@@ -5,12 +5,9 @@ use rayon::prelude::*;
 use std::collections::BTreeSet;
 use yansi::{Color, Paint};
 
-use slog::Logger;
-use slog::{error, info};
 use std::borrow::ToOwned;
 
 use crate::util::random_color;
-use slog::{debug, o};
 use std::io::IsTerminal;
 use std::io::{BufRead, BufReader};
 use std::path::Path;
@@ -53,7 +50,7 @@ fn is_stderr_a_tty() -> bool {
   std::io::stderr().is_terminal()
 }
 
-pub fn spawn_maybe(shell: &[String], cmd: &str, workdir: &Path, project_name: &str, color: Color, logger: &Logger) -> Result<(), AppError> {
+pub fn spawn_maybe(shell: &[String], cmd: &str, workdir: &Path, project_name: &str, color: Color) -> Result<(), AppError> {
   let program: &str = shell
     .first()
     .ok_or_else(|| AppError::UserError("shell entry in project settings must have at least one element".to_owned()))?;
@@ -90,21 +87,18 @@ pub fn spawn_maybe(shell: &[String], cmd: &str, workdir: &Path, project_name: &s
 
   let status = result.wait()?;
   if status.code().unwrap_or(0) > 0 {
-    error!(logger, "cmd failed");
     Err(AppError::UserError("External command failed.".to_owned()))
   } else {
-    info!(logger, "cmd finished");
     Ok(())
   }
 }
 
-pub fn init_threads(parallel_raw: &Option<String>, logger: &Logger) -> Result<(), AppError> {
+pub fn init_threads(parallel_raw: &Option<String>) -> Result<(), AppError> {
   if let Some(ref raw_num) = *parallel_raw {
     let num_threads = raw_num.parse::<usize>()?;
     rayon::ThreadPoolBuilder::new().num_threads(num_threads).build_global().expect(
       "Tried to initialize rayon more than once (this is a software bug on fw side, please file an issue at https://github.com/brocode/fw/issues/new )",
     );
-    debug!(logger, "Rayon rolling with thread pool of size {}", raw_num)
   }
   Ok(())
 }
@@ -113,11 +107,10 @@ pub fn foreach(
   maybe_config: Result<Config, AppError>,
   cmd: &str,
   tags: &BTreeSet<String>,
-  logger: &Logger,
   parallel_raw: &Option<String>,
 ) -> Result<(), AppError> {
   let config = maybe_config?;
-  init_threads(parallel_raw, logger)?;
+  init_threads(parallel_raw)?;
 
   let projects: Vec<&Project> = config.projects.values().collect();
   let script_results = projects
@@ -125,10 +118,8 @@ pub fn foreach(
     .filter(|p| tags.is_empty() || p.tags.clone().unwrap_or_default().intersection(tags).count() > 0)
     .map(|p| {
       let shell = config.settings.get_shell_or_default();
-      let project_logger = logger.new(o!("project" => p.name.clone()));
-      let path = config.actual_path_to_project(p, &project_logger);
-      info!(project_logger, "Entering");
-      spawn_maybe(&shell, cmd, &path, &p.name, random_color(), &project_logger)
+      let path = config.actual_path_to_project(p);
+      spawn_maybe(&shell, cmd, &path, &p.name, random_color())
     })
     .collect::<Vec<Result<(), AppError>>>();
 

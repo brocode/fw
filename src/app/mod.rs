@@ -25,14 +25,6 @@ pub fn app() -> Command {
 For further information please have a look at our README https://github.com/brocode/fw/blob/master/README.org",
     )
     .subcommand_required(true)
-    .arg(
-      Arg::new("v")
-        .short('v')
-        .num_args(0)
-        .action(ArgAction::Count)
-        .help("Sets the level of verbosity"),
-    )
-    .arg(Arg::new("q").short('q').help("Make fw quiet").action(ArgAction::SetTrue).num_args(0))
     .subcommand(
       Command::new("sync")
         .about("Sync workspace. Clones projects or updates remotes for existing projects.")
@@ -44,14 +36,6 @@ For further information please have a look at our README https://github.com/broc
             .required(false)
             .num_args(1)
             .action(ArgAction::Append),
-        )
-        .arg(
-          Arg::new("no-progress-bar")
-            .long("no-progress-bar")
-            .short('q')
-            .help("Progress bars are automatically disabled with -vv")
-            .num_args(0)
-            .action(ArgAction::SetTrue),
         )
         .arg(
           Arg::new("no-fast-forward-merge")

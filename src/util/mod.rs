@@ -4,12 +4,6 @@ use rand::seq::SliceRandom;
 
 use std::borrow::ToOwned;
 
-use slog::debug;
-use slog::Logger;
-use sloggers::terminal::{Destination, TerminalLoggerBuilder};
-use sloggers::types::{Format, Severity};
-use sloggers::Build;
-
 pub static COLOURS: [Color; 14] = [
   Color::Green,
   Color::Cyan,
@@ -30,25 +24,4 @@ pub static COLOURS: [Color; 14] = [
 pub fn random_color() -> Color {
   let mut rng = rand::thread_rng();
   COLOURS.choose(&mut rng).map(ToOwned::to_owned).unwrap_or(Color::Black)
-}
-
-pub fn logger_from_verbosity(verbosity: u64, quiet: bool) -> Logger {
-  let log_level = match verbosity {
-    _ if quiet => Severity::Error,
-    0 => Severity::Warning,
-    1 => Severity::Info,
-    2 => Severity::Debug,
-    3 => Severity::Trace,
-    _ => Severity::Trace,
-  };
-
-  let mut logger_builder = TerminalLoggerBuilder::new();
-  logger_builder.level(log_level);
-  logger_builder.destination(Destination::Stderr);
-  logger_builder.format(Format::Full);
-
-  let logger = logger_builder.build().unwrap();
-
-  debug!(logger, "Logger ready" ; "level" => format!("{:?}", log_level));
-  logger
 }

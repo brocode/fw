@@ -7,8 +7,6 @@ use crate::util::random_color;
 use git2::build::RepoBuilder;
 use git2::{AutotagOption, Branch, Direction, FetchOptions, MergeAnalysis, ProxyOptions, Remote, RemoteCallbacks, Repository};
 
-use slog::Logger;
-use slog::{debug, info, warn};
 use std::borrow::ToOwned;
 
 use std::path::Path;
@@ -54,19 +52,17 @@ fn builder() -> RepoBuilder<'static> {
   repo_builder
 }
 
-fn update_remote(project: &Project, remote: &mut Remote<'_>, project_logger: &Logger) -> Result<(), AppError> {
+fn update_remote(project: &Project, remote: &mut Remote<'_>) -> Result<(), AppError> {
   let remote_callbacks = agent_callbacks();
   let mut proxy_options = ProxyOptions::new();
   proxy_options.auto();
   remote
     .connect_auth(Direction::Fetch, Some(remote_callbacks), Some(proxy_options))
     .map_err(|error| {
-      info!(project_logger, "Error connecting remote"; "error" => format!("{}", error), "project" => &project.name);
       AppError::GitError(error)
     })?;
   let mut options = agent_fetch_options();
   remote.download::<String>(&[], Some(&mut options)).map_err(|error| {
-    info!(project_logger, "Error downloading for remote"; "error" => format!("{}", error), "project" => &project.name);
     AppError::GitError(error)
   })?;
   remote.disconnect()?;
@@ -74,10 +70,8 @@ fn update_remote(project: &Project, remote: &mut Remote<'_>, project_logger: &Lo
   Ok(())
 }
 
-pub fn update_project_remotes(project: &Project, path: &Path, project_logger: &Logger, ff_merge: bool) -> Result<(), AppError> {
-  debug!(project_logger, "Update project remotes");
+pub fn update_project_remotes(project: &Project, path: &Path, ff_merge: bool) -> Result<(), AppError> {
   let local: Repository = Repository::open(path).map_err(|error| {
-    warn!(project_logger, "Error opening local repo"; "error" => format!("{}", error));
     AppError::GitError(error)
   })?;
   for desired_remote in project.additional_remotes.clone().unwrap_or_default().into_iter().chain(
@@ -99,57 +93,50 @@ pub fn update_project_remotes(project: &Project, path: &Path, project_logger: &L
       }
     };
 
-    update_remote(project, &mut remote, project_logger)?;
+    update_remote(project, &mut remote)?;
   }
 
   if ff_merge {
-    if let Err(error) = fast_forward_merge(&local, project_logger) {
-      debug!(project_logger, "Fast forward failed: {}", error)
+    if let Err(error) = fast_forward_merge(&local) {
+      // does not matter
     }
   }
 
   Ok(())
 }
 
-fn fast_forward_merge(local: &Repository, project_logger: &Logger) -> Result<(), AppError> {
+fn fast_forward_merge(local: &Repository) -> Result<(), AppError> {
   let head_ref = local.head()?;
   if head_ref.is_branch() {
     let branch = Branch::wrap(head_ref);
     let upstream = branch.upstream()?;
     let upstream_commit = local.reference_to_annotated_commit(upstream.get())?;
 
-    debug!(project_logger, "Check fast forward for {:?} {:?}", branch.name(), upstream.name());
 
     let (analysis_result, _) = local.merge_analysis(&[&upstream_commit])?;
     if MergeAnalysis::is_fast_forward(&analysis_result) {
-      debug!(project_logger, "Fast forward possible");
       let target_id = upstream_commit.id();
       local.checkout_tree(&local.find_object(upstream_commit.id(), None)?, None)?;
       local.head()?.set_target(target_id, "fw fast-forward")?;
-    } else {
-      debug!(project_logger, "Fast forward not possible: {:?}", analysis_result)
     }
   }
   Ok(())
 }
 
-pub fn clone_project(config: &Config, project: &Project, path: &Path, project_logger: &Logger) -> Result<(), AppError> {
+pub fn clone_project(config: &Config, project: &Project, path: &Path) -> Result<(), AppError> {
   let shell = config.settings.get_shell_or_default();
   let mut repo_builder = builder();
-  debug!(project_logger, "Cloning project");
   repo_builder
     .bare(project.bare.unwrap_or_default())
     .clone(project.git.as_str(), path)
     .map_err(|error| {
-      warn!(project_logger, "Error cloning repo"; "error" => format!("{}", error));
       AppError::GitError(error)
     })
-    .and_then(|repo| init_additional_remotes(project, repo, project_logger))
+    .and_then(|repo| init_additional_remotes(project, repo))
     .and_then(|_| {
-      let after_clone = config.resolve_after_clone(project_logger, project);
+      let after_clone = config.resolve_after_clone(project);
       if !after_clone.is_empty() {
-        debug!(project_logger, "Handling post hooks"; "after_clone" => format!("{:?}", after_clone));
-        spawn_maybe(&shell, &after_clone.join(" && "), path, &project.name, random_color(), project_logger)
+        spawn_maybe(&shell, &after_clone.join(" && "), path, &project.name, random_color())
           .map_err(|error| AppError::UserError(format!("Post-clone hook failed (nonzero exit code). Cause: {:?}", error)))
       } else {
         Ok(())
@@ -157,12 +144,11 @@ pub fn clone_project(config: &Config, project: &Project, path: &Path, project_lo
     })
 }
 
-fn init_additional_remotes(project: &Project, repository: Repository, project_logger: &Logger) -> Result<(), AppError> {
+fn init_additional_remotes(project: &Project, repository: Repository) -> Result<(), AppError> {
   if let Some(additional_remotes) = &project.additional_remotes {
     for remote in additional_remotes {
       let mut git_remote = repository.remote(&remote.name, &remote.git)?;
-      update_remote(project, &mut git_remote, project_logger)?;
-      debug!(project_logger, "Added remote"; "remote" => remote.name.to_string())
+      update_remote(project, &mut git_remote)?;
     }
   }
   Ok(())

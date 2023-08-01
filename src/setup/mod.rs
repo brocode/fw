@@ -3,8 +3,6 @@ use crate::errors::AppError;
 use crate::ws::github;
 use clap::builder::PossibleValue;
 use git2::Repository;
-use slog::Logger;
-use slog::{debug, info, o, warn};
 use std::collections::BTreeMap;
 use std::env;
 use std::fs;
@@ -45,9 +43,7 @@ impl std::str::FromStr for ProjectState {
   }
 }
 
-pub fn setup(workspace_dir: &str, logger: &Logger) -> Result<(), AppError> {
-  let setup_logger = logger.new(o!("workspace" => workspace_dir.to_owned()));
-  debug!(setup_logger, "Entering setup");
+pub fn setup(workspace_dir: &str) -> Result<(), AppError> {
   let path = PathBuf::from(workspace_dir);
   let maybe_path = if path.exists() {
     Ok(path)
@@ -63,11 +59,11 @@ pub fn setup(workspace_dir: &str, logger: &Logger) -> Result<(), AppError> {
         Err(AppError::UserError(format!("Workspace path {} needs to be absolute", workspace_dir)))
       }
     })
-    .and_then(|path| determine_projects(path, logger))
-    .and_then(|projects| write_new_config_with_projects(projects, logger, workspace_dir))
+    .and_then(|path| determine_projects(path))
+    .and_then(|projects| write_new_config_with_projects(projects, workspace_dir))
 }
 
-fn determine_projects(path: PathBuf, logger: &Logger) -> Result<BTreeMap<String, Project>, AppError> {
+fn determine_projects(path: PathBuf) -> Result<BTreeMap<String, Project>, AppError> {
   let workspace_path = path.clone();
 
   let project_entries: Vec<fs::DirEntry> = fs::read_dir(path).and_then(Iterator::collect).map_err(AppError::Io)?;
@@ -80,14 +76,14 @@ fn determine_projects(path: PathBuf, logger: &Logger) -> Result<BTreeMap<String,
         Ok(name) => {
           let mut path_to_repo = workspace_path.clone();
           path_to_repo.push(&name);
-          match load_project(None, path_to_repo, &name, logger) {
+          match load_project(None, path_to_repo, &name) {
             Ok(project) => {
               projects.insert(project.name.clone(), project);
             }
-            Err(e) => warn!(logger, "Error while importing folder. Skipping it."; "entry" => name, "error" => format!("{}", e)),
+            Err(e) => eprintln!("Error while importing folder. Skipping it. {}", e),
           }
         }
-        Err(_) => warn!(logger, "Failed to parse directory name as unicode. Skipping it."),
+        Err(_) => eprintln!("Failed to parse directory name as unicode. Skipping it."),
       }
     }
   }
@@ -95,7 +91,7 @@ fn determine_projects(path: PathBuf, logger: &Logger) -> Result<BTreeMap<String,
   Ok(projects)
 }
 
-pub fn gitlab_import(maybe_config: Result<Config, AppError>, state: ProjectState, logger: &Logger) -> Result<(), AppError> {
+pub fn gitlab_import(maybe_config: Result<Config, AppError>, state: ProjectState) -> Result<(), AppError> {
   use gitlab::api::Query;
   let current_config = maybe_config?;
 
@@ -151,11 +147,8 @@ pub fn gitlab_import(maybe_config: Result<Config, AppError>, state: ProjectState
     };
 
     if current_projects.contains_key(&p.name) {
-      info!(
-        logger,
-          "Skipping new project from Gitlab import because it already exists in the current fw config"; "project_name" => &p.name);
+          //Skipping new project from Gitlab import because it already exists in the current fw config
     } else {
-      info!(logger, "Saving new project"; "project_name" => &p.name);
       config::write_project(&p)?; // TODO not sure if this should be default or gitlab subfolder? or even user specified?
       current_projects.insert(p.name.clone(), p); // to ensure no duplicated name encountered during processing
     }
@@ -164,7 +157,7 @@ pub fn gitlab_import(maybe_config: Result<Config, AppError>, state: ProjectState
   Ok(())
 }
 
-pub fn org_import(maybe_config: Result<Config, AppError>, org_name: &str, include_archived: bool, logger: &Logger) -> Result<(), AppError> {
+pub fn org_import(maybe_config: Result<Config, AppError>, org_name: &str, include_archived: bool) -> Result<(), AppError> {
   let current_config = maybe_config?;
   let token = env::var_os("FW_GITHUB_TOKEN")
     .map(|s| s.to_string_lossy().to_string())
@@ -197,11 +190,8 @@ pub fn org_import(maybe_config: Result<Config, AppError>, org_name: &str, includ
     };
 
     if current_projects.contains_key(&p.name) {
-      info!(
-        logger,
-          "Skipping new project from Github import because it already exists in the current fw config"; "project_name" => &p.name);
+     //     "Skipping new project from Github import because it already exists in the current fw config
     } else {
-      info!(logger, "Saving new project"; "project_name" => &p.name);
       config::write_project(&p)?;
       current_projects.insert(p.name.clone(), p); // to ensure no duplicated name encountered during processing
     }
@@ -209,13 +199,13 @@ pub fn org_import(maybe_config: Result<Config, AppError>, org_name: &str, includ
   Ok(())
 }
 
-pub fn import(maybe_config: Result<Config, AppError>, path: &str, logger: &Logger) -> Result<(), AppError> {
+pub fn import(maybe_config: Result<Config, AppError>, path: &str) -> Result<(), AppError> {
   let path = fs::canonicalize(Path::new(path))?;
   let project_path = path.to_str().ok_or(AppError::InternalError("project path is not valid unicode"))?.to_owned();
   let file_name = AppError::require(path.file_name(), AppError::UserError("Import path needs to be valid".to_string()))?;
   let project_name: String = file_name.to_string_lossy().into_owned();
   let maybe_settings = maybe_config.ok().map(|c| c.settings);
-  let new_project = load_project(maybe_settings, path.clone(), &project_name, logger)?;
+  let new_project = load_project(maybe_settings, path.clone(), &project_name)?;
   let new_project_with_path = Project {
     override_path: Some(project_path),
     ..new_project
@@ -224,16 +214,13 @@ pub fn import(maybe_config: Result<Config, AppError>, path: &str, logger: &Logge
   Ok(())
 }
 
-fn load_project(maybe_settings: Option<Settings>, path_to_repo: PathBuf, name: &str, logger: &Logger) -> Result<Project, AppError> {
-  let project_logger = logger.new(o!("project" => name.to_string()));
+fn load_project(maybe_settings: Option<Settings>, path_to_repo: PathBuf, name: &str) -> Result<Project, AppError> {
   let repo: Repository = Repository::open(path_to_repo)?;
   let all = repo.remotes()?;
-  debug!(project_logger, "remotes"; "found" => format!("{:?}", all.len()));
   let remote = repo.find_remote("origin")?;
   let url = remote
     .url()
     .ok_or_else(|| AppError::UserError(format!("invalid remote origin at {:?}", repo.path())))?;
-  info!(project_logger, "git config validated");
   Ok(Project {
     name: name.to_owned(),
     git: url.to_owned(),
@@ -248,7 +235,7 @@ fn load_project(maybe_settings: Option<Settings>, path_to_repo: PathBuf, name: &
   })
 }
 
-fn write_new_config_with_projects(projects: BTreeMap<String, Project>, logger: &Logger, workspace_dir: &str) -> Result<(), AppError> {
+fn write_new_config_with_projects(projects: BTreeMap<String, Project>, workspace_dir: &str) -> Result<(), AppError> {
   let settings: config::settings::PersistedSettings = config::settings::PersistedSettings {
     workspace: workspace_dir.to_owned(),
     default_after_workon: None,
@@ -257,10 +244,9 @@ fn write_new_config_with_projects(projects: BTreeMap<String, Project>, logger: &
     github_token: None,
     gitlab: None,
   };
-  config::write_settings(&settings, logger)?;
+  config::write_settings(&settings)?;
   for p in projects.values() {
     config::write_project(p)?;
   }
-  debug!(logger, "Finished"; "projects" => format!("{:?}", projects.len()));
   Ok(())
 }

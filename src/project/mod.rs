@@ -3,8 +3,6 @@ use crate::config::Config;
 use crate::config::{project::Project, project::Remote};
 use crate::errors::AppError;
 use crate::git::repo_name_from_url;
-use slog::Logger;
-use slog::{debug, info};
 use std::collections::BTreeSet;
 use std::fs;
 use yansi::Paint;
@@ -18,13 +16,11 @@ pub fn add_entry(
   override_path: Option<String>,
   tags: Option<BTreeSet<String>>,
   trusted: bool,
-  logger: &Logger,
 ) -> Result<(), AppError> {
   let name = maybe_name
     .ok_or_else(|| AppError::UserError(format!("No project name specified for {}", url)))
     .or_else(|_| repo_name_from_url(url).map(ToOwned::to_owned))?;
   let config: Config = maybe_config?;
-  info!(logger, "Prepare new project entry"; "name" => &name, "url" => url);
   if config.projects.contains_key(&name) {
     Err(AppError::UserError(format!(
       "Project key {} already exists, not gonna overwrite it for you",
@@ -56,18 +52,16 @@ pub fn add_entry(
   }
 }
 
-pub fn remove_project(maybe_config: Result<Config, AppError>, project_name: &str, purge_directory: bool, logger: &Logger) -> Result<(), AppError> {
+pub fn remove_project(maybe_config: Result<Config, AppError>, project_name: &str, purge_directory: bool) -> Result<(), AppError> {
   let config: Config = maybe_config?;
 
-  info!(logger, "Prepare remove project entry"; "name" => project_name);
 
   if !config.projects.contains_key(project_name) {
     Err(AppError::UserError(format!("Project key {} does not exist in config", project_name)))
   } else if let Some(project) = config.projects.get(&project_name.to_owned()).cloned() {
-    info!(logger, "Updated config"; "config" => format!("{:?}", config));
 
     if purge_directory {
-      let path = config.actual_path_to_project(&project, logger);
+      let path = config.actual_path_to_project(&project);
 
       if path.exists() {
         fs::remove_dir_all(&path)?;
@@ -99,7 +93,7 @@ pub fn add_remote(maybe_config: Result<Config, AppError>, name: &str, remote_nam
   Ok(())
 }
 
-pub fn remove_remote(maybe_config: Result<Config, AppError>, name: &str, remote_name: String, logger: &Logger) -> Result<(), AppError> {
+pub fn remove_remote(maybe_config: Result<Config, AppError>, name: &str, remote_name: String) -> Result<(), AppError> {
   let config: Config = maybe_config?;
   if !config.projects.contains_key(name) {
     return Err(AppError::UserError(format!("Project key {} does not exists. Can not update.", name)));
@@ -109,7 +103,6 @@ pub fn remove_remote(maybe_config: Result<Config, AppError>, name: &str, remote_
   let additional_remotes = additional_remotes.into_iter().filter(|r| r.name != remote_name).collect();
   project_config.additional_remotes = Some(additional_remotes);
 
-  debug!(logger, "Updated config"; "config" => format!("{:?}", config));
   config::write_project(&project_config)?;
   Ok(())
 }
@@ -121,10 +114,8 @@ pub fn update_entry(
   after_workon: Option<String>,
   after_clone: Option<String>,
   override_path: Option<String>,
-  logger: &Logger,
 ) -> Result<(), AppError> {
   let config: Config = maybe_config?;
-  info!(logger, "Update project entry"; "name" => name);
   if name.starts_with("http") || name.starts_with("git@") {
     Err(AppError::UserError(format!(
       "{} looks like a repo URL and not like a project name, please fix",
@@ -160,13 +151,13 @@ pub fn ls(maybe_config: Result<Config, AppError>, tags: &BTreeSet<String>) -> Re
   Ok(())
 }
 
-pub fn print_path(maybe_config: Result<Config, AppError>, name: &str, logger: &Logger) -> Result<(), AppError> {
+pub fn print_path(maybe_config: Result<Config, AppError>, name: &str) -> Result<(), AppError> {
   let config = maybe_config?;
   let project = config
     .projects
     .get(name)
     .ok_or_else(|| AppError::UserError(format!("project {} not found", name)))?;
-  let canonical_project_path = config.actual_path_to_project(project, logger);
+  let canonical_project_path = config.actual_path_to_project(project);
   let path = canonical_project_path
     .to_str()
     .ok_or(AppError::InternalError("project path is not valid unicode"))?;
@@ -174,7 +165,7 @@ pub fn print_path(maybe_config: Result<Config, AppError>, name: &str, logger: &L
   Ok(())
 }
 
-pub fn inspect(name: &str, maybe_config: Result<Config, AppError>, json: bool, logger: &Logger) -> Result<(), AppError> {
+pub fn inspect(name: &str, maybe_config: Result<Config, AppError>, json: bool) -> Result<(), AppError> {
   let config = maybe_config?;
   let project = config
     .projects
@@ -184,7 +175,7 @@ pub fn inspect(name: &str, maybe_config: Result<Config, AppError>, json: bool, l
     println!("{}", serde_json::to_string(project)?);
     return Ok(());
   }
-  let canonical_project_path = config.actual_path_to_project(project, logger);
+  let canonical_project_path = config.actual_path_to_project(project);
   let path = canonical_project_path
     .to_str()
     .ok_or(AppError::InternalError("project path is not valid unicode"))?;

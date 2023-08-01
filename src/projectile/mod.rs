@@ -1,26 +1,24 @@
 use crate::config::Config;
 use crate::errors::AppError;
 use regex::Regex;
-use slog::debug;
-use slog::Logger;
 use std::borrow::ToOwned;
 use std::fs;
 use std::io;
 use std::io::Write;
 use std::path::{Path, PathBuf};
 
-pub fn projectile(maybe_config: Result<Config, AppError>, logger: &Logger) -> Result<(), AppError> {
+pub fn projectile(maybe_config: Result<Config, AppError>) -> Result<(), AppError> {
   let config: Config = maybe_config?;
-  let projects_paths: Vec<PathBuf> = config.projects.values().map(|p| config.actual_path_to_project(p, logger)).collect();
+  let projects_paths: Vec<PathBuf> = config.projects.values().map(|p| config.actual_path_to_project(p)).collect();
   let home_dir: PathBuf = dirs::home_dir().ok_or_else(|| AppError::UserError("$HOME not set".to_owned()))?;
   let mut projectile_bookmarks: PathBuf = home_dir.clone();
   projectile_bookmarks.push(".emacs.d");
   projectile_bookmarks.push("projectile-bookmarks.eld");
   let writer = fs::File::create(projectile_bookmarks)?;
-  persist(logger, &home_dir, writer, projects_paths)
+  persist( &home_dir, writer, projects_paths)
 }
 
-fn persist<W>(logger: &Logger, home_dir: &Path, writer: W, paths: Vec<PathBuf>) -> Result<(), AppError>
+fn persist<W>( home_dir: &Path, writer: W, paths: Vec<PathBuf>) -> Result<(), AppError>
 where
   W: io::Write,
 {
@@ -29,7 +27,6 @@ where
   buffer.write_all(b"(")?;
   for path in paths {
     let path = replace_path_with_tilde(&path, home_dir.to_path_buf()).unwrap_or(path);
-    debug!(logger, "Writing projectile entry"; "entry" => &path);
     buffer.write_all(format!("\"{}/\"", path).as_bytes())?;
     buffer.write_all(b" ")?;
   }
@@ -48,7 +45,6 @@ fn replace_path_with_tilde(path: &str, path_to_replace: PathBuf) -> Result<Strin
 #[cfg(test)]
 mod tests {
   use super::*;
-  use slog::o;
   use std::path::Path;
 
   #[test]
@@ -56,11 +52,10 @@ mod tests {
     use std::io::Cursor;
     use std::str;
     let mut buffer = Cursor::new(vec![0; 61]);
-    let logger = a_logger();
     let paths = vec![PathBuf::from("/home/mriehl/test"), PathBuf::from("/home/mriehl/go/src/github.com/test2")];
 
     let home_dir = Path::new("/home/blubb").to_path_buf();
-    persist(&logger, &home_dir, &mut buffer, paths).unwrap();
+    persist( &home_dir, &mut buffer, paths).unwrap();
 
     assert_eq!(
       str::from_utf8(buffer.get_ref()).unwrap(),
@@ -76,10 +71,4 @@ mod tests {
     assert_eq!(replaced_string, "~/moep/home/blubb/test.txt".to_string());
   }
 
-  fn a_logger() -> Logger {
-    use slog::Drain;
-    let plain = slog_term::PlainSyncDecorator::new(std::io::stdout());
-    let drain = slog_term::FullFormat::new(plain).build().fuse();
-    Logger::root(drain, o!())
-  }
 }
