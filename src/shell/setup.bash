@@ -204,7 +204,7 @@ __fw_complete()
         local tags=()
         while read line; do
             tags+=($line)
-        done < <(fw -q tag ls)
+        done < <(fw tag ls)
         echo ${tags[@]}
     }
 
@@ -401,6 +401,6 @@ __fw_projects()
     local projects=()
     while read line; do
         projects+=($line)
-    done < <(fw -q ls)
+    done < <(fw ls)
     echo ${projects[@]}
 }

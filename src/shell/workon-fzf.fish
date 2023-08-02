@@ -7,8 +7,8 @@ function __fish_fw_use_script
 end
 
 function __workon
-  set -l project (fw -q ls | fzf --cycle --query=$argv[1] --color=light --preview-window=top:50% --preview='fw -q inspect {}' --no-mouse --select-1)
-  set -l script (fw -q gen-workon $argv[2] $project)
+  set -l project (fw ls | fzf --cycle --query=$argv[1] --color=light --preview-window=top:50% --preview='fw inspect {}' --no-mouse --select-1)
+  set -l script (fw gen-workon $argv[2] $project)
   __fish_fw_use_script $status $script
 end
 
@@ -21,7 +21,7 @@ function nworkon
 end
 
 function reworkon
-  set -l script (fw -q gen-reworkon $argv)
+  set -l script (fw gen-reworkon $argv)
   __fish_fw_use_script $status $script
 end
 

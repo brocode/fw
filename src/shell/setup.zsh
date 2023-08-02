@@ -1,6 +1,6 @@
 __fw_projects() {
   local projects;
-  fw -q ls | while read line; do
+  fw ls | while read line; do
       projects+=( $line );
   done;
   _describe -t projects 'project names' projects;
@@ -8,7 +8,7 @@ __fw_projects() {
 
 __fw_tags() {
   local tags;
-  fw -q tag ls | while read line; do
+  fw tag ls | while read line; do
       tags+=( $line );
   done;
   _describe -t tags 'tag names' tags;

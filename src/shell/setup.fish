@@ -1,9 +1,9 @@
 function __fw_projects
-  fw -q ls
+  fw ls
 end
 
 function __fw_tags
-  fw -q tag ls
+  fw tag ls
 end
 
 function __fw_subcommands

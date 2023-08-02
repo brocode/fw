@@ -1,6 +1,6 @@
 workon()
 {
-    local SCRIPT="$(fw -q gen-workon $@)"
+    local SCRIPT="$(fw gen-workon $@)"
     case $(uname -s) in
         MINGW*|MSYS*) SCRIPT="cd $(echo "/${SCRIPT:3}" | sed -e 's/\\/\//g' -e 's/://')" ;;
     esac
@@ -9,7 +9,7 @@ workon()
 
 reworkon()
 {
-    local SCRIPT="$(fw -q gen-reworkon $@)"
+    local SCRIPT="$(fw gen-reworkon $@)"
     case $(uname -s) in
         MINGW*|MSYS*) SCRIPT="cd $(echo "/${SCRIPT:3}" | sed -e 's/\\/\//g' -e 's/://')" ;;
     esac
@@ -18,7 +18,7 @@ reworkon()
 
 reworkon()
 {
-    local SCRIPT="$(fw -q gen-workon -x $@)"
+    local SCRIPT="$(fw gen-workon -x $@)"
     case $(uname -s) in
         MINGW*|MSYS*) SCRIPT="cd $(echo "/${SCRIPT:3}" | sed -e 's/\\/\//g' -e 's/://')" ;;
     esac

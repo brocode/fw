@@ -7,17 +7,17 @@ function __fish_fw_use_script
 end
 
 function workon
-  set -l script (fw -q gen-workon $argv)
+  set -l script (fw gen-workon $argv)
   __fish_fw_use_script $status $script
 end
 
 function nworkon
-  set -l script (fw -q gen-workon -x $argv)
+  set -l script (fw gen-workon -x $argv)
   __fish_fw_use_script $status $script
 end
 
 function reworkon
-  set -l script (fw -q gen-reworkon $argv)
+  set -l script (fw gen-reworkon $argv)
   __fish_fw_use_script $status $script
 end
 
