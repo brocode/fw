@@ -165,7 +165,7 @@ pub fn autotag(maybe_config: Result<Config, AppError>, cmd: &str, tag_name: &str
     // map with projects and filter if result == 0
     let filtered_projects: Vec<&Project> = script_results
       .into_iter()
-      .zip(projects.into_iter())
+      .zip(projects)
       .filter(|(x, _)| x.is_ok())
       .map(|(_, p)| p)
       .collect::<Vec<&Project>>();
