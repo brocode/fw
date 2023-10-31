@@ -561,7 +561,7 @@ dependencies = [
 
 [[package]]
 name = "fw"
-version = "2.17.1"
+version = "2.18.0"
 dependencies = [
  "clap",
  "crossbeam",
