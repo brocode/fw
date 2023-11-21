@@ -58,6 +58,6 @@ are the assumptions:
     will just work)
 
 
-## [*Installation*]{.spurious-link target="doc/installation.org"}
+## [Installation](doc/installation.md)
 
-## [*Usage*]{.spurious-link target="doc/usage.org"}
+## [Usage](doc/usage.md)
