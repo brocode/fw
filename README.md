@@ -2,7 +2,6 @@
 
 # fw
 
-[<file:https://github.com/brocode/fw/actions/workflows/rust.yml/badge.svg?branch=master>](https://github.com/brocode/fw/blob/nested-values/.github/workflows/rust.yml)
 [![](https://img.shields.io/crates/v/fw.svg)](https://crates.io/crates/fw)
 
 [![](https://asciinema.org/a/222856.png)](https://asciinema.org/a/222856)
