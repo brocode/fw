@@ -23,9 +23,9 @@ The default configuration location is located under your system\'s
 config directory as described
 [here](https://docs.rs/dirs/3.0.2/dirs/fn.config_dir.html). That is :
 
--   Linux: `~/.config/fw`{.verbatim}
--   MacOS: `$HOME/Library/Application Support/fw`{.verbatim}
--   Windows: `{FOLDERID_RoamingAppData}\fw`{.verbatim}
+-   Linux: `~/.config/fw`
+-   MacOS: `$HOME/Library/Application Support/fw`
+-   Windows: `{FOLDERID_RoamingAppData}\fw`
 
 The location and can be overridden by setting `FW_CONFIG_DIR`.
 
