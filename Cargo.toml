@@ -9,7 +9,7 @@ repository = "https://github.com/brocode/fw"
 readme = "README.org"
 keywords = ["workspace", "productivity", "cli", "automation", "developer-tools" ]
 edition = "2021"
-include = ["src/**/*", "LICENSE", "README.org"]
+include = ["src/**/*", "LICENSE", "README.md"]
 
 [dependencies]
 walkdir = "2"
