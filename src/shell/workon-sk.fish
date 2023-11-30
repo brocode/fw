@@ -17,7 +17,7 @@ function workon
 end
 
 function nworkon
-  __workon $argv[1] -x
+  __workon "$argv[1]" -x
 end
 
 function reworkon
