@@ -22,37 +22,14 @@ jobs:
       - run: sha512sum fw > fw.sha512sum
       - run: cargo run >> fw.1
         working-directory: ./man
-      - id: github_release
-        uses: actions/create-release@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - id: create_release
+        uses: softprops/action-gh-release@v1
         with:
           tag_name: ${{ github.ref }}
-          release_name: Release fw ${{ github.ref }}
-          body: "No changelog!"
-          draft: false
-          prerelease: false
-      - uses: actions/upload-release-asset@v1
+          files: |
+            fw
+            man/fw.1
+            fw.sha512sum
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.github_release.outputs.upload_url }}
-          asset_path: ./fw
-          asset_name: fw
-          asset_content_type: application/octet-stream
-      - uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.github_release.outputs.upload_url }}
-          asset_path: ./man/fw.1
-          asset_name: fw.1
-          asset_content_type: text/plain
-      - uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.github_release.outputs.upload_url }}
-          asset_path: ./fw.sha512sum
-          asset_name: fw.sha512sum
-          asset_content_type: text/plain
+
