@@ -4,5 +4,5 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct MetadataFromRepository {
-  pub tags: Option<BTreeSet<String>>,
+    pub tags: Option<BTreeSet<String>>,
 }

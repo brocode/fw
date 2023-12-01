@@ -3,21 +3,21 @@ use clap::{builder::EnumValueParser, crate_version, value_parser, Arg, ArgAction
 use crate::setup::ProjectState;
 
 pub fn app() -> Command {
-  let arg_with_fzf = Arg::new("with-fzf")
-    .long("with-fzf")
-    .short('f')
-    .num_args(0)
-    .action(ArgAction::SetTrue)
-    .help("Integrate with fzf");
-  let arg_with_skim = Arg::new("with-skim")
-    .long("with-skim")
-    .short('s')
-    .help("Integrate with skim")
-    .conflicts_with("with-fzf")
-    .action(ArgAction::SetTrue)
-    .num_args(0);
+    let arg_with_fzf = Arg::new("with-fzf")
+        .long("with-fzf")
+        .short('f')
+        .num_args(0)
+        .action(ArgAction::SetTrue)
+        .help("Integrate with fzf");
+    let arg_with_skim = Arg::new("with-skim")
+        .long("with-skim")
+        .short('s')
+        .help("Integrate with skim")
+        .conflicts_with("with-fzf")
+        .action(ArgAction::SetTrue)
+        .num_args(0);
 
-  Command::new("fw")
+    Command::new("fw")
     .version(crate_version!())
     .author("Brocode <bros@brocode.sh>")
     .about(
