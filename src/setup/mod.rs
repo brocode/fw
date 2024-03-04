@@ -91,72 +91,6 @@ fn determine_projects(path: PathBuf) -> Result<BTreeMap<String, Project>, AppErr
     Ok(projects)
 }
 
-pub fn gitlab_import(maybe_config: Result<Config, AppError>, state: ProjectState) -> Result<(), AppError> {
-    use gitlab::api::Query;
-    let current_config = maybe_config?;
-
-    let gitlab_config = current_config.settings.gitlab.clone().ok_or_else(|| {
-        AppError::UserError(
-            r#"Can't call Gitlab API, because no gitlab settings ("gitlab": { "token": "some-token", "url": "some-url" }) specified in the configuration."#
-                .to_string(),
-        )
-    })?;
-
-    let gitlab_client =
-        gitlab::Gitlab::new(gitlab_config.host, gitlab_config.token).map_err(|e| AppError::RuntimeError(format!("Failed to create gitlab client: {}", e)))?;
-
-    let mut builder = gitlab::api::projects::Projects::builder();
-    builder.owned(true);
-    match state {
-        ProjectState::Active => {
-            builder.archived(false);
-        }
-        ProjectState::Archived => {
-            builder.archived(true);
-        }
-        ProjectState::Both => {}
-    }
-
-    // owned repos and your organizations repositories
-    let owned_projects: Vec<gitlab::Project> = gitlab::api::paged(builder.build().unwrap(), gitlab::api::Pagination::All)
-        .query(&gitlab_client)
-        .map_err(|e| AppError::RuntimeError(format!("Failed to query gitlab: {}", e)))?;
-
-    let names_and_urls: Vec<(String, String)> = owned_projects
-        .iter()
-        .map(|repo| (repo.name.to_owned(), repo.ssh_url_to_repo.to_owned()))
-        .collect();
-
-    let after_clone = current_config.settings.default_after_clone.clone();
-    let after_workon = current_config.settings.default_after_workon.clone();
-    let tags = current_config.settings.default_tags.clone();
-    let mut current_projects = current_config.projects;
-
-    for (name, url) in names_and_urls {
-        let p = Project {
-            name,
-            git: url,
-            after_clone: after_clone.clone(),
-            after_workon: after_workon.clone(),
-            override_path: None,
-            tags: tags.clone(),
-            additional_remotes: None,
-            bare: None,
-            trusted: false,
-            project_config_path: "gitlab".to_string(),
-        };
-
-        if current_projects.contains_key(&p.name) {
-            //Skipping new project from Gitlab import because it already exists in the current fw config
-        } else {
-            config::write_project(&p)?; // TODO not sure if this should be default or gitlab subfolder? or even user specified?
-            current_projects.insert(p.name.clone(), p); // to ensure no duplicated name encountered during processing
-        }
-    }
-
-    Ok(())
-}
-
 pub fn org_import(maybe_config: Result<Config, AppError>, org_name: &str, include_archived: bool) -> Result<(), AppError> {
     let current_config = maybe_config?;
     let token = env::var_os("FW_GITHUB_TOKEN")
@@ -241,7 +175,6 @@ fn write_new_config_with_projects(projects: BTreeMap<String, Project>, workspace
         default_after_clone: None,
         shell: None,
         github_token: None,
-        gitlab: None,
     };
     config::write_settings(&settings)?;
     for p in projects.values() {

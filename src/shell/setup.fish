@@ -22,8 +22,7 @@ function __fw_subcommands
     'update:Update project settings' \
     'tag:Manipulate tags' \
     'print-path:Print project path to stdout' \
-    'org-import:Import all repositories from a github org' \
-    'gitlab-import:Import all owned repositories / your organizations repositories from gitlab'
+    'org-import:Import all repositories from a github org'
 
   for subcmd in $__fw_subcommands_in_zsh_format
     echo (string replace -r ':' '\t' $subcmd)

@@ -111,7 +111,6 @@ pub fn read_config() -> Result<Config, AppError> {
             default_after_clone: settings.default_after_clone,
             default_tags: Some(default_tags),
             github_token: settings.github_token,
-            gitlab: settings.gitlab,
         },
     })
 }
@@ -451,7 +450,6 @@ mod tests {
             shell: None,
             tags: Some(tags),
             github_token: None,
-            gitlab: None,
         };
         Config { projects, settings }
     }

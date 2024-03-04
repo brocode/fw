@@ -180,7 +180,6 @@ __fw_complete()
             'add-remote'
             'add'
             'foreach'
-            'gitlab-import'
             'help '
             'import'
             'inspect'

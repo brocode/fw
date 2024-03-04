@@ -1,5 +1,4 @@
 use crate::errors::AppError;
-use setup::ProjectState;
 use std::collections::BTreeSet;
 
 fn main() {
@@ -84,10 +83,6 @@ fn _main() -> i32 {
             subcommand_matches.get_one::<String>("ORG_NAME").expect("argument required by clap.rs"),
             subcommand_matches.get_flag("include-archived"),
         ),
-        "gitlab-import" => {
-            let state = *subcommand_matches.get_one::<ProjectState>("include").expect("argument required by clap.rs");
-            setup::gitlab_import(config, state)
-        }
         "gen-workon" => workon::gen(
             subcommand_matches.get_one::<String>("PROJECT_NAME").expect("argument required by clap.rs"),
             config,

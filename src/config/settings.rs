@@ -26,11 +26,6 @@ impl Tag {
     }
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone)]
-pub struct GitlabSettings {
-    pub token: String,
-    pub host: String,
-}
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Settings {
@@ -41,7 +36,6 @@ pub struct Settings {
     pub default_tags: Option<BTreeSet<String>>,
     pub tags: Option<BTreeMap<String, Tag>>,
     pub github_token: Option<String>,
-    pub gitlab: Option<GitlabSettings>,
 }
 
 impl Settings {
@@ -57,7 +51,6 @@ pub struct PersistedSettings {
     pub default_after_workon: Option<String>,
     pub default_after_clone: Option<String>,
     pub github_token: Option<String>,
-    pub gitlab: Option<GitlabSettings>,
 }
 
 impl PersistedSettings {
@@ -68,10 +61,6 @@ impl PersistedSettings {
             default_after_clone: Some("echo default after clone".to_string()),
             shell: Some(vec!["/usr/bin/zsh".to_string(), "-c".to_string()]),
             github_token: Some("githubtokensecret".to_string()),
-            gitlab: Some(GitlabSettings {
-                host: "localhost".to_string(),
-                token: "token".to_string(),
-            }),
         }
     }
 }

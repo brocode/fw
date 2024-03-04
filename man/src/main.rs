@@ -52,11 +52,6 @@ fn main() {
         .help("Generate sourceable shell code to work on project.")
     )
     .option(
-      Opt::new("<OPTIONS>")
-        .long("gitlab-import")
-        .help("Import all owned repositories / your organizations repositories from gitlab into fw.")
-    )
-    .option(
       Opt::new("<SUBCOMMANDS>")
         .long("help")
         .help("Print the help message or the help of the given subcommand(s).")

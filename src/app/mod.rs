@@ -1,6 +1,5 @@
-use clap::{builder::EnumValueParser, crate_version, value_parser, Arg, ArgAction, Command};
+use clap::{crate_version, value_parser, Arg, ArgAction, Command};
 
-use crate::setup::ProjectState;
 
 pub fn app() -> Command {
     let arg_with_fzf = Arg::new("with-fzf")
@@ -110,20 +109,6 @@ For further information please have a look at our README https://github.com/broc
             .required(false),
         )
         .arg(Arg::new("ORG_NAME").value_name("ORG_NAME").index(1).required(true)),
-    )
-    .subcommand(
-      Command::new("gitlab-import")
-        .about("Import all owned repositories / your organizations repositories from gitlab into fw")
-        .arg(
-          Arg::new("include")
-            .help("Filter projects to import by state")
-            .long("include")
-            .short('a')
-            .num_args(1)
-            .value_name("state")
-            .value_parser(EnumValueParser::<ProjectState>::new())
-            .default_value("active"),
-        ),
     )
     .subcommand(
       Command::new("add-remote")
