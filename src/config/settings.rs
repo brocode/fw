@@ -26,7 +26,6 @@ impl Tag {
     }
 }
 
-
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Settings {
     pub workspace: String,

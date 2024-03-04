@@ -1,6 +1,5 @@
 use clap::{crate_version, value_parser, Arg, ArgAction, Command};
 
-
 pub fn app() -> Command {
     let arg_with_fzf = Arg::new("with-fzf")
         .long("with-fzf")
