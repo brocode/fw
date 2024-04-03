@@ -10,12 +10,12 @@ pub static COLOURS: [Color; 12] = [
     Color::Blue,
     Color::Yellow,
     Color::Red,
-    Color::RGB(255, 165, 0),
-    Color::RGB(255, 99, 71),
-    Color::RGB(0, 153, 255),
-    Color::RGB(153, 102, 51),
-    Color::RGB(102, 153, 0),
-    Color::RGB(255, 153, 255),
+    Color::Rgb(255, 165, 0),
+    Color::Rgb(255, 99, 71),
+    Color::Rgb(0, 153, 255),
+    Color::Rgb(153, 102, 51),
+    Color::Rgb(102, 153, 0),
+    Color::Rgb(255, 153, 255),
     Color::Magenta,
 ];
 

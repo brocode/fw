@@ -26,14 +26,14 @@ fn forward_process_output_to_stdout<T: std::io::Read>(read: T, prefix: &str, col
         if mark_err {
             let prefix = format!("{:>21.21} |", prefix);
             if atty {
-                print!("{} {} {}", Paint::red("ERR"), color.paint(prefix), line);
+                print!("{} {} {}", "ERR".red(), prefix.fg(color), line);
             } else {
                 print!("ERR {} {}", prefix, line);
             };
         } else {
             let prefix = format!("{:>25.25} |", prefix);
             if atty {
-                print!("{} {}", color.paint(prefix), line);
+                print!("{} {}", prefix.fg(color), line);
             } else {
                 print!("{} {}", prefix, line);
             };
