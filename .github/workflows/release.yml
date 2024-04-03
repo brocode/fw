@@ -23,7 +23,7 @@ jobs:
       - run: cargo run >> fw.1
         working-directory: ./man
       - id: create_release
-        uses: softprops/action-gh-release@v1
+        uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ github.ref }}
           files: |
