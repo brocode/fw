@@ -5,7 +5,7 @@ use crate::spawn::spawn_maybe;
 use crate::util::random_color;
 
 use git2::build::RepoBuilder;
-use git2::{AutotagOption, Branch, Direction, FetchOptions, MergeAnalysis, ProxyOptions, Remote, RemoteCallbacks, Repository};
+use git2::{AutotagOption, Branch, Direction, FetchOptions, MergeAnalysis, ProxyOptions, Remote, RemoteCallbacks, RemoteUpdateFlags, Repository};
 
 use std::borrow::ToOwned;
 
@@ -62,7 +62,7 @@ fn update_remote(remote: &mut Remote<'_>) -> Result<(), AppError> {
     let mut options = agent_fetch_options();
     remote.download::<String>(&[], Some(&mut options)).map_err(AppError::GitError)?;
     remote.disconnect()?;
-    remote.update_tips(None, true, AutotagOption::Unspecified, None)?;
+    remote.update_tips(None, RemoteUpdateFlags::UPDATE_FETCHHEAD, AutotagOption::Unspecified, None)?;
     Ok(())
 }
 
