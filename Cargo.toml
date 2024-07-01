@@ -15,9 +15,9 @@ include = ["src/**/*", "LICENSE", "README.md"]
 walkdir = "2"
 dirs = "5"
 toml = "0.8"
-serde_json = "1.0.117"
+serde_json = "1.0.119"
 serde = {version = "1", features = ["derive"] }
-git2 = "0.18"
+git2 = "0.19"
 maplit = "1.0"
 rayon = "1"
 regex = "1"
