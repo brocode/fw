@@ -65,6 +65,11 @@ fn _main() -> i32 {
             subcommand_matches.get_one::<String>("NAME").expect("argument required by clap.rs"),
             subcommand_matches.get_flag("purge-directory"),
         ),
+        "move" => project::move_project(
+            config,
+            subcommand_matches.get_one::<String>("NAME").expect("argument required by clap.rs"),
+            subcommand_matches.get_one::<String>("DESTINATION").expect("argument required by clap.rs"),
+        ),
         "update" => {
             let name: &str = subcommand_matches.get_one::<String>("NAME").expect("argument required by clap.rs");
             let git: Option<String> = subcommand_matches.get_one::<String>("git").map(ToOwned::to_owned);

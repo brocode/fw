@@ -4,7 +4,7 @@ use crate::config::{project::Project, project::Remote};
 use crate::errors::AppError;
 use crate::git::repo_name_from_url;
 use std::collections::BTreeSet;
-use std::fs;
+use std::{fs, path};
 use yansi::Paint;
 
 pub fn add_entry(
@@ -200,5 +200,23 @@ pub fn inspect(name: &str, maybe_config: Result<Config, AppError>, json: bool) -
     println!("{:<20}: {}", "Additional remotes", additional_remotes);
     let git = project.git.clone();
     println!("{:<20}: {}", "Git", git);
+    Ok(())
+}
+
+pub(crate) fn move_project(maybe_config: Result<Config, AppError>, name: &str, destination: &str) -> Result<(), AppError> {
+    let config = maybe_config?;
+    let project = config
+        .projects
+        .get(name)
+        .ok_or_else(|| AppError::UserError(format!("project {} not found", name)))?;
+    let canonical_project_path = config.actual_path_to_project(project);
+
+    let mut path = path::absolute(destination)?;
+
+    fs::rename(canonical_project_path, path.clone())?;
+
+    path = fs::canonicalize(path)?;
+    let project_path = path.to_str().ok_or(AppError::InternalError("project path is not valid unicode"))?.to_owned();
+    update_entry(Ok(config), name, None, None, None, Some(project_path))?;
     Ok(())
 }
