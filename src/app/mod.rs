@@ -176,7 +176,7 @@ For further information please have a look at our README https://github.com/broc
     .subcommand(
       Command::new("move")
         .alias("mv")
-        .about("Moves a project")
+        .about("Moves a project (both physically and in the configuration)")
         .arg(Arg::new("NAME").value_name("NAME").index(1).required(true))
         .arg(Arg::new("DESTINATION").value_name("DESTINATION").index(2).required(true))
     )
