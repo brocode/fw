@@ -1,6 +1,6 @@
 use yansi::Color;
 
-use rand::seq::SliceRandom;
+use rand::seq::IndexedRandom;
 
 use std::borrow::ToOwned;
 
@@ -20,6 +20,6 @@ pub static COLOURS: [Color; 12] = [
 ];
 
 pub fn random_color() -> Color {
-	let mut rng = rand::thread_rng();
+	let mut rng = rand::rng();
 	COLOURS.choose(&mut rng).map(ToOwned::to_owned).unwrap_or(Color::Black)
 }
