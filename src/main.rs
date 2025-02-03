@@ -2,7 +2,9 @@ use crate::errors::AppError;
 use std::collections::BTreeSet;
 
 fn main() {
-	openssl_probe::init_ssl_cert_env_vars();
+	unsafe {
+		openssl_probe::init_openssl_env_vars();
+	}
 	let return_code = _main();
 	std::process::exit(return_code)
 }
