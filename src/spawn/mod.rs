@@ -1,4 +1,4 @@
-use crate::config::{project::Project, Config};
+use crate::config::{Config, project::Project};
 use crate::errors::AppError;
 
 use rayon::prelude::*;
@@ -65,14 +65,15 @@ pub fn spawn_maybe(shell: &[String], cmd: &str, workdir: &Path, project_name: &s
 		.stdin(Stdio::null())
 		.spawn()?;
 
-	let stdout_child = if let Some(stdout) = result.stdout.take() {
-		let project_name = project_name.to_owned();
-		Some(thread::spawn(move || {
-			let atty: bool = is_stdout_a_tty();
-			forward_process_output_to_stdout(stdout, &project_name, color, atty, false)
-		}))
-	} else {
-		None
+	let stdout_child = match result.stdout.take() {
+		Some(stdout) => {
+			let project_name = project_name.to_owned();
+			Some(thread::spawn(move || {
+				let atty: bool = is_stdout_a_tty();
+				forward_process_output_to_stdout(stdout, &project_name, color, atty, false)
+			}))
+		}
+		_ => None,
 	};
 
 	// stream stderr in this thread. no need to spawn another one.

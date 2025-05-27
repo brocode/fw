@@ -8,7 +8,7 @@ categories = ["command-line-utilities"]
 repository = "https://github.com/brocode/fw"
 readme = "README.md"
 keywords = ["workspace", "productivity", "cli", "automation", "developer-tools" ]
-edition = "2021"
+edition = "2024"
 include = ["src/**/*", "LICENSE", "README.md"]
 
 [dependencies]

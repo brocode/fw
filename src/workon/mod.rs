@@ -10,7 +10,7 @@ use yansi::Color;
 pub fn gen_reworkon(maybe_config: Result<config::Config, AppError>) -> Result<(), AppError> {
 	let config = maybe_config?;
 	let project = current_project(&config)?;
-	gen(&project.name, Ok(config), false)
+	r#gen(&project.name, Ok(config), false)
 }
 
 fn current_project(config: &config::Config) -> Result<Project, AppError> {
@@ -36,7 +36,7 @@ pub fn reworkon(maybe_config: Result<config::Config, AppError>) -> Result<(), Ap
 	spawn_maybe(&shell, &commands.join(" && "), &path, &project.name, Color::Yellow)
 }
 
-pub fn gen(name: &str, maybe_config: Result<config::Config, AppError>, quick: bool) -> Result<(), AppError> {
+pub fn r#gen(name: &str, maybe_config: Result<config::Config, AppError>, quick: bool) -> Result<(), AppError> {
 	let config = maybe_config?;
 	let project: &Project = config
 		.projects

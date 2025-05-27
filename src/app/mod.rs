@@ -1,4 +1,4 @@
-use clap::{crate_version, value_parser, Arg, ArgAction, Command};
+use clap::{Arg, ArgAction, Command, crate_version, value_parser};
 
 pub fn app() -> Command {
 	let arg_with_fzf = Arg::new("with-fzf")

@@ -1,6 +1,6 @@
 use crate::config;
 use crate::config::settings::Tag;
-use crate::config::{project::Project, Config};
+use crate::config::{Config, project::Project};
 use crate::errors::AppError;
 use crate::spawn::init_threads;
 use crate::spawn::spawn_maybe;

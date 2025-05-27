@@ -1,4 +1,4 @@
-use crate::config::{self, project::Project, settings::Settings, Config};
+use crate::config::{self, Config, project::Project, settings::Settings};
 use crate::errors::AppError;
 use crate::ws::github;
 use clap::builder::PossibleValue;

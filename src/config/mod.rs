@@ -1,7 +1,7 @@
 use crate::errors::AppError;
 use serde::{Deserialize, Serialize};
 use std::collections::{BTreeMap, BTreeSet};
-use std::fs::{self, read_to_string, File};
+use std::fs::{self, File, read_to_string};
 use std::io::Write;
 use std::path::{Path, PathBuf};
 use walkdir::WalkDir;

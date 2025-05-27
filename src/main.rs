@@ -90,7 +90,7 @@ fn _main() -> i32 {
 			subcommand_matches.get_one::<String>("ORG_NAME").expect("argument required by clap.rs"),
 			subcommand_matches.get_flag("include-archived"),
 		),
-		"gen-workon" => workon::gen(
+		"gen-workon" => workon::r#gen(
 			subcommand_matches.get_one::<String>("PROJECT_NAME").expect("argument required by clap.rs"),
 			config,
 			subcommand_matches.get_flag("quick"),

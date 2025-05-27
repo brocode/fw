@@ -26,11 +26,7 @@ fn do_expand(path: PathBuf, home_dir: Option<PathBuf>) -> PathBuf {
 }
 
 pub fn expand_path(path: PathBuf) -> PathBuf {
-	if path.starts_with("~") {
-		do_expand(path, dirs::home_dir())
-	} else {
-		path
-	}
+	if path.starts_with("~") { do_expand(path, dirs::home_dir()) } else { path }
 }
 
 pub fn fw_path() -> Result<FwPaths, AppError> {

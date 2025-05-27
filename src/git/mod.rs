@@ -1,4 +1,4 @@
-use crate::config::{project::Project, Config};
+use crate::config::{Config, project::Project};
 use crate::errors::AppError;
 
 use crate::spawn::spawn_maybe;

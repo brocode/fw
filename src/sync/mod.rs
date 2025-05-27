@@ -1,6 +1,6 @@
 use crate::config;
 use crate::config::metadata_from_repository::MetadataFromRepository;
-use crate::config::{project::Project, Config};
+use crate::config::{Config, project::Project};
 use crate::errors::AppError;
 use std::collections::BTreeSet;
 use std::fs::read_to_string;
