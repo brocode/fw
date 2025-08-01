@@ -42,7 +42,7 @@ pub fn delete_tag(maybe_config: Result<Config, AppError>, tag_name: &str) -> Res
 fn list_all_tags(config: Config) {
 	if let Some(tags) = config.settings.tags {
 		for tag_name in tags.keys() {
-			println!("{}", tag_name);
+			println!("{tag_name}");
 		}
 	}
 }
@@ -57,10 +57,10 @@ pub fn add_tag(config: &Config, project_name: String, tag_name: String) -> Resul
 			config::write_project(&project)?;
 			Ok(())
 		} else {
-			Err(AppError::UserError(format!("Unknown tag {}", tag_name)))
+			Err(AppError::UserError(format!("Unknown tag {tag_name}")))
 		}
 	} else {
-		Err(AppError::UserError(format!("Unknown project {}", project_name)))
+		Err(AppError::UserError(format!("Unknown project {project_name}")))
 	}
 }
 
@@ -76,7 +76,7 @@ pub fn create_tag(
 	let tags: BTreeMap<String, Tag> = config.settings.tags.unwrap_or_default();
 
 	if tags.contains_key(&tag_name) {
-		Err(AppError::UserError(format!("Tag {} already exists, not gonna overwrite it for you", tag_name)))
+		Err(AppError::UserError(format!("Tag {tag_name} already exists, not gonna overwrite it for you")))
 	} else {
 		let new_tag = Tag {
 			after_clone,
@@ -111,7 +111,7 @@ pub fn inspect_tag(maybe_config: Result<Config, AppError>, tag_name: &str) -> Re
 		}
 		Ok(())
 	} else {
-		Err(AppError::UserError(format!("Unkown tag {}", tag_name)))
+		Err(AppError::UserError(format!("Unkown tag {tag_name}")))
 	}
 }
 
@@ -127,7 +127,7 @@ pub fn remove_tag(maybe_config: Result<Config, AppError>, project_name: String, 
 			Ok(())
 		}
 	} else {
-		Err(AppError::UserError(format!("Unknown project {}", project_name)))
+		Err(AppError::UserError(format!("Unknown project {project_name}")))
 	}
 }
 
@@ -135,12 +135,12 @@ fn list_project_tags(config: &Config, project_name: &str) -> Result<(), AppError
 	if let Some(project) = config.projects.get(project_name) {
 		if let Some(tags) = project.clone().tags {
 			for tag_name in tags {
-				println!("{}", tag_name);
+				println!("{tag_name}");
 			}
 		}
 		Ok(())
 	} else {
-		Err(AppError::UserError(format!("Unknown project {}", project_name)))
+		Err(AppError::UserError(format!("Unknown project {project_name}")))
 	}
 }
 
@@ -175,6 +175,6 @@ pub fn autotag(maybe_config: Result<Config, AppError>, cmd: &str, tag_name: &str
 		}
 		Ok(())
 	} else {
-		Err(AppError::UserError(format!("Unknown tag {}", tag_name)))
+		Err(AppError::UserError(format!("Unknown tag {tag_name}")))
 	}
 }

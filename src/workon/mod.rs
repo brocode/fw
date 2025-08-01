@@ -22,7 +22,7 @@ fn current_project(config: &config::Config) -> Result<Project, AppError> {
 		.find(|&p| config.actual_path_to_project(p).to_string_lossy().eq(&current_dir));
 	maybe_match
 		.map(ToOwned::to_owned)
-		.ok_or_else(|| AppError::UserError(format!("No project matching expanded path {} found in config", current_dir)))
+		.ok_or_else(|| AppError::UserError(format!("No project matching expanded path {current_dir} found in config")))
 }
 
 pub fn reworkon(maybe_config: Result<config::Config, AppError>) -> Result<(), AppError> {
@@ -41,13 +41,13 @@ pub fn r#gen(name: &str, maybe_config: Result<config::Config, AppError>, quick: 
 	let project: &Project = config
 		.projects
 		.get(name)
-		.ok_or_else(|| AppError::UserError(format!("project key {} not found in fw.json", name)))?;
+		.ok_or_else(|| AppError::UserError(format!("project key {name} not found in fw.json")))?;
 	let canonical_project_path = config.actual_path_to_project(project);
 	let path = canonical_project_path
 		.to_str()
 		.ok_or(AppError::InternalError("project path is not valid unicode"))?;
 	if !canonical_project_path.exists() {
-		Err(AppError::UserError(format!("project key {} found but path {} does not exist", name, path)))
+		Err(AppError::UserError(format!("project key {name} found but path {path} does not exist")))
 	} else {
 		let mut commands: Vec<String> = vec![format!("cd '{}'", path)];
 		if !quick {

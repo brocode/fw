@@ -52,7 +52,7 @@ pub fn read_config() -> Result<Config, AppError> {
 					.ok_or(AppError::InternalError("Failed to get project name"))?;
 				project.project_config_path = PathBuf::from(project_file.path().parent().ok_or(AppError::InternalError("Expected file to have a parent"))?)
 					.strip_prefix(paths.projects.as_path())
-					.map_err(|e| AppError::RuntimeError(format!("Failed to strip prefix: {}", e)))?
+					.map_err(|e| AppError::RuntimeError(format!("Failed to strip prefix: {e}")))?
 					.to_string_lossy()
 					.to_string();
 				if projects.contains_key(&project.name) {
@@ -81,13 +81,12 @@ pub fn read_config() -> Result<Config, AppError> {
 					.ok_or(AppError::InternalError("Failed to get tag name"))?;
 				tag.tag_config_path = PathBuf::from(tag_file.path().parent().ok_or(AppError::InternalError("Expected file to have a parent"))?)
 					.strip_prefix(paths.tags.as_path())
-					.map_err(|e| AppError::RuntimeError(format!("Failed to strip prefix: {}", e)))?
+					.map_err(|e| AppError::RuntimeError(format!("Failed to strip prefix: {e}")))?
 					.to_string_lossy()
 					.to_string();
 				if tags.contains_key(&tag_name) {
 					eprintln!(
-						"Inconsistency found: tag {} defined more than once. Will use the project that is found last. Results might be inconsistent.",
-						tag_name
+						"Inconsistency found: tag {tag_name} defined more than once. Will use the project that is found last. Results might be inconsistent."
 					);
 				}
 				tags.insert(tag_name, tag);
@@ -121,7 +120,7 @@ pub fn write_settings(settings: &PersistedSettings) -> Result<(), AppError> {
 
 	let mut buffer = File::create(&paths.settings)?;
 	let serialized = toml::to_string_pretty(settings)?;
-	write!(buffer, "{}", serialized)?;
+	write!(buffer, "{serialized}")?;
 	write_example(&mut buffer, PersistedSettings::example())?;
 
 	Ok(())
@@ -142,8 +141,8 @@ pub fn write_tag(tag_name: &str, tag: &Tag) -> Result<(), AppError> {
 	let mut buffer = File::create(&tag_file_path)
 		.map_err(|e| AppError::RuntimeError(format!("Failed to create project config file '{}'. {}", tag_file_path.to_string_lossy(), e)))?;
 	let serialized = toml::to_string_pretty(&tag)?;
-	write!(buffer, "{}", CONF_MODE_HEADER)?;
-	write!(buffer, "{}", serialized)?;
+	write!(buffer, "{CONF_MODE_HEADER}")?;
+	write!(buffer, "{serialized}")?;
 	write_example(&mut buffer, Tag::example())?;
 	Ok(())
 }
@@ -156,7 +155,7 @@ pub fn delete_tag_config(tag_name: &str, tag: &Tag) -> Result<(), AppError> {
 	tag_file_path.push(PathBuf::from(&tag.tag_config_path));
 	tag_file_path.push(tag_name);
 
-	fs::remove_file(&tag_file_path).map_err(|e| AppError::RuntimeError(format!("Failed to delete tag config from '{:?}': {}", tag_file_path, e)))?;
+	fs::remove_file(&tag_file_path).map_err(|e| AppError::RuntimeError(format!("Failed to delete tag config from '{tag_file_path:?}': {e}")))?;
 	Ok(())
 }
 
@@ -168,7 +167,7 @@ pub fn delete_project_config(project: &Project) -> Result<(), AppError> {
 	project_file_path.push(PathBuf::from(&project.project_config_path));
 	project_file_path.push(&project.name);
 
-	fs::remove_file(project_file_path).map_err(|e| AppError::RuntimeError(format!("Failed to delete project config: {}", e)))?;
+	fs::remove_file(project_file_path).map_err(|e| AppError::RuntimeError(format!("Failed to delete project config: {e}")))?;
 	Ok(())
 }
 
@@ -180,7 +179,7 @@ where
 	writeln!(buffer, "\n# Example:")?;
 	for line in example_toml.split('\n') {
 		if line.trim() != "" {
-			writeln!(buffer, "# {}", line)?;
+			writeln!(buffer, "# {line}")?;
 		}
 	}
 	Ok(())
@@ -202,8 +201,8 @@ pub fn write_project(project: &Project) -> Result<(), AppError> {
 		.map_err(|e| AppError::RuntimeError(format!("Failed to create project config file '{}'. {}", project_file_path.to_string_lossy(), e)))?;
 	let serialized = toml::to_string_pretty(&project)?;
 
-	write!(buffer, "{}", CONF_MODE_HEADER)?;
-	write!(buffer, "{}", serialized)?;
+	write!(buffer, "{CONF_MODE_HEADER}")?;
+	write!(buffer, "{serialized}")?;
 	write_example(&mut buffer, Project::example())?;
 	Ok(())
 }

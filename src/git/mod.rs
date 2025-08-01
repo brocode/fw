@@ -14,9 +14,8 @@ use std::path::Path;
 pub fn repo_name_from_url(url: &str) -> Result<&str, AppError> {
 	let last_fragment = url.rsplit('/').next().ok_or_else(|| {
 		AppError::UserError(format!(
-			"Given URL {} does not have path fragments so cannot determine project name. Please give \
-       one.",
-			url
+			"Given URL {url} does not have path fragments so cannot determine project name. Please give \
+       one."
 		))
 	})?;
 
@@ -127,7 +126,7 @@ pub fn clone_project(config: &Config, project: &Project, path: &Path) -> Result<
 			let after_clone = config.resolve_after_clone(project);
 			if !after_clone.is_empty() {
 				spawn_maybe(&shell, &after_clone.join(" && "), path, &project.name, random_color())
-					.map_err(|error| AppError::UserError(format!("Post-clone hook failed (nonzero exit code). Cause: {:?}", error)))
+					.map_err(|error| AppError::UserError(format!("Post-clone hook failed (nonzero exit code). Cause: {error:?}")))
 			} else {
 				Ok(())
 			}

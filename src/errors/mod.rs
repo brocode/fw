@@ -40,17 +40,17 @@ impl AppError {
 impl fmt::Display for AppError {
 	fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
 		match *self {
-			AppError::Io(ref err) => write!(f, "Io error: {}", err),
-			AppError::UserError(ref str) => write!(f, "User error: {}", str),
-			AppError::RuntimeError(ref str) => write!(f, "Runtime error: {}", str),
-			AppError::BadJson(ref err) => write!(f, "JSON error: {}", err),
-			AppError::InternalError(str) => write!(f, "Internal error: {}", str),
-			AppError::GitError(ref err) => write!(f, "Git error: {}", err),
-			AppError::Regex(ref err) => write!(f, "Regex error: {}", err),
-			AppError::TomlSerError(ref err) => write!(f, "toml serialization error: {}", err),
-			AppError::TomlDeError(ref err) => write!(f, "toml read error: {}", err),
-			AppError::WalkdirError(ref err) => write!(f, "walkdir error: {}", err),
-			AppError::ReqwestError(ref err) => write!(f, "reqwest error: {}", err),
+			AppError::Io(ref err) => write!(f, "Io error: {err}"),
+			AppError::UserError(ref str) => write!(f, "User error: {str}"),
+			AppError::RuntimeError(ref str) => write!(f, "Runtime error: {str}"),
+			AppError::BadJson(ref err) => write!(f, "JSON error: {err}"),
+			AppError::InternalError(str) => write!(f, "Internal error: {str}"),
+			AppError::GitError(ref err) => write!(f, "Git error: {err}"),
+			AppError::Regex(ref err) => write!(f, "Regex error: {err}"),
+			AppError::TomlSerError(ref err) => write!(f, "toml serialization error: {err}"),
+			AppError::TomlDeError(ref err) => write!(f, "toml read error: {err}"),
+			AppError::WalkdirError(ref err) => write!(f, "walkdir error: {err}"),
+			AppError::ReqwestError(ref err) => write!(f, "reqwest error: {err}"),
 		}
 	}
 }
@@ -73,7 +73,7 @@ impl Error for AppError {
 
 impl From<core::num::ParseIntError> for AppError {
 	fn from(err: core::num::ParseIntError) -> AppError {
-		AppError::UserError(format!("Type error: {}", err))
+		AppError::UserError(format!("Type error: {err}"))
 	}
 }
 

@@ -5,13 +5,13 @@ pub fn print_zsh_setup(use_fzf: bool, use_skim: bool) -> Result<(), AppError> {
 	let basic_workon = include_str!("workon.zsh");
 	let fzf_workon = include_str!("workon-fzf.zsh");
 	let skim_workon = include_str!("workon-sk.zsh");
-	println!("{}", fw_completion);
+	println!("{fw_completion}");
 	if use_fzf {
-		println!("{}", fzf_workon);
+		println!("{fzf_workon}");
 	} else if use_skim {
-		println!("{}", skim_workon);
+		println!("{skim_workon}");
 	} else {
-		println!("{}", basic_workon);
+		println!("{basic_workon}");
 	}
 	Ok(())
 }
@@ -22,13 +22,13 @@ pub fn print_bash_setup(use_fzf: bool, use_skim: bool) -> Result<(), AppError> {
 	let fzf = include_str!("workon-fzf.bash");
 	let skim = include_str!("workon-sk.bash");
 
-	println!("{}", setup);
+	println!("{setup}");
 	if use_fzf {
-		println!("{}", fzf);
+		println!("{fzf}");
 	} else if use_skim {
-		println!("{}", skim)
+		println!("{skim}")
 	} else {
-		println!("{}", basic);
+		println!("{basic}");
 	}
 
 	Ok(())
@@ -40,13 +40,13 @@ pub fn print_fish_setup(use_fzf: bool, use_skim: bool) -> Result<(), AppError> {
 	let fzf = include_str!("workon-fzf.fish");
 	let skim = include_str!("workon-sk.fish");
 
-	println!("{}", setup);
+	println!("{setup}");
 	if use_fzf {
-		println!("{}", fzf);
+		println!("{fzf}");
 	} else if use_skim {
-		println!("{}", skim);
+		println!("{skim}");
 	} else {
-		println!("{}", basic);
+		println!("{basic}");
 	}
 
 	Ok(())

@@ -48,7 +48,7 @@ pub fn setup(workspace_dir: &str) -> Result<(), AppError> {
 	let maybe_path = if path.exists() {
 		Ok(path)
 	} else {
-		Err(AppError::UserError(format!("Given workspace path {} does not exist", workspace_dir)))
+		Err(AppError::UserError(format!("Given workspace path {workspace_dir} does not exist")))
 	};
 
 	maybe_path
@@ -56,7 +56,7 @@ pub fn setup(workspace_dir: &str) -> Result<(), AppError> {
 			if path.is_absolute() {
 				Ok(path)
 			} else {
-				Err(AppError::UserError(format!("Workspace path {} needs to be absolute", workspace_dir)))
+				Err(AppError::UserError(format!("Workspace path {workspace_dir} needs to be absolute")))
 			}
 		})
 		.and_then(determine_projects)
@@ -80,7 +80,7 @@ fn determine_projects(path: PathBuf) -> Result<BTreeMap<String, Project>, AppErr
 						Ok(project) => {
 							projects.insert(project.name.clone(), project);
 						}
-						Err(e) => eprintln!("Error while importing folder. Skipping it. {}", e),
+						Err(e) => eprintln!("Error while importing folder. Skipping it. {e}"),
 					}
 				}
 				Err(_) => eprintln!("Failed to parse directory name as unicode. Skipping it."),
@@ -98,8 +98,7 @@ pub fn org_import(maybe_config: Result<Config, AppError>, org_name: &str, includ
 		.or_else(|| current_config.settings.github_token.clone())
 		.ok_or_else(|| {
 			AppError::UserError(format!(
-				"Can't call GitHub API for org {} because no github oauth token (settings.github_token) specified in the configuration.",
-				org_name
+				"Can't call GitHub API for org {org_name} because no github oauth token (settings.github_token) specified in the configuration."
 			))
 		})?;
 	let mut api = github::github_api(&token)?;
@@ -112,7 +111,7 @@ pub fn org_import(maybe_config: Result<Config, AppError>, org_name: &str, includ
 	for name in org_repository_names {
 		let p = Project {
 			name: name.clone(),
-			git: format!("git@github.com:{}/{}.git", org_name, name),
+			git: format!("git@github.com:{org_name}/{name}.git"),
 			after_clone: after_clone.clone(),
 			after_workon: after_workon.clone(),
 			override_path: None,

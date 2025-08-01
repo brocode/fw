@@ -27,7 +27,7 @@ where
 	buffer.write_all(b"(")?;
 	for path in paths {
 		let path = replace_path_with_tilde(&path, home_dir.to_path_buf()).unwrap_or(path);
-		buffer.write_all(format!("\"{}/\"", path).as_bytes())?;
+		buffer.write_all(format!("\"{path}/\"").as_bytes())?;
 		buffer.write_all(b" ")?;
 	}
 	buffer.write_all(b")")?;

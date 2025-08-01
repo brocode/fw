@@ -81,7 +81,7 @@ impl GithubApi {
 			.send()?;
 
 		if res.status().is_success() {
-			res.json::<T>().map_err(|e| AppError::RuntimeError(format!("Failed to parse response: {}", e)))
+			res.json::<T>().map_err(|e| AppError::RuntimeError(format!("Failed to parse response: {e}")))
 		} else {
 			Err(AppError::RuntimeError(format!("Bad status from github {}", res.status())))
 		}
@@ -101,7 +101,7 @@ impl GithubApi {
 		Ok(initial_names)
 	}
 	fn page_repositories(&mut self, org: &str, after: Option<String>, include_archived: bool) -> Result<PageResult, AppError> {
-		let after_refinement = after.map(|a| format!(", after:\"{}\"", a)).unwrap_or_else(|| "".to_owned());
+		let after_refinement = after.map(|a| format!(", after:\"{a}\"")).unwrap_or_else(|| "".to_owned());
 		let response: OrganizationQueryResponse = self.query(
 			&("query {organization(login: \"".to_owned()
 				+ org

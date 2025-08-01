@@ -15,8 +15,7 @@ fn _main() -> i32 {
 	let config = config::read_config();
 	if config.is_err() {
 		eprintln!(
-			"Could not read v2.0 config: {:?}. If you are running the setup right now this is expected.",
-			config
+			"Could not read v2.0 config: {config:?}. If you are running the setup right now this is expected."
 		);
 	};
 
@@ -144,7 +143,7 @@ fn _main() -> i32 {
 	match result {
 		Ok(()) => 0,
 		Err(error) => {
-			eprintln!("Error running command: error {}", error);
+			eprintln!("Error running command: error {error}");
 			1
 		}
 	}

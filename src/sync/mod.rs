@@ -77,7 +77,7 @@ pub fn synchronize(maybe_config: Result<Config, AppError>, only_new: bool, ff_me
 	let spinner_style = ProgressStyle::default_spinner()
 		.tick_chars("⣾⣽⣻⢿⡿⣟⣯⣷⣿")
 		.template("{prefix:.bold.dim} {spinner} {wide_msg}")
-		.map_err(|e| AppError::RuntimeError(format!("Invalid Template: {}", e)))?;
+		.map_err(|e| AppError::RuntimeError(format!("Invalid Template: {e}")))?;
 
 	let m = MultiProgress::new();
 	m.set_draw_target(ProgressDrawTarget::stderr());
@@ -86,7 +86,7 @@ pub fn synchronize(maybe_config: Result<Config, AppError>, only_new: bool, ff_me
 	let progress_bars = (1..=worker).map(|i| {
 		let pb = m.add(ProgressBar::new(projects_count));
 		pb.set_style(spinner_style.clone());
-		pb.set_prefix(format!("[{: >2}/{}]", i, worker));
+		pb.set_prefix(format!("[{i: >2}/{worker}]"));
 		pb.set_message("initializing...");
 		pb.tick();
 		pb.enable_steady_tick(Duration::from_millis(250));

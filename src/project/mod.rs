@@ -18,13 +18,12 @@ pub fn add_entry(
 	trusted: bool,
 ) -> Result<(), AppError> {
 	let name = maybe_name
-		.ok_or_else(|| AppError::UserError(format!("No project name specified for {}", url)))
+		.ok_or_else(|| AppError::UserError(format!("No project name specified for {url}")))
 		.or_else(|_| repo_name_from_url(url).map(ToOwned::to_owned))?;
 	let config: Config = maybe_config?;
 	if config.projects.contains_key(&name) {
 		Err(AppError::UserError(format!(
-			"Project key {} already exists, not gonna overwrite it for you",
-			name
+			"Project key {name} already exists, not gonna overwrite it for you"
 		)))
 	} else {
 		let default_after_clone = config.settings.default_after_clone.clone();
@@ -56,7 +55,7 @@ pub fn remove_project(maybe_config: Result<Config, AppError>, project_name: &str
 	let config: Config = maybe_config?;
 
 	if !config.projects.contains_key(project_name) {
-		Err(AppError::UserError(format!("Project key {} does not exist in config", project_name)))
+		Err(AppError::UserError(format!("Project key {project_name} does not exist in config")))
 	} else if let Some(project) = config.projects.get(project_name).cloned() {
 		if purge_directory {
 			let path = config.actual_path_to_project(&project);
@@ -67,21 +66,20 @@ pub fn remove_project(maybe_config: Result<Config, AppError>, project_name: &str
 		}
 		config::delete_project_config(&project)
 	} else {
-		Err(AppError::UserError(format!("Unknown project {}", project_name)))
+		Err(AppError::UserError(format!("Unknown project {project_name}")))
 	}
 }
 
 pub fn add_remote(maybe_config: Result<Config, AppError>, name: &str, remote_name: String, git: String) -> Result<(), AppError> {
 	let config: Config = maybe_config?;
 	if !config.projects.contains_key(name) {
-		return Err(AppError::UserError(format!("Project key {} does not exists. Can not update.", name)));
+		return Err(AppError::UserError(format!("Project key {name} does not exists. Can not update.")));
 	}
 	let mut project_config: Project = config.projects.get(name).expect("Already checked in the if above").clone();
 	let mut additional_remotes = project_config.additional_remotes.unwrap_or_default();
 	if additional_remotes.iter().any(|r| r.name == remote_name) {
 		return Err(AppError::UserError(format!(
-			"Remote {} for project {} does already exist. Can not add.",
-			remote_name, name
+			"Remote {remote_name} for project {name} does already exist. Can not add."
 		)));
 	}
 	additional_remotes.push(Remote { name: remote_name, git });
@@ -94,7 +92,7 @@ pub fn add_remote(maybe_config: Result<Config, AppError>, name: &str, remote_nam
 pub fn remove_remote(maybe_config: Result<Config, AppError>, name: &str, remote_name: String) -> Result<(), AppError> {
 	let config: Config = maybe_config?;
 	if !config.projects.contains_key(name) {
-		return Err(AppError::UserError(format!("Project key {} does not exists. Can not update.", name)));
+		return Err(AppError::UserError(format!("Project key {name} does not exists. Can not update.")));
 	}
 	let mut project_config: Project = config.projects.get(name).expect("Already checked in the if above").clone();
 	let additional_remotes = project_config.additional_remotes.unwrap_or_default();
@@ -116,11 +114,10 @@ pub fn update_entry(
 	let config: Config = maybe_config?;
 	if name.starts_with("http") || name.starts_with("git@") {
 		Err(AppError::UserError(format!(
-			"{} looks like a repo URL and not like a project name, please fix",
-			name
+			"{name} looks like a repo URL and not like a project name, please fix"
 		)))
 	} else if !config.projects.contains_key(name) {
-		Err(AppError::UserError(format!("Project key {} does not exists. Can not update.", name)))
+		Err(AppError::UserError(format!("Project key {name} does not exists. Can not update.")))
 	} else {
 		let old_project_config: Project = config.projects.get(name).expect("Already checked in the if above").clone();
 		config::write_project(&Project {
@@ -143,7 +140,7 @@ pub fn ls(maybe_config: Result<Config, AppError>, tags: &BTreeSet<String>) -> Re
 	let config = maybe_config?;
 	for (name, project) in config.projects {
 		if tags.is_empty() || project.tags.unwrap_or_default().intersection(tags).count() > 0 {
-			println!("{}", name)
+			println!("{name}")
 		}
 	}
 	Ok(())
@@ -154,12 +151,12 @@ pub fn print_path(maybe_config: Result<Config, AppError>, name: &str) -> Result<
 	let project = config
 		.projects
 		.get(name)
-		.ok_or_else(|| AppError::UserError(format!("project {} not found", name)))?;
+		.ok_or_else(|| AppError::UserError(format!("project {name} not found")))?;
 	let canonical_project_path = config.actual_path_to_project(project);
 	let path = canonical_project_path
 		.to_str()
 		.ok_or(AppError::InternalError("project path is not valid unicode"))?;
-	println!("{}", path);
+	println!("{path}");
 	Ok(())
 }
 
@@ -168,7 +165,7 @@ pub fn inspect(name: &str, maybe_config: Result<Config, AppError>, json: bool) -
 	let project = config
 		.projects
 		.get(name)
-		.ok_or_else(|| AppError::UserError(format!("project {} not found", name)))?;
+		.ok_or_else(|| AppError::UserError(format!("project {name} not found")))?;
 	if json {
 		println!("{}", serde_json::to_string(project)?);
 		return Ok(());
@@ -208,7 +205,7 @@ pub(crate) fn move_project(maybe_config: Result<Config, AppError>, name: &str, d
 	let project = config
 		.projects
 		.get(name)
-		.ok_or_else(|| AppError::UserError(format!("project {} not found", name)))?;
+		.ok_or_else(|| AppError::UserError(format!("project {name} not found")))?;
 	let canonical_project_path = config.actual_path_to_project(project);
 
 	let mut path = path::absolute(destination)?;
