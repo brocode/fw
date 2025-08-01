@@ -14,9 +14,7 @@ fn _main() -> i32 {
 
 	let config = config::read_config();
 	if config.is_err() {
-		eprintln!(
-			"Could not read v2.0 config: {config:?}. If you are running the setup right now this is expected."
-		);
+		eprintln!("Could not read v2.0 config: {config:?}. If you are running the setup right now this is expected.");
 	};
 
 	let subcommand_name = matches.subcommand_name().expect("subcommand required by clap.rs").to_owned();

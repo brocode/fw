@@ -85,9 +85,7 @@ pub fn read_config() -> Result<Config, AppError> {
 					.to_string_lossy()
 					.to_string();
 				if tags.contains_key(&tag_name) {
-					eprintln!(
-						"Inconsistency found: tag {tag_name} defined more than once. Will use the project that is found last. Results might be inconsistent."
-					);
+					eprintln!("Inconsistency found: tag {tag_name} defined more than once. Will use the project that is found last. Results might be inconsistent.");
 				}
 				tags.insert(tag_name, tag);
 			}
