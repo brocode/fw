@@ -14,8 +14,8 @@ include = ["src/**/*", "LICENSE", "README.md"]
 [dependencies]
 walkdir = "2"
 dirs = "6"
-toml = "0.8"
-serde_json = "1.0.140"
+toml = "0.9"
+serde_json = "1.0.142"
 serde = {version = "1", features = ["derive"] }
 git2 = "0.20"
 maplit = "1.0"
