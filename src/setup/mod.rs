@@ -1,47 +1,12 @@
 use crate::config::{self, Config, project::Project, settings::Settings};
 use crate::errors::AppError;
 use crate::ws::github;
-use clap::builder::PossibleValue;
 use git2::Repository;
 use std::collections::BTreeMap;
 use std::env;
 use std::fs;
 use std::iter::Iterator;
 use std::path::{Path, PathBuf};
-
-#[derive(Copy, Clone)]
-pub enum ProjectState {
-	Active,
-	Archived,
-	Both,
-}
-
-impl clap::ValueEnum for ProjectState {
-	fn value_variants<'a>() -> &'a [Self] {
-		&[Self::Active, Self::Archived, Self::Both]
-	}
-
-	fn to_possible_value(&self) -> Option<PossibleValue> {
-		match self {
-			Self::Active => Some(PossibleValue::new("active")),
-			Self::Archived => Some(PossibleValue::new("archived")),
-			Self::Both => Some(PossibleValue::new("both")),
-		}
-	}
-}
-
-impl std::str::FromStr for ProjectState {
-	type Err = AppError;
-
-	fn from_str(s: &str) -> Result<Self, Self::Err> {
-		match s {
-			"active" => Ok(Self::Active),
-			"archived" => Ok(Self::Archived),
-			"both" => Ok(Self::Both),
-			_ => Err(AppError::InternalError("invalid value for ProjectState")), // TODO should this be unreachable?,
-		}
-	}
-}
 
 pub fn setup(workspace_dir: &str) -> Result<(), AppError> {
 	let path = PathBuf::from(workspace_dir);
