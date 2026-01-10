@@ -3,7 +3,7 @@ use std::collections::BTreeSet;
 
 fn main() {
 	unsafe {
-		openssl_probe::init_openssl_env_vars();
+		openssl_probe::try_init_openssl_env_vars();
 	}
 	let return_code = _main();
 	std::process::exit(return_code)
