@@ -67,13 +67,15 @@ fn update_remote(remote: &mut Remote<'_>) -> Result<(), AppError> {
 
 pub fn update_project_remotes(project: &Project, path: &Path, ff_merge: bool) -> Result<(), AppError> {
 	let local: Repository = Repository::open(path).map_err(AppError::GitError)?;
-	for desired_remote in project.additional_remotes.clone().unwrap_or_default().into_iter().chain(
-		vec![crate::config::project::Remote {
+	for desired_remote in project
+		.additional_remotes
+		.clone()
+		.unwrap_or_default()
+		.into_iter()
+		.chain(vec![crate::config::project::Remote {
 			name: "origin".to_string(),
 			git: project.git.to_owned(),
-		}]
-		.into_iter(),
-	) {
+		}]) {
 		let remote = local
 			.find_remote(&desired_remote.name)
 			.or_else(|_| local.remote(&desired_remote.name, &desired_remote.git))?;
