@@ -117,7 +117,7 @@ fn load_project(maybe_settings: Option<Settings>, path_to_repo: PathBuf, name: &
 	let remote = repo.find_remote("origin")?;
 	let url = remote
 		.url()
-		.ok_or_else(|| AppError::UserError(format!("invalid remote origin at {:?}", repo.path())))?;
+		.map_err(|_| AppError::UserError(format!("invalid remote origin at {:?}", repo.path())))?;
 	Ok(Project {
 		name: name.to_owned(),
 		git: url.to_owned(),

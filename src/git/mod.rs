@@ -81,7 +81,7 @@ pub fn update_project_remotes(project: &Project, path: &Path, ff_merge: bool) ->
 			.or_else(|_| local.remote(&desired_remote.name, &desired_remote.git))?;
 
 		let mut remote = match remote.url() {
-			Some(url) if url == desired_remote.git => remote,
+			Ok(url) if url == desired_remote.git => remote,
 			_ => {
 				local.remote_set_url(&desired_remote.name, &desired_remote.git)?;
 				local.find_remote(&desired_remote.name)?
